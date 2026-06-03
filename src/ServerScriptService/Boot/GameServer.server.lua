@@ -7,6 +7,7 @@ local EquipmentService = require(script.Parent.Parent.Services.EquipmentService)
 local UpgradeService = require(script.Parent.Parent.Services.UpgradeService)
 local CombatService = require(script.Parent.Parent.Services.CombatService)
 local WeaponService = require(script.Parent.Parent.Services.WeaponService)
+local EquipmentService = require(script.Parent.Parent.Services.EquipmentService)
 
 local profiles = {}
 
@@ -42,6 +43,7 @@ local GetWeaponSummaryRequest = ensureRemoteFunction("GetWeaponSummaryRequest")
 local GetWeaponsByLevelRequest = ensureRemoteFunction("GetWeaponsByLevelRequest")
 local GetWeaponsByGradeRequest = ensureRemoteFunction("GetWeaponsByGradeRequest")
 local GiveWeaponRequest = ensureRemoteFunction("GiveWeaponRequest")
+local GetPlayerStatsRequest = ensureRemoteFunction("GetPlayerStatsRequest")
 
 Players.PlayerAdded:Connect(function(player)
 	-- Untuk tahap debug logic, data masih in-memory.
@@ -149,4 +151,16 @@ GiveWeaponRequest.OnServerInvoke = function(player, weaponId)
 		Uid = inventoryWeapon.Uid,
 		ItemId = inventoryWeapon.ItemId,
 	}
+end
+
+GetPlayerStatsRequest.OnServerInvoke = function(player)
+	local data = profiles[player]
+
+	if not data then
+		return false, "No player data"
+	end
+
+	local stats = EquipmentService.GetTotalStats(data)
+
+	return true, stats
 end
