@@ -13,6 +13,7 @@ function WeaponEffectService.ApplyEffectsToStats(baseStats, effects)
 	stats.CritResistance = stats.CritResistance or 0
 	stats.Accuracy = stats.Accuracy or 0
 	stats.BlockChance = stats.BlockChance or 0
+	stats.Dodge = stats.Dodge or 0
 	stats.RangeMultiplier = stats.RangeMultiplier or 1
 	stats.LifeStealPercent = stats.LifeStealPercent or 0
 	stats.IgnoreBlockChance = stats.IgnoreBlockChance or 0
@@ -21,11 +22,17 @@ function WeaponEffectService.ApplyEffectsToStats(baseStats, effects)
 	stats.LauncherAttackDelayReduction = stats.LauncherAttackDelayReduction or 0
 	stats.DebuffDurationReduction = stats.DebuffDurationReduction or 0
 	stats.FPCostReduction = stats.FPCostReduction or 0
-	stats.IsRareDForceHybrid = stats.IsRareDForceHybrid or false
+	stats.FPCostIncrease = stats.FPCostIncrease or 0
+	stats.ForceDelayReduction = stats.ForceDelayReduction or 0
+	stats.DebuffDurationIncrease = stats.DebuffDurationIncrease or 0
 
 	for _, effect in ipairs(effects or {}) do
 		if effect.Type == "AttackPercent" then
 			stats.Attack += math.floor(stats.Attack * effect.Value)
+
+		elseif effect.Type == "AllAttackPercent" then
+			stats.Attack += math.floor(stats.Attack * effect.Value)
+			stats.ForceAttack += math.floor(stats.ForceAttack * effect.Value)
 
 		elseif effect.Type == "ForceAttackPercent" then
 			stats.ForceAttack += math.floor(stats.ForceAttack * effect.Value)
@@ -52,11 +59,13 @@ function WeaponEffectService.ApplyEffectsToStats(baseStats, effects)
 			stats.Accuracy += effect.Value
 
 		elseif effect.Type == "AccuracyPercent" then
-			local baseAccuracy = math.max(stats.Accuracy, 1)
-			stats.Accuracy += math.floor(baseAccuracy * effect.Value)
+			stats.Accuracy += math.floor(math.max(stats.Accuracy, 1) * effect.Value)
 
 		elseif effect.Type == "BlockChanceFlat" then
 			stats.BlockChance += effect.Value
+
+		elseif effect.Type == "DodgeFlat" then
+			stats.Dodge += effect.Value
 
 		elseif effect.Type == "RangePercent" then
 			stats.RangeMultiplier += effect.Value
@@ -79,11 +88,17 @@ function WeaponEffectService.ApplyEffectsToStats(baseStats, effects)
 		elseif effect.Type == "DebuffDurationReduction" then
 			stats.DebuffDurationReduction += effect.Value
 
+		elseif effect.Type == "DebuffDurationIncrease" then
+			stats.DebuffDurationIncrease += effect.Value
+
 		elseif effect.Type == "FPCostReduction" then
 			stats.FPCostReduction += effect.Value
 
-		elseif effect.Type == "RareDForceHybrid" then
-			stats.IsRareDForceHybrid = true
+		elseif effect.Type == "FPCostIncreasePercent" then
+			stats.FPCostIncrease += effect.Value
+
+		elseif effect.Type == "ForceDelayReductionFlat" then
+			stats.ForceDelayReduction += effect.Value
 		end
 	end
 
@@ -94,7 +109,10 @@ function WeaponEffectService.ApplyEffectsToStats(baseStats, effects)
 	stats.LifeStealPercent = math.clamp(stats.LifeStealPercent, 0, 0.50)
 	stats.IgnoreBlockChance = math.clamp(stats.IgnoreBlockChance, 0, 1)
 	stats.FPCostReduction = math.clamp(stats.FPCostReduction, 0, 0.80)
+	stats.FPCostIncrease = math.clamp(stats.FPCostIncrease, 0, 3.00)
+	stats.ForceDelayReduction = math.clamp(stats.ForceDelayReduction, 0, 2.00)
 	stats.DebuffDurationReduction = math.clamp(stats.DebuffDurationReduction, 0, 0.80)
+	stats.DebuffDurationIncrease = math.clamp(stats.DebuffDurationIncrease, 0, 3.00)
 	stats.ElementalResistancePercent = math.clamp(stats.ElementalResistancePercent, -0.80, 0.80)
 
 	return stats

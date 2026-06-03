@@ -4,20 +4,34 @@ local WeaponEnums = {}
 
 WeaponEnums.Series = {
 	Classic = "Classic",
+	TypeA = "TypeA",
+	TypeB = "TypeB",
+	TypeC = "TypeC",
 	RareD = "RareD",
 	Leon = "Leon",
 	Relic = "Relic",
-	TypeC = "TypeC",
 }
 
 WeaponEnums.Rarity = {
-	Classic = "Classic",
+	Normal = "Normal",
+	TypeA = "TypeA",
+	TypeB = "TypeB",
+	TypeC = "TypeC",
 	RareD = "RareD",
 	LeonLow = "LeonLow",
 	LeonMedium = "LeonMedium",
 	LeonHigh = "LeonHigh",
 	Relic = "Relic",
-	TypeC = "TypeC",
+}
+
+WeaponEnums.Grade = {
+	N = "N",
+	A = "A",
+	B = "B",
+	C = "C",
+	D = "D",
+	Leon = "Leon",
+	Relic = "Relic",
 }
 
 WeaponEnums.WeaponType = {
@@ -54,6 +68,25 @@ WeaponEnums.FactionId = {
 	Mecha = GameConfig.Factions.MECHA,
 	Cyborg = GameConfig.Factions.CYBORG,
 	Mystic = GameConfig.Factions.MYSTIC,
+}
+
+WeaponEnums.AbilityId = {
+	Wind = "Wind",
+	Strong = "Strong",
+	Fine = "Fine",
+	Smart = "Smart",
+	Solid = "Solid",
+	Strength = "Strength",
+	AdvancedStrength = "AdvancedStrength",
+	Vampire = "Vampire",
+	Guardian = "Guardian",
+	Sharp = "Sharp",
+	Protection = "Protection",
+	Grand = "Grand",
+	AntiSharp = "AntiSharp",
+	Saving = "Saving",
+	Endurance = "Endurance",
+	LevelDown = "LevelDown",
 }
 
 return WeaponEnums
