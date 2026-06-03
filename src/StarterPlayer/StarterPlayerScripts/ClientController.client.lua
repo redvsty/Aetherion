@@ -12,6 +12,10 @@ local GetClassOptionsRequest = remotes:WaitForChild("GetClassOptionsRequest")
 local EquipItemRequest = remotes:WaitForChild("EquipItemRequest")
 local UpgradeItemRequest = remotes:WaitForChild("UpgradeItemRequest")
 local AttackRequest = remotes:WaitForChild("AttackRequest")
+local GetWeaponSummaryRequest = remotes:WaitForChild("GetWeaponSummaryRequest")
+local GetWeaponsByLevelRequest = remotes:WaitForChild("GetWeaponsByLevelRequest")
+local GetWeaponsByGradeRequest = remotes:WaitForChild("GetWeaponsByGradeRequest")
+local GiveWeaponRequest = remotes:WaitForChild("GiveWeaponRequest")
 
 local function printTable(tbl, indent)
 	indent = indent or 0
@@ -224,6 +228,122 @@ function _G.Aetherion.Attack(targetModel)
 	end
 end
 
+function _G.Aetherion.WeaponSummary()
+	local success, result = pcall(function()
+		return GetWeaponSummaryRequest:InvokeServer()
+	end)
+
+	if not success then
+		warn("[Aetherion Client] WeaponSummary failed:", result)
+		return
+	end
+
+	print("========== AETHERION WEAPON SUMMARY ==========")
+	print("Total:", result.Total)
+
+	print("By Level:")
+	for level, count in pairs(result.ByLevel) do
+		print(" - Level", level, count)
+	end
+
+	print("By Grade:")
+	for grade, count in pairs(result.ByGrade) do
+		print(" - Grade", grade, count)
+	end
+
+	print("By Series:")
+	for series, count in pairs(result.BySeries) do
+		print(" - Series", series, count)
+	end
+
+	print("==============================================")
+end
+
+function _G.Aetherion.ListWeaponsByLevel(level, limit)
+	local success, result = pcall(function()
+		return GetWeaponsByLevelRequest:InvokeServer(level, limit or 50)
+	end)
+
+	if not success then
+		warn("[Aetherion Client] ListWeaponsByLevel failed:", result)
+		return
+	end
+
+	print("========== WEAPONS LEVEL", level, "==========")
+
+	for _, weapon in ipairs(result) do
+		print(
+			weapon.Id,
+			"|",
+			weapon.Name,
+			"| Grade:",
+			weapon.Grade,
+			"| Series:",
+			weapon.Series,
+			"| Atk:",
+			tostring(weapon.AttackMin) .. "-" .. tostring(weapon.AttackMax),
+			"| Force:",
+			tostring(weapon.ForceAttackMin) .. "-" .. tostring(weapon.ForceAttackMax),
+			"| Effect:",
+			weapon.SpecialEffectText
+		)
+	end
+
+	print("==============================================")
+end
+
+function _G.Aetherion.ListWeaponsByGrade(grade, limit)
+	local success, result = pcall(function()
+		return GetWeaponsByGradeRequest:InvokeServer(grade, limit or 50)
+	end)
+
+	if not success then
+		warn("[Aetherion Client] ListWeaponsByGrade failed:", result)
+		return
+	end
+
+	print("========== WEAPONS GRADE", grade, "==========")
+
+	for _, weapon in ipairs(result) do
+		print(
+			weapon.Id,
+			"|",
+			weapon.Name,
+			"| Level:",
+			weapon.RequiredLevel,
+			"| Series:",
+			weapon.Series,
+			"| Atk:",
+			tostring(weapon.AttackMin) .. "-" .. tostring(weapon.AttackMax),
+			"| Effect:",
+			weapon.SpecialEffectText
+		)
+	end
+
+	print("==============================================")
+end
+
+function _G.Aetherion.GiveWeapon(weaponId)
+	local success, ok, result = pcall(function()
+		return GiveWeaponRequest:InvokeServer(weaponId)
+	end)
+
+	if not success then
+		warn("[Aetherion Client] GiveWeapon failed:", ok)
+		return
+	end
+
+	print("[Aetherion] GiveWeapon:", ok)
+
+	if type(result) == "table" then
+		printTable(result, 1)
+	else
+		print(result)
+	end
+
+	printData()
+end
+
 task.wait(2)
 
 print("[Aetherion] ClientController loaded.")
@@ -242,5 +362,12 @@ print('_G.Aetherion.CreateCharacter("MYSTIC", "Spiritualist")')
 print('_G.Aetherion.CreateCharacter("MYSTIC", "Specialist")')
 print("_G.Aetherion.GetClassOptions(30)")
 print("_G.Aetherion.GetClassOptions(40)")
+print("_G.Aetherion.WeaponSummary()")
+print("_G.Aetherion.ListWeaponsByLevel(1)")
+print('_G.Aetherion.ListWeaponsByGrade("N")')
+print('_G.Aetherion.ListWeaponsByGrade("A")')
+print('_G.Aetherion.ListWeaponsByGrade("B")')
+print('_G.Aetherion.ListWeaponsByGrade("C")')
+print('_G.Aetherion.GiveWeapon("classic_dagger")')
 
 printData()

@@ -1,29 +1,53 @@
 local ItemDefinitions = require(game.ReplicatedStorage.Shared.Definitions.ItemDefinitions)
-local InventoryService = require(script.Parent.InventoryService)
 local Weapons = require(game.ReplicatedStorage.Shared.Database.Weapons.Weapons)
+
+local InventoryService = require(script.Parent.InventoryService)
 local WeaponEffectService = require(script.Parent.WeaponEffectService)
 
 local EquipmentService = {}
 
+local function getItemDefinition(item)
+	if not item then
+		return nil
+	end
+
+	return ItemDefinitions[item.ItemId] or Weapons[item.ItemId]
+end
+
+local function getEquipmentSlot(itemDef)
+	return itemDef.EquipSlot or itemDef.Slot
+end
+
 function EquipmentService.CanEquip(playerData, item)
-	local itemDef = ItemDefinitions[item.ItemId]
+	local itemDef = getItemDefinition(item)
 
 	if not itemDef then
 		return false, "Unknown item"
 	end
 
-	if itemDef.FactionId ~= "ALL" and itemDef.FactionId ~= playerData.FactionId then
+	local equipmentSlot = getEquipmentSlot(itemDef)
+
+	if not equipmentSlot then
+		return false, "Item has no equipment slot"
+	end
+
+	if itemDef.FactionId ~= nil and itemDef.FactionId ~= "ALL" and itemDef.FactionId ~= playerData.FactionId then
 		return false, "Wrong faction"
 	end
 
-	if playerData.Level < itemDef.RequiredLevel then
+	if itemDef.RequiredLevel and playerData.Level < itemDef.RequiredLevel then
 		return false, "Level too low"
 	end
 
 	if itemDef.RequiredPT then
-		local pt = playerData.PT[itemDef.RequiredPT.Type]
+		local requiredPT = itemDef.RequiredPT
+		local pt = playerData.PT[requiredPT.Type]
 
-		if not pt or pt.Level < itemDef.RequiredPT.Level then
+		if not pt then
+			return false, "Missing PT type: " .. tostring(requiredPT.Type)
+		end
+
+		if pt.Level < requiredPT.Level then
 			return false, "PT too low"
 		end
 	end
@@ -38,7 +62,7 @@ function EquipmentService.Equip(playerData, itemUid)
 		return false, "Item not found"
 	end
 
-	local itemDef = ItemDefinitions[item.ItemId]
+	local itemDef = getItemDefinition(item)
 
 	if not itemDef then
 		return false, "Invalid item"
@@ -50,7 +74,13 @@ function EquipmentService.Equip(playerData, itemUid)
 		return false, reason
 	end
 
-	playerData.Equipment[itemDef.Slot] = itemUid
+	local equipmentSlot = getEquipmentSlot(itemDef)
+
+	if not equipmentSlot then
+		return false, "Item has no equipment slot"
+	end
+
+	playerData.Equipment[equipmentSlot] = itemUid
 
 	return true, "Equipped"
 end
@@ -74,12 +104,18 @@ function EquipmentService.GetTotalStats(playerData)
 		local item = EquipmentService.GetEquippedItem(playerData, slot)
 
 		if item then
-			local itemDef = ItemDefinitions[item.ItemId] or Weapons[item.ItemId]
+			local itemDef = getItemDefinition(item)
 
 			if itemDef then
 				local upgradeLevel = item.UpgradeLevel or 0
-				local attackAverage = math.floor(((itemDef.AttackMin or 0) + (itemDef.AttackMax or 0)) / 2)
-				local forceAverage = math.floor(((itemDef.ForceAttackMin or 0) + (itemDef.ForceAttackMax or 0)) / 2)
+
+				local attackAverage = math.floor(
+					((itemDef.AttackMin or 0) + (itemDef.AttackMax or 0)) / 2
+				)
+
+				local forceAverage = math.floor(
+					((itemDef.ForceAttackMin or 0) + (itemDef.ForceAttackMax or 0)) / 2
+				)
 
 				attack += attackAverage
 				forceAttack += forceAverage
@@ -96,22 +132,35 @@ function EquipmentService.GetTotalStats(playerData)
 		Attack = attack,
 		ForceAttack = forceAttack,
 		Defense = defense,
+
 		MaxHP = playerData.Stats.MaxHP or 150,
 		MaxFP = playerData.Stats.MaxFP or 100,
+
 		MoveSpeed = 16,
+
 		CritChance = 0.05,
 		CritResistance = 0,
+
 		Accuracy = 1,
+		Dodge = 0,
+
 		BlockChance = 0,
 		RangeMultiplier = 1,
+
 		LifeStealPercent = 0,
 		IgnoreBlockChance = 0,
+
 		ElementalResistanceFlat = 0,
 		ElementalResistancePercent = 0,
+
 		LauncherAttackDelayReduction = 0,
+		ForceDelayReduction = 0,
+
 		DebuffDurationReduction = 0,
+		DebuffDurationIncrease = 0,
+
 		FPCostReduction = 0,
-		IsRareDForceHybrid = false,
+		FPCostIncrease = 0,
 	}
 
 	local weaponUid = playerData.Equipment.Weapon

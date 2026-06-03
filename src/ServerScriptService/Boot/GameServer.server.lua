@@ -6,6 +6,7 @@ local CharacterCreationService = require(script.Parent.Parent.Services.Character
 local EquipmentService = require(script.Parent.Parent.Services.EquipmentService)
 local UpgradeService = require(script.Parent.Parent.Services.UpgradeService)
 local CombatService = require(script.Parent.Parent.Services.CombatService)
+local WeaponService = require(script.Parent.Parent.Services.WeaponService)
 
 local profiles = {}
 
@@ -37,6 +38,10 @@ local GetClassOptionsRequest = ensureRemoteFunction("GetClassOptionsRequest")
 local EquipItemRequest = ensureRemoteFunction("EquipItemRequest")
 local UpgradeItemRequest = ensureRemoteFunction("UpgradeItemRequest")
 local AttackRequest = ensureRemoteFunction("AttackRequest")
+local GetWeaponSummaryRequest = ensureRemoteFunction("GetWeaponSummaryRequest")
+local GetWeaponsByLevelRequest = ensureRemoteFunction("GetWeaponsByLevelRequest")
+local GetWeaponsByGradeRequest = ensureRemoteFunction("GetWeaponsByGradeRequest")
+local GiveWeaponRequest = ensureRemoteFunction("GiveWeaponRequest")
 
 Players.PlayerAdded:Connect(function(player)
 	-- Untuk tahap debug logic, data masih in-memory.
@@ -109,4 +114,39 @@ end
 
 AttackRequest.OnServerInvoke = function(player, targetModel)
 	return CombatService.Attack(player, targetModel, profiles)
+end
+
+GetWeaponSummaryRequest.OnServerInvoke = function(_player)
+	return WeaponService.GetSummary()
+end
+
+GetWeaponsByLevelRequest.OnServerInvoke = function(_player, level, limit)
+	local weapons = WeaponService.ListByLevel(level)
+	return WeaponService.ToDebugRows(weapons, limit or 50)
+end
+
+GetWeaponsByGradeRequest.OnServerInvoke = function(_player, grade, limit)
+	local weapons = WeaponService.ListByGrade(grade)
+	return WeaponService.ToDebugRows(weapons, limit or 50)
+end
+
+GiveWeaponRequest.OnServerInvoke = function(player, weaponId)
+	local data = profiles[player]
+
+	if not data then
+		return false, "No player data"
+	end
+
+	local inventoryWeapon = WeaponService.CreateInventoryWeapon(weaponId)
+
+	if not inventoryWeapon then
+		return false, "Weapon not found"
+	end
+
+	table.insert(data.Inventory, inventoryWeapon)
+
+	return true, {
+		Uid = inventoryWeapon.Uid,
+		ItemId = inventoryWeapon.ItemId,
+	}
 end
