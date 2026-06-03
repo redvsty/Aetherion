@@ -1,0 +1,13 @@
+# Roblox outputs
+*.rbxl
+*.rbxlx
+*.rbxm
+*.rbxmx
+
+# Rojo
+sourcemap.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
