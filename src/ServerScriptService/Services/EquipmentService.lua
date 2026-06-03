@@ -1,5 +1,7 @@
 local ItemDefinitions = require(game.ReplicatedStorage.Shared.Definitions.ItemDefinitions)
 local InventoryService = require(script.Parent.InventoryService)
+local Weapons = require(game.ReplicatedStorage.Shared.Database.Weapons.Weapons)
+local WeaponEffectService = require(script.Parent.WeaponEffectService)
 
 local EquipmentService = {}
 
@@ -65,32 +67,68 @@ end
 
 function EquipmentService.GetTotalStats(playerData)
 	local attack = 5
+	local forceAttack = 0
 	local defense = 5
 
 	for _, slot in ipairs({ "Weapon", "Armor", "Shield", "Cloak" }) do
 		local item = EquipmentService.GetEquippedItem(playerData, slot)
 
 		if item then
-			local itemDef = ItemDefinitions[item.ItemId]
+			local itemDef = ItemDefinitions[item.ItemId] or Weapons[item.ItemId]
 
 			if itemDef then
 				local upgradeLevel = item.UpgradeLevel or 0
 				local attackAverage = math.floor(((itemDef.AttackMin or 0) + (itemDef.AttackMax or 0)) / 2)
+				local forceAverage = math.floor(((itemDef.ForceAttackMin or 0) + (itemDef.ForceAttackMax or 0)) / 2)
 
 				attack += attackAverage
+				forceAttack += forceAverage
 				defense += itemDef.Defense or 0
 
 				attack += math.floor(attackAverage * upgradeLevel * 0.08)
+				forceAttack += math.floor(forceAverage * upgradeLevel * 0.08)
 				defense += math.floor((itemDef.Defense or 0) * upgradeLevel * 0.07)
 			end
 		end
 	end
 
-	return {
+	local stats = {
 		Attack = attack,
+		ForceAttack = forceAttack,
 		Defense = defense,
+		MaxHP = playerData.Stats.MaxHP or 150,
+		MaxFP = playerData.Stats.MaxFP or 100,
+		MoveSpeed = 16,
 		CritChance = 0.05,
+		CritResistance = 0,
+		Accuracy = 1,
+		BlockChance = 0,
+		RangeMultiplier = 1,
+		LifeStealPercent = 0,
+		IgnoreBlockChance = 0,
+		ElementalResistanceFlat = 0,
+		ElementalResistancePercent = 0,
+		LauncherAttackDelayReduction = 0,
+		DebuffDurationReduction = 0,
+		FPCostReduction = 0,
+		IsRareDForceHybrid = false,
 	}
+
+	local weaponUid = playerData.Equipment.Weapon
+
+	if weaponUid then
+		local weaponItem = InventoryService.FindItem(playerData, weaponUid)
+
+		if weaponItem then
+			local weaponDef = Weapons[weaponItem.ItemId]
+
+			if weaponDef and weaponDef.Effects then
+				stats = WeaponEffectService.ApplyEffectsToStats(stats, weaponDef.Effects)
+			end
+		end
+	end
+
+	return stats
 end
 
 return EquipmentService

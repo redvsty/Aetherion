@@ -75,7 +75,27 @@ function CombatService.Attack(attackerPlayer, targetModel, profiles)
 
 	local damage, isCrit = CombatFormulas.CalculateDamage(attackerStats, defenderStats)
 
+	if defenderStats.CritResistance and defenderStats.CritResistance > 0 then
+		if isCrit and math.random() < defenderStats.CritResistance then
+			isCrit = false
+			damage = math.floor(damage / GameConfig.Combat.CritMultiplier)
+		end
+	end
+
 	targetHumanoid:TakeDamage(damage)
+
+	if attackerStats.LifeStealPercent and attackerStats.LifeStealPercent > 0 then
+	local attackerHumanoid = attackerCharacter:FindFirstChildOfClass("Humanoid")
+
+	if attackerHumanoid then
+		local healAmount = math.floor(damage * attackerStats.LifeStealPercent)
+
+		attackerHumanoid.Health = math.min(
+			attackerHumanoid.MaxHealth,
+			attackerHumanoid.Health + healAmount
+			)
+		end
+	end
 
 	return true, {
 		Damage = damage,
