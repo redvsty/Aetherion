@@ -318,6 +318,21 @@ local function giveWeapon(weaponId)
 	end
 end
 
+local function giveItem(itemId, amountText)
+	if not itemId or itemId == "" then
+		itemId = "talic_ignorant"
+	end
+
+	local amount = tonumber(amountText) or 1
+	local ok, result = AetherionDebug.GiveItem(itemId, amount)
+
+	if ok then
+		appendOutput("Item given:\n" .. formatTable(result))
+	else
+		appendOutput("Give item failed:\n" .. tostring(result))
+	end
+end
+
 local function equipItem(uid)
 	if not uid or uid == "" then
 		uid = selectedItemUid
@@ -363,7 +378,7 @@ function AetherionDebugUI.Create()
 
 	mainFrame = Instance.new("Frame")
 	mainFrame.Name = "MainFrame"
-	mainFrame.Size = UDim2.new(0, 760, 0, 520)
+	mainFrame.Size = UDim2.new(0, 760, 0, 700)
 	mainFrame.Position = UDim2.new(0, 24, 0, 80)
 	mainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
 	mainFrame.BorderSizePixel = 0
@@ -443,6 +458,14 @@ function AetherionDebugUI.Create()
 
 	addButton("Give Weapon", function()
 		giveWeapon(weaponInput.Text)
+	end)
+
+	local itemInput = createInput(leftPanel, "Item ID", UDim2.new(0, 158, 0, 30), UDim2.new(0, 0, 0, y))
+	local amountInput = createInput(leftPanel, "Qty", UDim2.new(0, 84, 0, 30), UDim2.new(0, 166, 0, y))
+	y += 36
+
+	addButton("Give Item", function()
+		giveItem(itemInput.Text, amountInput.Text)
 	end)
 
 	local uidInput = createInput(leftPanel, "Item UID", UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, y))

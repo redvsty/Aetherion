@@ -48,7 +48,7 @@ local HOTBAR_SIZE = 10
 
 local uiState = {
 	CurrentBag = 1,
-	InventoryOpen = true,
+	InventoryOpen = false,
 	UpgradeOpen = false,
 
 	PlayerData = nil,
@@ -124,6 +124,70 @@ local function isUpgraderItem(item)
 	end
 
 	return def.SpecialAction == "OpenUpgradeUI"
+end
+
+local function isTalicItem(item)
+	local def = item and ItemDefinitions[item.ItemId]
+	return def and def.UpgradeRole == "Talic"
+end
+
+local function isCatalystItem(item)
+	local def = item and ItemDefinitions[item.ItemId]
+	return def and def.UpgradeRole == "Catalyst"
+end
+
+local function isUpgradeableItem(item)
+	local def = item and getDefinition(item.ItemId)
+	return def and def.MaxUpgrade ~= nil
+end
+
+local function talicAppliesToEquipment(talicItem, equipmentItem)
+	local talicDef = talicItem and ItemDefinitions[talicItem.ItemId]
+	local equipmentDef = equipmentItem and getDefinition(equipmentItem.ItemId)
+
+	if not talicDef or not equipmentDef then
+		return false
+	end
+
+	if not talicDef.AppliesTo then
+		return true
+	end
+
+	return talicDef.AppliesTo == equipmentDef.Category
+end
+
+local function getUpgradeSlotLimit(item)
+	if not item then
+		return 0
+	end
+
+	local def = getDefinition(item.ItemId)
+
+	if not def then
+		return 0
+	end
+
+	return item.Slots or def.SlotMax or 0
+end
+
+local function getAssignedTalicCount()
+	local count = 0
+
+	for _, key in ipairs({ "Talic1", "Talic2", "Talic3", "Talic4" }) do
+		if uiState.UpgradeSlots[key] then
+			count += 1
+		end
+	end
+
+	return count
+end
+
+local function clearUpgradeSlotReferences(uid, exceptSlotKey)
+	for key, assigned in pairs(uiState.UpgradeSlots) do
+		if key ~= exceptSlotKey and assigned and assigned.Uid == uid then
+			uiState.UpgradeSlots[key] = nil
+		end
+	end
 end
 
 local function getGradeColor(def)
@@ -716,6 +780,47 @@ local function slotAcceptsItem(slotKey, item)
 	return equipSlot == slotKey
 end
 
+local function upgradeSlotAcceptsItem(slotKey, item)
+	if slotKey == "Equipment" then
+		return isUpgradeableItem(item), "Only upgradeable equipment can be placed here"
+	end
+
+	if slotKey == "Catalyst" then
+		return isCatalystItem(item), "Only catalyst items can be placed here"
+	end
+
+	if string.sub(slotKey, 1, 5) == "Talic" then
+		if not isTalicItem(item) then
+			return false, "Only talic items can be placed here"
+		end
+
+		local equipment = uiState.UpgradeSlots.Equipment
+
+		if not equipment then
+			return false, "Place equipment first"
+		end
+
+		if not talicAppliesToEquipment(item, equipment) then
+			return false, "Talic cannot be used on this item"
+		end
+
+		local slotLimit = getUpgradeSlotLimit(equipment)
+		local currentTalics = getAssignedTalicCount()
+
+		if not uiState.UpgradeSlots[slotKey] then
+			currentTalics += 1
+		end
+
+		if currentTalics > slotLimit then
+			return false, "Equipment only has " .. tostring(slotLimit) .. " upgrade slots"
+		end
+
+		return true
+	end
+
+	return false, "Unknown upgrade slot"
+end
+
 local function handleDrop(sourceMeta, targetMeta)
 	local item = uiState.DraggedItem
 	if not item then
@@ -757,6 +862,21 @@ local function handleDrop(sourceMeta, targetMeta)
 	end
 
 	if targetMeta.Kind == "Upgrade" then
+		local accepts, reason = upgradeSlotAcceptsItem(targetMeta.SlotKey, item)
+
+		if not accepts then
+			setStatus(reason)
+			return
+		end
+
+		if targetMeta.SlotKey == "Equipment" then
+			for _, key in ipairs({ "Talic1", "Talic2", "Talic3", "Talic4" }) do
+				uiState.UpgradeSlots[key] = nil
+			end
+		elseif targetMeta.SlotKey == "Catalyst" then
+			clearUpgradeSlotReferences(item.Uid, targetMeta.SlotKey)
+		end
+
 		uiState.UpgradeSlots[targetMeta.SlotKey] = {
 			Uid = item.Uid,
 			ItemId = item.ItemId,
@@ -810,6 +930,8 @@ local function renderSlotVisual(button, item, placeholderText)
 
 	if item.UpgradeLevel and item.UpgradeLevel > 0 then
 		bottomText.Text = "+" .. tostring(item.UpgradeLevel)
+	elseif item.Quantity and item.Quantity > 1 then
+		bottomText.Text = "x" .. tostring(item.Quantity)
 	else
 		bottomText.Text = ""
 	end
@@ -1022,15 +1144,56 @@ local function performUpgrade()
 		return
 	end
 
-	local ok, successFlag, result = invokeRemote(UpgradeItemRequest, equipment.Uid, 0)
+	local talicUids = {}
+
+	for _, key in ipairs({ "Talic1", "Talic2", "Talic3", "Talic4" }) do
+		local talic = uiState.UpgradeSlots[key]
+
+		if talic then
+			table.insert(talicUids, talic.Uid)
+		end
+	end
+
+	if #talicUids <= 0 then
+		setStatus("Put at least one talic into upgrade slot")
+		return
+	end
+
+	local slotLimit = getUpgradeSlotLimit(equipment)
+
+	if #talicUids > slotLimit then
+		setStatus("Equipment only has " .. tostring(slotLimit) .. " upgrade slots")
+		return
+	end
+
+	local catalyst = uiState.UpgradeSlots.Catalyst
+	local catalystUid = catalyst and catalyst.Uid or nil
+
+	local ok, successFlag, result = invokeRemote(UpgradeItemRequest, equipment.Uid, talicUids, catalystUid)
 	if ok and successFlag then
-		setStatus("Upgrade success")
+		setStatus("Upgrade " .. tostring(result.Result or "done"))
+		uiState.UpgradeSlots.Talic1 = nil
+		uiState.UpgradeSlots.Talic2 = nil
+		uiState.UpgradeSlots.Talic3 = nil
+		uiState.UpgradeSlots.Talic4 = nil
+		uiState.UpgradeSlots.Catalyst = nil
 		refreshPlayerData()
 		refreshPlayerStats()
 		AetherionGameplayUI.Render()
 	else
 		setStatus(result or "Upgrade failed")
 	end
+end
+
+local function toggleInventory()
+	uiState.InventoryOpen = not uiState.InventoryOpen
+
+	if guiRefs.InventoryFrame then
+		guiRefs.InventoryFrame.Visible = uiState.InventoryOpen
+	end
+
+	setStatus("Inventory " .. (uiState.InventoryOpen and "opened" or "closed"))
+	AetherionGameplayUI.Render()
 end
 
 local function setupRuntime()
@@ -1056,18 +1219,6 @@ local function setupRuntime()
 		local focusedTextBox = UserInputService:GetFocusedTextBox()
 
 		if focusedTextBox then
-			return
-		end
-
-		if input.KeyCode == Enum.KeyCode.I then
-			uiState.InventoryOpen = not uiState.InventoryOpen
-
-			if guiRefs.InventoryFrame then
-				guiRefs.InventoryFrame.Visible = uiState.InventoryOpen
-			end
-
-			setStatus("Inventory " .. (uiState.InventoryOpen and "opened" or "closed"))
-			AetherionGameplayUI.Render()
 			return
 		end
 
@@ -1115,14 +1266,7 @@ local function setupRuntime()
 			return Enum.ContextActionResult.Pass
 		end
 
-		uiState.InventoryOpen = not uiState.InventoryOpen
-
-		if guiRefs.InventoryFrame then
-			guiRefs.InventoryFrame.Visible = uiState.InventoryOpen
-		end
-
-		setStatus("Inventory " .. (uiState.InventoryOpen and "opened" or "closed"))
-		AetherionGameplayUI.Render()
+		toggleInventory()
 
 		return Enum.ContextActionResult.Sink
 	end, false, Enum.KeyCode.I)
@@ -1134,6 +1278,8 @@ function AetherionGameplayUI.Create()
 		guiRefs = {}
 	end
 
+	uiState.InventoryOpen = false
+
 	local playerGui = player:WaitForChild("PlayerGui")
 
 	local screenGui = Instance.new("ScreenGui")
@@ -1143,13 +1289,6 @@ function AetherionGameplayUI.Create()
 	screenGui.Parent = playerGui
 
 	guiRefs.ScreenGui = screenGui
-
-	local quickInventoryButton = makeButton(screenGui, "INV", UDim2.new(0, 52, 0, 28), UDim2.new(1, -120, 0, 8))
-
-	quickInventoryButton.MouseButton1Click:Connect(function()
-		uiState.InventoryOpen = not uiState.InventoryOpen
-		AetherionGameplayUI.Render()
-	end)
 
 	local quickUpgradeButton = makeButton(screenGui, "UPG", UDim2.new(0, 52, 0, 28), UDim2.new(1, -62, 0, 8))
 
@@ -1183,6 +1322,7 @@ function AetherionGameplayUI.Create()
 	local inventoryFrame =
 		makeFrame(screenGui, "InventoryFrame", UDim2.new(0, 355, 0, 455), UDim2.new(1, -370, 0, 42), RF_THEME.Window)
 	guiRefs.InventoryFrame = inventoryFrame
+	inventoryFrame.Visible = uiState.InventoryOpen
 
 	local invTitle = makeLabel(inventoryFrame, "Inventory", UDim2.new(1, -20, 0, 24), UDim2.new(0, 10, 0, 8), 15, true)
 	invTitle.TextColor3 = RF_THEME.Gold
@@ -1232,6 +1372,7 @@ function AetherionGameplayUI.Create()
 	local upgradeFrame =
 		makeFrame(screenGui, "UpgradeFrame", UDim2.new(0, 260, 0, 285), UDim2.new(1, -275, 0, 510), RF_THEME.Window)
 	guiRefs.UpgradeFrame = upgradeFrame
+	upgradeFrame.Visible = uiState.UpgradeOpen
 
 	makeLabel(upgradeFrame, "Upgrade", UDim2.new(0, 120, 0, 24), UDim2.new(0, 10, 0, 8), 16, true)
 

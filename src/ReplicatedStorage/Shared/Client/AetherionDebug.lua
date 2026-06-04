@@ -27,6 +27,7 @@ local GetWeaponSummaryRequest = getRemote("GetWeaponSummaryRequest")
 local GetWeaponsByLevelRequest = getRemote("GetWeaponsByLevelRequest")
 local GetWeaponsByGradeRequest = getRemote("GetWeaponsByGradeRequest")
 local GiveWeaponRequest = getRemote("GiveWeaponRequest")
+local GiveItemRequest = getRemote("GiveItemRequest")
 local GetPlayerStatsRequest = getRemote("GetPlayerStatsRequest")
 
 local function invoke(remote, ...)
@@ -96,7 +97,19 @@ function AetherionDebug.Data()
 
 	print("Inventory:")
 	for _, item in ipairs(data.Inventory or {}) do
-		print(" -", item.Uid, item.ItemId, "Upgrade:", item.UpgradeLevel, "Locked:", item.Locked, "Slots:", item.Slots)
+		print(
+			" -",
+			item.Uid,
+			item.ItemId,
+			"Qty:",
+			item.Quantity,
+			"Upgrade:",
+			item.UpgradeLevel,
+			"Locked:",
+			item.Locked,
+			"Slots:",
+			item.Slots
+		)
 	end
 
 	print("===========================================")
@@ -227,6 +240,25 @@ function AetherionDebug.GiveWeapon(weaponId)
 	end
 
 	print("[AetherionDebug] GiveWeapon:", ok)
+
+	if type(result) == "table" then
+		printTable(result, 1)
+	else
+		print(result)
+	end
+
+	return ok, result
+end
+
+function AetherionDebug.GiveItem(itemId, amount)
+	local success, ok, result = invoke(GiveItemRequest, itemId, amount or 1)
+
+	if not success then
+		warn("[AetherionDebug] GiveItem failed:", ok)
+		return
+	end
+
+	print("[AetherionDebug] GiveItem:", ok)
 
 	if type(result) == "table" then
 		printTable(result, 1)
