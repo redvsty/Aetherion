@@ -232,7 +232,7 @@ local ItemDefinitions = {
 		CanDrop = false,
 
 		SpecialAction = "OpenUpgradeUI",
-	}
+	},
 }
 
 return ItemDefinitions

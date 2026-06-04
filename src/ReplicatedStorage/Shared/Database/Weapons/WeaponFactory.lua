@@ -51,7 +51,8 @@ function WeaponFactory.InferType(name)
 end
 
 function WeaponFactory.GetPTType(weaponType)
-	if weaponType == WeaponEnums.WeaponType.Bow
+	if
+		weaponType == WeaponEnums.WeaponType.Bow
 		or weaponType == WeaponEnums.WeaponType.Rifle
 		or weaponType == WeaponEnums.WeaponType.Gatling
 		or weaponType == WeaponEnums.WeaponType.Throwing
@@ -59,15 +60,11 @@ function WeaponFactory.GetPTType(weaponType)
 		return GameConfig.PTTypes.Ranged
 	end
 
-	if weaponType == WeaponEnums.WeaponType.Launcher
-		or weaponType == WeaponEnums.WeaponType.GrenadeLauncher
-	then
+	if weaponType == WeaponEnums.WeaponType.Launcher or weaponType == WeaponEnums.WeaponType.GrenadeLauncher then
 		return GameConfig.PTTypes.Launcher
 	end
 
-	if weaponType == WeaponEnums.WeaponType.Staff
-		or weaponType == WeaponEnums.WeaponType.Wand
-	then
+	if weaponType == WeaponEnums.WeaponType.Staff or weaponType == WeaponEnums.WeaponType.Wand then
 		return GameConfig.PTTypes.Magic
 	end
 
@@ -75,15 +72,11 @@ function WeaponFactory.GetPTType(weaponType)
 end
 
 function WeaponFactory.GetFactionId(weaponType)
-	if weaponType == WeaponEnums.WeaponType.Launcher
-		or weaponType == WeaponEnums.WeaponType.GrenadeLauncher
-	then
+	if weaponType == WeaponEnums.WeaponType.Launcher or weaponType == WeaponEnums.WeaponType.GrenadeLauncher then
 		return GameConfig.Factions.CYBORG
 	end
 
-	if weaponType == WeaponEnums.WeaponType.Staff
-		or weaponType == WeaponEnums.WeaponType.Wand
-	then
+	if weaponType == WeaponEnums.WeaponType.Staff or weaponType == WeaponEnums.WeaponType.Wand then
 		return GameConfig.Factions.MYSTIC
 	end
 

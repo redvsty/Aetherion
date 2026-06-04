@@ -86,10 +86,7 @@ local function isLauncherWeapon(weaponType)
 end
 
 local function isRangedWeapon(weaponType)
-	return weaponType == "Bow"
-		or weaponType == "Rifle"
-		or weaponType == "Gun"
-		or weaponType == "Gatling"
+	return weaponType == "Bow" or weaponType == "Rifle" or weaponType == "Gun" or weaponType == "Gatling"
 end
 
 function LeonEffectDefinitions.GetGradeFromName(name)

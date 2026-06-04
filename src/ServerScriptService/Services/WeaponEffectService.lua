@@ -29,74 +29,51 @@ function WeaponEffectService.ApplyEffectsToStats(baseStats, effects)
 	for _, effect in ipairs(effects or {}) do
 		if effect.Type == "AttackPercent" then
 			stats.Attack += math.floor(stats.Attack * effect.Value)
-
 		elseif effect.Type == "AllAttackPercent" then
 			stats.Attack += math.floor(stats.Attack * effect.Value)
 			stats.ForceAttack += math.floor(stats.ForceAttack * effect.Value)
-
 		elseif effect.Type == "ForceAttackPercent" then
 			stats.ForceAttack += math.floor(stats.ForceAttack * effect.Value)
-
 		elseif effect.Type == "DefensePercent" then
 			stats.Defense += math.floor(stats.Defense * effect.Value)
-
 		elseif effect.Type == "MaxHPPercent" then
 			stats.MaxHP += math.floor(stats.MaxHP * effect.Value)
-
 		elseif effect.Type == "MaxFPPercent" then
 			stats.MaxFP += math.floor(stats.MaxFP * effect.Value)
-
 		elseif effect.Type == "MoveSpeedFlat" then
 			stats.MoveSpeed += effect.Value
-
 		elseif effect.Type == "CriticalChanceFlat" then
 			stats.CritChance += effect.Value
-
 		elseif effect.Type == "CriticalResistanceFlat" then
 			stats.CritResistance += effect.Value
-
 		elseif effect.Type == "AccuracyFlat" then
 			stats.Accuracy += effect.Value
-
 		elseif effect.Type == "AccuracyPercent" then
 			stats.Accuracy += math.floor(math.max(stats.Accuracy, 1) * effect.Value)
-
 		elseif effect.Type == "BlockChanceFlat" then
 			stats.BlockChance += effect.Value
-
 		elseif effect.Type == "DodgeFlat" then
 			stats.Dodge += effect.Value
-
 		elseif effect.Type == "RangePercent" then
 			stats.RangeMultiplier += effect.Value
-
 		elseif effect.Type == "LifeStealPercent" then
 			stats.LifeStealPercent += effect.Value
-
 		elseif effect.Type == "IgnoreBlockChance" then
 			stats.IgnoreBlockChance += effect.Value
-
 		elseif effect.Type == "ElementalResistanceFlat" then
 			stats.ElementalResistanceFlat += effect.Value
-
 		elseif effect.Type == "ElementalResistancePercent" then
 			stats.ElementalResistancePercent += effect.Value
-
 		elseif effect.Type == "LauncherAttackDelayReduction" then
 			stats.LauncherAttackDelayReduction += effect.Value
-
 		elseif effect.Type == "DebuffDurationReduction" then
 			stats.DebuffDurationReduction += effect.Value
-
 		elseif effect.Type == "DebuffDurationIncrease" then
 			stats.DebuffDurationIncrease += effect.Value
-
 		elseif effect.Type == "FPCostReduction" then
 			stats.FPCostReduction += effect.Value
-
 		elseif effect.Type == "FPCostIncreasePercent" then
 			stats.FPCostIncrease += effect.Value
-
 		elseif effect.Type == "ForceDelayReductionFlat" then
 			stats.ForceDelayReduction += effect.Value
 		end

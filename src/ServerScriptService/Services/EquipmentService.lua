@@ -109,13 +109,9 @@ function EquipmentService.GetTotalStats(playerData)
 			if itemDef then
 				local upgradeLevel = item.UpgradeLevel or 0
 
-				local attackAverage = math.floor(
-					((itemDef.AttackMin or 0) + (itemDef.AttackMax or 0)) / 2
-				)
+				local attackAverage = math.floor(((itemDef.AttackMin or 0) + (itemDef.AttackMax or 0)) / 2)
 
-				local forceAverage = math.floor(
-					((itemDef.ForceAttackMin or 0) + (itemDef.ForceAttackMax or 0)) / 2
-				)
+				local forceAverage = math.floor(((itemDef.ForceAttackMin or 0) + (itemDef.ForceAttackMax or 0)) / 2)
 
 				attack += attackAverage
 				forceAttack += forceAverage

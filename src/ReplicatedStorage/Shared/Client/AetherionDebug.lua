@@ -96,17 +96,7 @@ function AetherionDebug.Data()
 
 	print("Inventory:")
 	for _, item in ipairs(data.Inventory or {}) do
-		print(
-			" -",
-			item.Uid,
-			item.ItemId,
-			"Upgrade:",
-			item.UpgradeLevel,
-			"Locked:",
-			item.Locked,
-			"Slots:",
-			item.Slots
-		)
+		print(" -", item.Uid, item.ItemId, "Upgrade:", item.UpgradeLevel, "Locked:", item.Locked, "Slots:", item.Slots)
 	end
 
 	print("===========================================")

@@ -1,11 +1,8 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local AetherionDebug = require(
-	ReplicatedStorage:WaitForChild("Shared")
-		:WaitForChild("Client")
-		:WaitForChild("AetherionDebug")
-)
+local AetherionDebug =
+	require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Client"):WaitForChild("AetherionDebug"))
 
 local player = Players.LocalPlayer
 
@@ -178,7 +175,7 @@ local function showStats()
 	}
 
 	local lines = {
-		"TOTAL STATS"
+		"TOTAL STATS",
 	}
 
 	for _, key in ipairs(orderedKeys) do
@@ -200,7 +197,7 @@ local function showWeaponSummary()
 		"WEAPON SUMMARY",
 		"Total: " .. tostring(summary.Total),
 		"",
-		"By Level:"
+		"By Level:",
 	}
 
 	for level, count in pairs(summary.ByLevel or {}) do
@@ -233,7 +230,7 @@ local function showWeaponsByLevel(level)
 	end
 
 	local lines = {
-		"WEAPONS LEVEL " .. tostring(level)
+		"WEAPONS LEVEL " .. tostring(level),
 	}
 
 	for _, weapon in ipairs(weapons) do
@@ -267,7 +264,7 @@ local function showWeaponsByGrade(grade)
 	end
 
 	local lines = {
-		"WEAPONS GRADE " .. tostring(grade)
+		"WEAPONS GRADE " .. tostring(grade),
 	}
 
 	for _, weapon in ipairs(weapons) do

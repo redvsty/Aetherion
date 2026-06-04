@@ -85,15 +85,12 @@ function CombatService.Attack(attackerPlayer, targetModel, profiles)
 	targetHumanoid:TakeDamage(damage)
 
 	if attackerStats.LifeStealPercent and attackerStats.LifeStealPercent > 0 then
-	local attackerHumanoid = attackerCharacter:FindFirstChildOfClass("Humanoid")
+		local attackerHumanoid = attackerCharacter:FindFirstChildOfClass("Humanoid")
 
-	if attackerHumanoid then
-		local healAmount = math.floor(damage * attackerStats.LifeStealPercent)
+		if attackerHumanoid then
+			local healAmount = math.floor(damage * attackerStats.LifeStealPercent)
 
-		attackerHumanoid.Health = math.min(
-			attackerHumanoid.MaxHealth,
-			attackerHumanoid.Health + healAmount
-			)
+			attackerHumanoid.Health = math.min(attackerHumanoid.MaxHealth, attackerHumanoid.Health + healAmount)
 		end
 	end
 

@@ -427,7 +427,10 @@ local function getTooltipText(item)
 	end
 
 	if def.RequiredPT and def.RequiredPT.Type then
-		table.insert(lines, "Required Skill: " .. tostring(def.RequiredPT.Type) .. " " .. tostring(def.RequiredPT.Level))
+		table.insert(
+			lines,
+			"Required Skill: " .. tostring(def.RequiredPT.Type) .. " " .. tostring(def.RequiredPT.Level)
+		)
 	end
 
 	if def.AttackMin or def.AttackMax then
@@ -435,7 +438,10 @@ local function getTooltipText(item)
 	end
 
 	if def.ForceAttackMin or def.ForceAttackMax then
-		table.insert(lines, "Force Attack: " .. tostring(def.ForceAttackMin or 0) .. " - " .. tostring(def.ForceAttackMax or 0))
+		table.insert(
+			lines,
+			"Force Attack: " .. tostring(def.ForceAttackMin or 0) .. " - " .. tostring(def.ForceAttackMax or 0)
+		)
 	end
 
 	if def.Defense then
@@ -470,7 +476,13 @@ local function ensureTooltip()
 		return
 	end
 
-	local tooltipFrame = makeFrame(guiRefs.ScreenGui, "TooltipFrame", UDim2.new(0, 260, 0, 220), UDim2.new(0, 0, 0, 0), Color3.fromRGB(8, 12, 24))
+	local tooltipFrame = makeFrame(
+		guiRefs.ScreenGui,
+		"TooltipFrame",
+		UDim2.new(0, 260, 0, 220),
+		UDim2.new(0, 0, 0, 0),
+		Color3.fromRGB(8, 12, 24)
+	)
 	tooltipFrame.Visible = false
 	tooltipFrame.ZIndex = 50
 
@@ -590,7 +602,13 @@ local function beginDrag(sourceMeta, item)
 	uiState.DraggedItem = item
 	uiState.DraggedSource = sourceMeta
 
-	local dragVisual = makeFrame(guiRefs.ScreenGui, "DragVisual", UDim2.new(0, 70, 0, 70), UDim2.new(0, 0, 0, 0), Color3.fromRGB(35, 35, 40))
+	local dragVisual = makeFrame(
+		guiRefs.ScreenGui,
+		"DragVisual",
+		UDim2.new(0, 70, 0, 70),
+		UDim2.new(0, 0, 0, 0),
+		Color3.fromRGB(35, 35, 40)
+	)
 	dragVisual.BackgroundTransparency = 0.15
 	dragVisual.ZIndex = 100
 
@@ -1126,24 +1144,14 @@ function AetherionGameplayUI.Create()
 
 	guiRefs.ScreenGui = screenGui
 
-	local quickInventoryButton = makeButton(
-	screenGui,
-	"INV",
-	UDim2.new(0, 52, 0, 28),
-	UDim2.new(1, -120, 0, 8)
-	)
+	local quickInventoryButton = makeButton(screenGui, "INV", UDim2.new(0, 52, 0, 28), UDim2.new(1, -120, 0, 8))
 
 	quickInventoryButton.MouseButton1Click:Connect(function()
 		uiState.InventoryOpen = not uiState.InventoryOpen
 		AetherionGameplayUI.Render()
 	end)
 
-	local quickUpgradeButton = makeButton(
-		screenGui,
-		"UPG",
-		UDim2.new(0, 52, 0, 28),
-		UDim2.new(1, -62, 0, 8)
-	)
+	local quickUpgradeButton = makeButton(screenGui, "UPG", UDim2.new(0, 52, 0, 28), UDim2.new(1, -62, 0, 8))
 
 	quickUpgradeButton.MouseButton1Click:Connect(function()
 		uiState.UpgradeOpen = not uiState.UpgradeOpen
@@ -1151,7 +1159,8 @@ function AetherionGameplayUI.Create()
 	end)
 
 	-- HUD kiri atas
-	local hudFrame = makeFrame(screenGui, "HUDFrame", UDim2.new(0, 300, 0, 135), UDim2.new(0, 12, 0, 12), Color3.fromRGB(18, 20, 26))
+	local hudFrame =
+		makeFrame(screenGui, "HUDFrame", UDim2.new(0, 300, 0, 135), UDim2.new(0, 12, 0, 12), Color3.fromRGB(18, 20, 26))
 	guiRefs.HUDFrame = hudFrame
 
 	local levelLabel = makeLabel(hudFrame, "Lv. 1", UDim2.new(0, 80, 0, 22), UDim2.new(0, 8, 0, 6), 18, true)
@@ -1163,18 +1172,23 @@ function AetherionGameplayUI.Create()
 
 	guiRefs.KillLabel = makeLabel(hudFrame, "Kill 0", UDim2.new(0, 130, 0, 18), UDim2.new(0, 8, 0, 112), 12, true)
 	guiRefs.DeathLabel = makeLabel(hudFrame, "Death 0", UDim2.new(0, 130, 0, 18), UDim2.new(0, 78, 0, 112), 12, true)
-	guiRefs.TempPvpLabel = makeLabel(hudFrame, "PvP Sementara 0", UDim2.new(0, 160, 0, 18), UDim2.new(0, 8, 0, 128), 12, false)
-	guiRefs.CertainPvpLabel = makeLabel(hudFrame, "Point Tertentu 0", UDim2.new(0, 160, 0, 18), UDim2.new(0, 8, 0, 144), 12, false)
-	guiRefs.GoldPointLabel = makeLabel(hudFrame, "Point Emas 0", UDim2.new(0, 160, 0, 18), UDim2.new(0, 8, 0, 160), 12, false)
+	guiRefs.TempPvpLabel =
+		makeLabel(hudFrame, "PvP Sementara 0", UDim2.new(0, 160, 0, 18), UDim2.new(0, 8, 0, 128), 12, false)
+	guiRefs.CertainPvpLabel =
+		makeLabel(hudFrame, "Point Tertentu 0", UDim2.new(0, 160, 0, 18), UDim2.new(0, 8, 0, 144), 12, false)
+	guiRefs.GoldPointLabel =
+		makeLabel(hudFrame, "Point Emas 0", UDim2.new(0, 160, 0, 18), UDim2.new(0, 8, 0, 160), 12, false)
 
 	-- Inventory kanan atas
-	local inventoryFrame = makeFrame(screenGui, "InventoryFrame", UDim2.new(0, 355, 0, 455), UDim2.new(1, -370, 0, 42), RF_THEME.Window)
+	local inventoryFrame =
+		makeFrame(screenGui, "InventoryFrame", UDim2.new(0, 355, 0, 455), UDim2.new(1, -370, 0, 42), RF_THEME.Window)
 	guiRefs.InventoryFrame = inventoryFrame
 
 	local invTitle = makeLabel(inventoryFrame, "Inventory", UDim2.new(1, -20, 0, 24), UDim2.new(0, 10, 0, 8), 15, true)
 	invTitle.TextColor3 = RF_THEME.Gold
 	invTitle.TextXAlignment = Enum.TextXAlignment.Center
-	guiRefs.MoneyLabel = makeLabel(inventoryFrame, "CP 0   Gold 0", UDim2.new(0, 180, 0, 20), UDim2.new(0, 180, 0, 10), 12, false)
+	guiRefs.MoneyLabel =
+		makeLabel(inventoryFrame, "CP 0   Gold 0", UDim2.new(0, 180, 0, 20), UDim2.new(0, 180, 0, 10), 12, false)
 	guiRefs.MoneyLabel.TextXAlignment = Enum.TextXAlignment.Right
 
 	local equipmentGrid = Instance.new("Frame")
@@ -1215,7 +1229,8 @@ function AetherionGameplayUI.Create()
 	end)
 
 	-- Upgrade UI
-	local upgradeFrame = makeFrame(screenGui, "UpgradeFrame", UDim2.new(0, 260, 0, 285), UDim2.new(1, -275, 0, 510), RF_THEME.Window)
+	local upgradeFrame =
+		makeFrame(screenGui, "UpgradeFrame", UDim2.new(0, 260, 0, 285), UDim2.new(1, -275, 0, 510), RF_THEME.Window)
 	guiRefs.UpgradeFrame = upgradeFrame
 
 	makeLabel(upgradeFrame, "Upgrade", UDim2.new(0, 120, 0, 24), UDim2.new(0, 10, 0, 8), 16, true)
@@ -1239,7 +1254,13 @@ function AetherionGameplayUI.Create()
 	end)
 
 	-- Hotbar tengah bawah
-	local hotbarFrame = makeFrame(screenGui, "HotbarFrame", UDim2.new(0, 560, 0, 74), UDim2.new(0.5, -280, 1, -94), Color3.fromRGB(18, 20, 26))
+	local hotbarFrame = makeFrame(
+		screenGui,
+		"HotbarFrame",
+		UDim2.new(0, 560, 0, 74),
+		UDim2.new(0.5, -280, 1, -94),
+		Color3.fromRGB(18, 20, 26)
+	)
 	guiRefs.HotbarFrame = hotbarFrame
 
 	local hotbarSlots = Instance.new("Frame")
@@ -1250,9 +1271,16 @@ function AetherionGameplayUI.Create()
 	guiRefs.HotbarSlots = hotbarSlots
 
 	-- Status bawah
-	local statusFrame = makeFrame(screenGui, "StatusFrame", UDim2.new(0, 420, 0, 30), UDim2.new(0.5, -210, 1, -20), Color3.fromRGB(18, 20, 26))
+	local statusFrame = makeFrame(
+		screenGui,
+		"StatusFrame",
+		UDim2.new(0, 420, 0, 30),
+		UDim2.new(0.5, -210, 1, -20),
+		Color3.fromRGB(18, 20, 26)
+	)
 	guiRefs.StatusFrame = statusFrame
-	guiRefs.StatusLabel = makeLabel(statusFrame, "Status: Ready.", UDim2.new(1, -12, 1, 0), UDim2.new(0, 6, 0, 0), 12, false)
+	guiRefs.StatusLabel =
+		makeLabel(statusFrame, "Status: Ready.", UDim2.new(1, -12, 1, 0), UDim2.new(0, 6, 0, 0), 12, false)
 
 	ensureTooltip()
 
