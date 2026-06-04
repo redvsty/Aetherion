@@ -8,17 +8,17 @@
 
 local Players = game:GetService("Players")
 
-local GameConfig    = require(game.ReplicatedStorage.Shared.GameConfig)
-local ItemDefinitions  = require(game.ReplicatedStorage.Shared.Definitions.ItemDefinitions)
-local CombatFormulas   = require(game.ReplicatedStorage.Shared.CombatFormulas)
+local GameConfig = require(game.ReplicatedStorage.Shared.GameConfig)
+local ItemDefinitions = require(game.ReplicatedStorage.Shared.Definitions.ItemDefinitions)
+local CombatFormulas = require(game.ReplicatedStorage.Shared.CombatFormulas)
 local EquipmentService = require(script.Parent.EquipmentService)
-local LevelService     = require(script.Parent.LevelService)
+local LevelService = require(script.Parent.LevelService)
 
 local CombatService = {}
 
 -- Fix 5: Rate limit — minimum detik antar attack per player (server-side)
-local ATTACK_COOLDOWN = 0.4  -- detik, sesuaikan dengan attack speed design
-local lastAttackTime  = {}   -- [player] = tick()
+local ATTACK_COOLDOWN = 0.4 -- detik, sesuaikan dengan attack speed design
+local lastAttackTime = {} -- [player] = tick()
 
 local function getPlayerFromModel(model)
 	return Players:GetPlayerFromCharacter(model)
@@ -29,7 +29,7 @@ local function getAttackerWeaponPTType(attackerData)
 	local weaponUid = attackerData.Equipment and attackerData.Equipment.Weapon
 
 	if not weaponUid then
-		return GameConfig.PTTypes.Melee  -- default fallback
+		return GameConfig.PTTypes.Melee -- default fallback
 	end
 
 	-- Cari item di inventory
@@ -47,20 +47,18 @@ local function getAttackerWeaponPTType(attackerData)
 end
 
 -- Fix 2: Beri PT exp ke attacker sesuai weapon type, lalu cek PT level up
-local function grantPTExp(attackerData, ptType, targetLevel)
-	if not attackerData.PT then
-		return
+local function addPTExp(playerData, ptType, amount)
+	if not playerData.PT then
+		return 0
 	end
 
-	local pt = attackerData.PT[ptType]
+	local pt = playerData.PT[ptType]
 
 	if not pt then
-		return
+		return 0
 	end
 
-	local gain = math.max(1, math.floor(
-		CombatFormulas.GetPTExpGain(pt.Level, targetLevel or 1, 10)
-	))
+	local gain = math.max(0, math.floor(amount or 0))
 
 	pt.Exp += gain
 
@@ -72,8 +70,47 @@ local function grantPTExp(attackerData, ptType, targetLevel)
 			break
 		end
 
-		pt.Exp  -= required
+		pt.Exp -= required
 		pt.Level += 1
+	end
+
+	return gain
+end
+
+local function grantPTExp(attackerData, ptType, targetLevel)
+	if not attackerData.PT then
+		return 0
+	end
+
+	local pt = attackerData.PT[ptType]
+
+	if not pt then
+		return 0
+	end
+
+	local gain = math.max(1, math.floor(CombatFormulas.GetPTExpGain(pt.Level, targetLevel or 1, 10)))
+
+	return addPTExp(attackerData, ptType, gain)
+end
+
+local function grantPartyDefenseBonus(attackerPlayer, attackerData, profiles, attackerPTGain)
+	local party = attackerData.Party
+
+	if not party or type(party.Members) ~= "table" or attackerPTGain <= 0 then
+		return
+	end
+
+	local bonusGain = math.max(1, math.floor(attackerPTGain * 0.1))
+
+	for _, member in ipairs(party.Members) do
+		if member.UserId ~= attackerPlayer.UserId then
+			local memberPlayer = Players:GetPlayerByUserId(member.UserId)
+			local memberData = memberPlayer and profiles[memberPlayer]
+
+			if memberData then
+				addPTExp(memberData, GameConfig.PTTypes.Defense, bonusGain)
+			end
+		end
 	end
 end
 
@@ -130,8 +167,8 @@ function CombatService.Attack(attackerPlayer, targetModel, profiles)
 		return false, "Invalid target"
 	end
 
-	local attackerRoot   = attackerCharacter:FindFirstChild("HumanoidRootPart")
-	local targetRoot     = targetModel:FindFirstChild("HumanoidRootPart")
+	local attackerRoot = attackerCharacter:FindFirstChild("HumanoidRootPart")
+	local targetRoot = targetModel:FindFirstChild("HumanoidRootPart")
 	local targetHumanoid = targetModel:FindFirstChildOfClass("Humanoid")
 
 	if not attackerRoot or not targetRoot or not targetHumanoid then
@@ -152,7 +189,7 @@ function CombatService.Attack(attackerPlayer, targetModel, profiles)
 
 	-- Fix 5h: Cek faction / PvP rules
 	local targetPlayer = getPlayerFromModel(targetModel)
-	local targetData   = targetPlayer and profiles[targetPlayer] or nil
+	local targetData = targetPlayer and profiles[targetPlayer] or nil
 
 	if targetData and not CombatService.CanDamage(attackerData, targetData) then
 		return false, "Cannot damage same faction"
@@ -171,9 +208,13 @@ function CombatService.Attack(attackerPlayer, targetModel, profiles)
 	targetHumanoid:TakeDamage(damage)
 
 	-- Fix 2: Grant PT exp ke attacker sesuai weapon type
-	local ptType      = getAttackerWeaponPTType(attackerData)
+	local ptType = getAttackerWeaponPTType(attackerData)
 	local targetLevel = targetData and targetData.Level or 1
-	grantPTExp(attackerData, ptType, targetLevel)
+	local attackerPTGain = grantPTExp(attackerData, ptType, targetLevel)
+
+	if not targetData then
+		grantPartyDefenseBonus(attackerPlayer, attackerData, profiles, attackerPTGain)
+	end
 
 	-- Juga grant Defense PT ke defender jika player
 	if targetData then
@@ -182,7 +223,7 @@ function CombatService.Attack(attackerPlayer, targetModel, profiles)
 
 	return true, {
 		Damage = damage,
-		Crit   = isCrit,
+		Crit = isCrit,
 	}
 end
 

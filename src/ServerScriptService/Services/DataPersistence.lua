@@ -5,15 +5,15 @@
 -- Retry logic untuk handle DataStore throttle / error sementara.
 
 local DataStoreService = game:GetService("DataStoreService")
-local RunService       = game:GetService("RunService")
+local RunService = game:GetService("RunService")
 
-local GameConfig         = require(game.ReplicatedStorage.Shared.GameConfig)
+local GameConfig = require(game.ReplicatedStorage.Shared.GameConfig)
 local CurrencyDefinitions = require(game.ReplicatedStorage.Shared.Definitions.CurrencyDefinitions)
 
-local DATASTORE_NAME    = "AetherionPlayerData_v3"
-local CURRENT_SCHEMA    = 3
-local MAX_RETRIES       = 3
-local RETRY_DELAY       = 2    -- detik antar retry
+local DATASTORE_NAME = "AetherionPlayerData_v3"
+local CURRENT_SCHEMA = 3
+local MAX_RETRIES = 3
+local RETRY_DELAY = 2 -- detik antar retry
 local AUTO_SAVE_INTERVAL = 120 -- detik, auto-save tiap 2 menit
 
 local playerStore = DataStoreService:GetDataStore(DATASTORE_NAME)
@@ -63,7 +63,7 @@ local function migrateData(data)
 	-- v1 → v2: tambah ContributionPoints & ChaosUntil
 	if version < 2 then
 		data.ContributionPoints = data.ContributionPoints or 0
-		data.ChaosUntil         = data.ChaosUntil or 0
+		data.ChaosUntil = data.ChaosUntil or 0
 		version = 2
 	end
 
@@ -115,7 +115,13 @@ function DataPersistence.Load(player)
 
 	if not ok or not data then
 		if not ok then
-			warn_(string.format("Gagal load data player %s setelah %d retry. Menggunakan data default (tidak akan disave sampai berhasil).", player.Name, MAX_RETRIES))
+			warn_(
+				string.format(
+					"Gagal load data player %s setelah %d retry. Menggunakan data default (tidak akan disave sampai berhasil).",
+					player.Name,
+					MAX_RETRIES
+				)
+			)
 		else
 			log(string.format("Player baru: %s. Membuat data default.", player.Name))
 		end
@@ -125,10 +131,11 @@ function DataPersistence.Load(player)
 
 	-- Migration
 	data = migrateData(data)
+	data.Party = nil
 
 	-- Pastikan field wajib ada (proteksi dari data corrupt parsial)
-	data.UserId  = data.UserId  or player.UserId
-	data.Name    = player.Name  -- selalu update nama terkini
+	data.UserId = data.UserId or player.UserId
+	data.Name = player.Name -- selalu update nama terkini
 	data.MaxLevel = GameConfig.MaxLevel
 
 	log(string.format("Data player %s berhasil diload (schema v%d).", player.Name, data.SchemaVersion))
@@ -153,10 +160,14 @@ function DataPersistence.Save(player, data)
 	end
 
 	local key = tostring(player.UserId)
+	local transientParty = data.Party
+	data.Party = nil
 
 	local ok, _ = retryOperation(function()
 		playerStore:SetAsync(key, data)
 	end, "Save " .. key)
+
+	data.Party = transientParty
 
 	if ok then
 		log(string.format("Data player %s berhasil disave.", player.Name))

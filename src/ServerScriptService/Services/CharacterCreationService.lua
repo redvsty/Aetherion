@@ -14,22 +14,35 @@ local StarterArmorByFaction = {
 	[GameConfig.Factions.MYSTIC] = "mystic_training_robe_001",
 }
 
-local function createInventoryItem(itemId)
-	return {
-		Uid = HttpService:GenerateGUID(false),
-		ItemId = itemId,
-		UpgradeLevel = 0,
-		Locked = false,
-		Slots = math.random(0, 3),
-		Durability = 100,
-		MaxDurability = 100,
-	}
+local function createInventoryItem(itemId, overrides)
+    overrides = overrides or {}
+
+    return {
+        Uid = HttpService:GenerateGUID(false),
+        ItemId = itemId,
+        UpgradeLevel = overrides.UpgradeLevel or 0,
+        Locked = overrides.Locked or false,
+        Slots = overrides.Slots or math.random(0, 3),
+        Durability = overrides.Durability or 100,
+        MaxDurability = overrides.MaxDurability or 100,
+        Quantity = overrides.Quantity or 1,
+    }
 end
 
-local function giveItem(playerData, itemId)
-	local item = createInventoryItem(itemId)
-	InventoryService.AddItem(playerData, item)
-	return item
+local function giveItem(playerData, itemId, overrides)
+    local item = createInventoryItem(itemId, overrides)
+    InventoryService.AddItem(playerData, item)
+    return item
+end
+
+local function giveStarterUtilityItem(playerData)
+    return giveItem(playerData, "upgrader", {
+        Locked = true,
+        Slots = 0,
+        Durability = 0,
+        MaxDurability = 0,
+        Quantity = 1,
+    })
 end
 
 -- Fix 4: Hanya init currency faction sendiri + Gold.
@@ -79,6 +92,8 @@ function CharacterCreationService.SelectRaceAndClass(playerData, factionId, star
 	playerData.NeedsStartingClassSelection = false
 
 	giveStartingCurrency(playerData, factionId)
+	
+	local upgrader = giveStarterUtilityItem(playerData)
 
 	local weapon = giveItem(playerData, weaponId)
 	local armor = giveItem(playerData, armorId)
@@ -91,6 +106,7 @@ function CharacterCreationService.SelectRaceAndClass(playerData, factionId, star
 		StartingClassId = startingClassId,
 		StarterWeaponUid = weapon.Uid,
 		StarterArmorUid = armor.Uid,
+		StarterUpgraderUid = upgrader.Uid,
 	}
 end
 

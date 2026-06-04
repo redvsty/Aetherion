@@ -37,10 +37,30 @@ local function waitRemoteFunction(name)
 	return remote
 end
 
+local function waitRemoteEvent(name)
+	local remote = remotes:WaitForChild(name, 10)
+
+	if not remote then
+		error("Missing RemoteEvent: " .. name)
+	end
+
+	if not remote:IsA("RemoteEvent") then
+		error(name .. " is not RemoteEvent")
+	end
+
+	return remote
+end
+
 local GetPlayerDataRequest = waitRemoteFunction("GetPlayerDataRequest")
 local GetPlayerStatsRequest = waitRemoteFunction("GetPlayerStatsRequest")
 local EquipItemRequest = waitRemoteFunction("EquipItemRequest")
 local UpgradeItemRequest = waitRemoteFunction("UpgradeItemRequest")
+local GetPartyDataRequest = waitRemoteFunction("GetPartyDataRequest")
+local PartyInviteRequest = waitRemoteFunction("PartyInviteRequest")
+local PartyInviteResponseRequest = waitRemoteFunction("PartyInviteResponseRequest")
+local PartyLeaveRequest = waitRemoteFunction("PartyLeaveRequest")
+local PartyToggleLockRequest = waitRemoteFunction("PartyToggleLockRequest")
+local PartyInviteReceived = waitRemoteEvent("PartyInviteReceived")
 
 local BAG_COUNT = 5
 local BAG_SIZE = 20
@@ -50,9 +70,12 @@ local uiState = {
 	CurrentBag = 1,
 	InventoryOpen = false,
 	UpgradeOpen = false,
+	PartyOpen = false,
 
 	PlayerData = nil,
 	PlayerStats = nil,
+	SelectedPartyTarget = nil,
+	PendingPartyInvite = nil,
 
 	HotbarAssignments = {},
 	UpgradeSlots = {
@@ -90,6 +113,10 @@ local RF_THEME = {
 
 local guiRefs = {}
 local slotRegistry = {}
+local runtimeConnections = {}
+local lastInventoryToggleAt = 0
+local INVENTORY_ACTION_PRIORITY = 10000
+local PARTY_ACTION_PRIORITY = INVENTORY_ACTION_PRIORITY + 1
 
 local function invokeRemote(remote, ...)
 	local ok, a, b = pcall(function(...)
@@ -128,12 +155,12 @@ end
 
 local function isTalicItem(item)
 	local def = item and ItemDefinitions[item.ItemId]
-	return def and def.UpgradeRole == "Talic"
+	return def and (def.Type == "Talic" or def.UpgradeRole == "Talic")
 end
 
 local function isCatalystItem(item)
 	local def = item and ItemDefinitions[item.ItemId]
-	return def and def.UpgradeRole == "Catalyst"
+	return def and (def.Type == "UpgradeCatalyst" or def.UpgradeRole == "Catalyst")
 end
 
 local function isUpgradeableItem(item)
@@ -158,16 +185,15 @@ end
 
 local function getUpgradeSlotLimit(item)
 	if not item then
-		return 0
+		return 4
 	end
 
 	local def = getDefinition(item.ItemId)
-
 	if not def then
-		return 0
+		return 4
 	end
 
-	return item.Slots or def.SlotMax or 0
+	return item.Slots or def.SlotMax or 4
 end
 
 local function getAssignedTalicCount()
@@ -303,6 +329,28 @@ local function refreshPlayerStats()
 
 	setStatus("Failed to get player stats")
 	return false
+end
+
+local function refreshPartyData()
+	local ok, successFlag, partyData = invokeRemote(GetPartyDataRequest)
+
+	if ok and successFlag then
+		uiState.PlayerData = uiState.PlayerData or {}
+		uiState.PlayerData.Party = partyData
+		return true
+	end
+
+	return false
+end
+
+local function getSelectedPartyTargetName()
+	local target = uiState.SelectedPartyTarget
+
+	if target and target.Parent then
+		return target.Name
+	end
+
+	return "No target"
 end
 
 local function createCorner(parent, radius)
@@ -978,6 +1026,138 @@ local function buildHUD()
 	guiRefs.MoneyLabel.Text = "CP " .. tostring(currencies.CP or 0) .. "   Gold " .. tostring(currencies.Gold or 0)
 end
 
+local function getPartyMembers()
+	local data = uiState.PlayerData or {}
+	local party = data.Party
+	local members = {}
+
+	if type(party) == "table" and type(party.Members) == "table" then
+		for _, member in ipairs(party.Members) do
+			table.insert(members, member)
+		end
+	end
+
+	if #members == 0 then
+		table.insert(members, {
+			Name = data.Name or player.Name,
+			Level = data.Level or 1,
+			Role = data.StartingClassId or "Leader",
+			IsLeader = true,
+			HP = (data.Stats and data.Stats.HP) or 150,
+			MaxHP = (data.Stats and data.Stats.MaxHP) or 150,
+			FP = (data.Stats and data.Stats.FP) or 100,
+			MaxFP = (data.Stats and data.Stats.MaxFP) or 100,
+		})
+	end
+
+	return members
+end
+
+local function buildPartyUI()
+	local frame = guiRefs.PartyFrame
+	frame.Visible = uiState.PartyOpen
+
+	if not frame.Visible then
+		return
+	end
+
+	clearChildren(guiRefs.PartyContent)
+
+	local members = getPartyMembers()
+	local capacity = 8
+	local party = (uiState.PlayerData and uiState.PlayerData.Party) or {}
+
+	guiRefs.PartyTitle.Text = "Party " .. tostring(#members) .. "/" .. tostring(capacity)
+
+	if guiRefs.PartyTargetLabel then
+		guiRefs.PartyTargetLabel.Text = "Target: " .. getSelectedPartyTargetName()
+	end
+
+	if guiRefs.PartyLockButton then
+		guiRefs.PartyLockButton.Text = party.Locked and "Locked" or "Lock"
+	end
+
+	for index = 1, capacity do
+		local member = members[index]
+		local row = Instance.new("Frame")
+		row.Name = "MemberRow" .. tostring(index)
+		row.Size = UDim2.new(1, -12, 0, 28)
+		row.Position = UDim2.new(0, 6, 0, (index - 1) * 31)
+		row.BackgroundColor3 = member and Color3.fromRGB(18, 22, 28) or Color3.fromRGB(12, 15, 19)
+		row.BorderSizePixel = 0
+		row.Parent = guiRefs.PartyContent
+		createCorner(row, 2)
+		createStroke(row, member and Color3.fromRGB(124, 139, 154) or Color3.fromRGB(66, 73, 82), 1)
+
+		if member then
+			local nameLabel = makeLabel(
+				row,
+				tostring(member.Name or "Unknown") .. "  Lv" .. tostring(member.Level or 1),
+				UDim2.new(1, -14, 0, 12),
+				UDim2.new(0, 8, 0, 3),
+				11,
+				true
+			)
+			nameLabel.TextColor3 = Color3.fromRGB(236, 241, 246)
+
+			local roleLabel = makeLabel(
+				row,
+				tostring(member.Role or "Member"),
+				UDim2.new(0, 95, 0, 11),
+				UDim2.new(1, -103, 0, 3),
+				9,
+				false
+			)
+			roleLabel.TextXAlignment = Enum.TextXAlignment.Right
+			roleLabel.TextColor3 = Color3.fromRGB(183, 170, 255)
+
+			local hpRatio = 0
+			local fpRatio = 0
+
+			if member.MaxHP and member.MaxHP > 0 then
+				hpRatio = math.clamp((member.HP or member.MaxHP) / member.MaxHP, 0, 1)
+			end
+
+			if member.MaxFP and member.MaxFP > 0 then
+				fpRatio = math.clamp((member.FP or member.MaxFP) / member.MaxFP, 0, 1)
+			end
+
+			local hpBar = Instance.new("Frame")
+			hpBar.Size = UDim2.new(0, 72, 0, 4)
+			hpBar.Position = UDim2.new(0, 8, 1, -10)
+			hpBar.BackgroundColor3 = Color3.fromRGB(55, 18, 18)
+			hpBar.BorderSizePixel = 0
+			hpBar.Parent = row
+			createCorner(hpBar, 1)
+
+			local hpFill = Instance.new("Frame")
+			hpFill.Size = UDim2.new(hpRatio, 0, 1, 0)
+			hpFill.BackgroundColor3 = Color3.fromRGB(210, 63, 63)
+			hpFill.BorderSizePixel = 0
+			hpFill.Parent = hpBar
+			createCorner(hpFill, 1)
+
+			local fpBar = Instance.new("Frame")
+			fpBar.Size = UDim2.new(0, 72, 0, 4)
+			fpBar.Position = UDim2.new(0, 8, 1, -4)
+			fpBar.BackgroundColor3 = Color3.fromRGB(17, 28, 55)
+			fpBar.BorderSizePixel = 0
+			fpBar.Parent = row
+			createCorner(fpBar, 1)
+
+			local fpFill = Instance.new("Frame")
+			fpFill.Size = UDim2.new(fpRatio, 0, 1, 0)
+			fpFill.BackgroundColor3 = Color3.fromRGB(79, 124, 223)
+			fpFill.BorderSizePixel = 0
+			fpFill.Parent = fpBar
+			createCorner(fpFill, 1)
+		else
+			local emptyLabel = makeLabel(row, "Empty Slot", UDim2.new(1, -14, 1, 0), UDim2.new(0, 8, 0, 0), 11, false)
+			emptyLabel.TextColor3 = Color3.fromRGB(108, 116, 124)
+		end
+	end
+end
+
 local function buildInventory()
 	local inventoryFrame = guiRefs.InventoryFrame
 	inventoryFrame.Visible = uiState.InventoryOpen
@@ -1129,6 +1309,7 @@ function AetherionGameplayUI.Render()
 
 	buildHUD()
 	buildInventory()
+	buildPartyUI()
 	buildUpgradeUI()
 	buildHotbar()
 
@@ -1196,68 +1377,233 @@ local function toggleInventory()
 	AetherionGameplayUI.Render()
 end
 
+local function toggleParty()
+	uiState.PartyOpen = not uiState.PartyOpen
+
+	if guiRefs.PartyFrame then
+		guiRefs.PartyFrame.Visible = uiState.PartyOpen
+	end
+
+	refreshPartyData()
+	setStatus("Party " .. (uiState.PartyOpen and "opened" or "closed"))
+	AetherionGameplayUI.Render()
+end
+
+local function setInvitePromptVisible(visible)
+	if guiRefs.PartyInvitePrompt then
+		guiRefs.PartyInvitePrompt.Visible = visible
+	end
+end
+
+local function showPartyInvite(invite)
+	uiState.PendingPartyInvite = invite
+
+	if guiRefs.PartyInviteText then
+		guiRefs.PartyInviteText.Text = tostring(invite.InviterName or "A player") .. " invited you to join a party."
+	end
+
+	setInvitePromptVisible(true)
+	setStatus("Party invitation received")
+end
+
+local function respondToPartyInvite(accepted)
+	local ok, successFlag, result = invokeRemote(PartyInviteResponseRequest, accepted)
+
+	if ok and successFlag then
+		uiState.PendingPartyInvite = nil
+		setInvitePromptVisible(false)
+		refreshPlayerData()
+		refreshPartyData()
+
+		if accepted then
+			uiState.PartyOpen = true
+			setStatus("Joined party")
+		else
+			setStatus("Party invitation declined")
+		end
+
+		AetherionGameplayUI.Render()
+	else
+		setStatus(result or "Party invite response failed")
+	end
+end
+
+local function inviteSelectedPartyTarget()
+	local target = uiState.SelectedPartyTarget
+
+	if not target or not target.Parent then
+		setStatus("Ctrl-click a player first")
+		return
+	end
+
+	local ok, successFlag, result = invokeRemote(PartyInviteRequest, target.UserId)
+
+	if ok and successFlag then
+		refreshPlayerData()
+		refreshPartyData()
+		uiState.PartyOpen = true
+		setStatus("Party invite sent to " .. target.Name)
+		AetherionGameplayUI.Render()
+	else
+		setStatus(result or "Party invite failed")
+	end
+end
+
+local function leaveParty()
+	local ok, successFlag, result = invokeRemote(PartyLeaveRequest)
+
+	if ok and successFlag then
+		refreshPlayerData()
+		refreshPartyData()
+		setStatus(tostring(result or "Left party"))
+		AetherionGameplayUI.Render()
+	else
+		setStatus(result or "Leave party failed")
+	end
+end
+
+local function togglePartyLock()
+	local ok, successFlag, result = invokeRemote(PartyToggleLockRequest)
+
+	if ok and successFlag then
+		refreshPlayerData()
+		refreshPartyData()
+		setStatus("Party lock toggled")
+		AetherionGameplayUI.Render()
+	else
+		setStatus(result or "Party lock failed")
+	end
+end
+
+local function selectPartyTargetFromMouse()
+	local mouse = player:GetMouse()
+	local targetPart = mouse.Target
+
+	if not targetPart then
+		return
+	end
+
+	local model = targetPart:FindFirstAncestorOfClass("Model")
+	local targetPlayer = model and Players:GetPlayerFromCharacter(model)
+
+	if not targetPlayer or targetPlayer == player then
+		return
+	end
+
+	uiState.SelectedPartyTarget = targetPlayer
+
+	if guiRefs.PartyTargetLabel then
+		guiRefs.PartyTargetLabel.Text = "Target: " .. targetPlayer.Name
+	end
+
+	setStatus("Selected party target: " .. targetPlayer.Name)
+end
+
+local function requestInventoryToggle()
+	local now = os.clock()
+
+	if now - lastInventoryToggleAt < 0.12 then
+		return
+	end
+
+	lastInventoryToggleAt = now
+	toggleInventory()
+end
+
+local function clearRuntimeConnections()
+	for _, connection in ipairs(runtimeConnections) do
+		connection:Disconnect()
+	end
+
+	runtimeConnections = {}
+end
+
 local function setupRuntime()
-	UserInputService.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 and uiState.DraggedItem then
-			endDrag()
-		end
-	end)
+	clearRuntimeConnections()
+	ContextActionService:UnbindAction("ToggleAetherionInventory")
+	ContextActionService:UnbindAction("ToggleAetherionParty")
 
-	RunService.RenderStepped:Connect(function()
-		if uiState.DragVisual then
-			local mousePos = UserInputService:GetMouseLocation()
-			uiState.DragVisual.Position = UDim2.new(0, mousePos.X + 8, 0, mousePos.Y + 8)
-		end
+	table.insert(
+		runtimeConnections,
+		UserInputService.InputEnded:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 and uiState.DraggedItem then
+				endDrag()
+			end
+		end)
+	)
 
-		if guiRefs.TooltipFrame and guiRefs.TooltipFrame.Visible then
-			local mousePos = UserInputService:GetMouseLocation()
-			guiRefs.TooltipFrame.Position = UDim2.new(0, mousePos.X + 16, 0, mousePos.Y + 16)
-		end
-	end)
-
-	UserInputService.InputBegan:Connect(function(input, gameProcessed)
-		local focusedTextBox = UserInputService:GetFocusedTextBox()
-
-		if focusedTextBox then
-			return
-		end
-
-		if input.KeyCode == Enum.KeyCode.U then
-			uiState.UpgradeOpen = not uiState.UpgradeOpen
-
-			if guiRefs.UpgradeFrame then
-				guiRefs.UpgradeFrame.Visible = uiState.UpgradeOpen
+	table.insert(
+		runtimeConnections,
+		RunService.RenderStepped:Connect(function()
+			if uiState.DragVisual then
+				local mousePos = UserInputService:GetMouseLocation()
+				uiState.DragVisual.Position = UDim2.new(0, mousePos.X + 8, 0, mousePos.Y + 8)
 			end
 
-			setStatus("Upgrade " .. (uiState.UpgradeOpen and "opened" or "closed"))
-			AetherionGameplayUI.Render()
-			return
-		end
+			if guiRefs.TooltipFrame and guiRefs.TooltipFrame.Visible then
+				local mousePos = UserInputService:GetMouseLocation()
+				guiRefs.TooltipFrame.Position = UDim2.new(0, mousePos.X + 16, 0, mousePos.Y + 16)
+			end
+		end)
+	)
 
-		if input.KeyCode == Enum.KeyCode.One then
-			setStatus("Use hotbar slot 1")
-		elseif input.KeyCode == Enum.KeyCode.Two then
-			setStatus("Use hotbar slot 2")
-		elseif input.KeyCode == Enum.KeyCode.Three then
-			setStatus("Use hotbar slot 3")
-		elseif input.KeyCode == Enum.KeyCode.Four then
-			setStatus("Use hotbar slot 4")
-		elseif input.KeyCode == Enum.KeyCode.Five then
-			setStatus("Use hotbar slot 5")
-		elseif input.KeyCode == Enum.KeyCode.Six then
-			setStatus("Use hotbar slot 6")
-		elseif input.KeyCode == Enum.KeyCode.Seven then
-			setStatus("Use hotbar slot 7")
-		elseif input.KeyCode == Enum.KeyCode.Eight then
-			setStatus("Use hotbar slot 8")
-		elseif input.KeyCode == Enum.KeyCode.Nine then
-			setStatus("Use hotbar slot 9")
-		elseif input.KeyCode == Enum.KeyCode.Zero then
-			setStatus("Use hotbar slot 10")
-		end
-	end)
-	ContextActionService:UnbindAction("ToggleAetherionInventory")
-	ContextActionService:BindAction("ToggleAetherionInventory", function(_, inputState)
+	table.insert(
+		runtimeConnections,
+		UserInputService.InputBegan:Connect(function(input, gameProcessed)
+			local focusedTextBox = UserInputService:GetFocusedTextBox()
+
+			if focusedTextBox then
+				return
+			end
+
+			if
+				input.UserInputType == Enum.UserInputType.MouseButton1
+				and (
+					UserInputService:IsKeyDown(Enum.KeyCode.LeftControl)
+					or UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
+				)
+			then
+				selectPartyTargetFromMouse()
+				return
+			end
+
+			if input.UserInputType ~= Enum.UserInputType.Keyboard then
+				return
+			end
+
+			if input.KeyCode == Enum.KeyCode.P then
+				return
+			end
+
+			if gameProcessed then
+				return
+			end
+
+			if input.KeyCode == Enum.KeyCode.One then
+				setStatus("Use hotbar slot 1")
+			elseif input.KeyCode == Enum.KeyCode.Two then
+				setStatus("Use hotbar slot 2")
+			elseif input.KeyCode == Enum.KeyCode.Three then
+				setStatus("Use hotbar slot 3")
+			elseif input.KeyCode == Enum.KeyCode.Four then
+				setStatus("Use hotbar slot 4")
+			elseif input.KeyCode == Enum.KeyCode.Five then
+				setStatus("Use hotbar slot 5")
+			elseif input.KeyCode == Enum.KeyCode.Six then
+				setStatus("Use hotbar slot 6")
+			elseif input.KeyCode == Enum.KeyCode.Seven then
+				setStatus("Use hotbar slot 7")
+			elseif input.KeyCode == Enum.KeyCode.Eight then
+				setStatus("Use hotbar slot 8")
+			elseif input.KeyCode == Enum.KeyCode.Nine then
+				setStatus("Use hotbar slot 9")
+			elseif input.KeyCode == Enum.KeyCode.Zero then
+				setStatus("Use hotbar slot 10")
+			end
+		end)
+	)
+
+	ContextActionService:BindActionAtPriority("ToggleAetherionInventory", function(_, inputState)
 		if inputState ~= Enum.UserInputState.Begin then
 			return Enum.ContextActionResult.Pass
 		end
@@ -1266,10 +1612,29 @@ local function setupRuntime()
 			return Enum.ContextActionResult.Pass
 		end
 
-		toggleInventory()
-
+		requestInventoryToggle()
 		return Enum.ContextActionResult.Sink
-	end, false, Enum.KeyCode.I)
+	end, false, INVENTORY_ACTION_PRIORITY, Enum.KeyCode.I)
+
+	ContextActionService:BindActionAtPriority("ToggleAetherionParty", function(_, inputState)
+		if inputState ~= Enum.UserInputState.Begin then
+			return Enum.ContextActionResult.Pass
+		end
+
+		if UserInputService:GetFocusedTextBox() then
+			return Enum.ContextActionResult.Pass
+		end
+
+		toggleParty()
+		return Enum.ContextActionResult.Sink
+	end, false, PARTY_ACTION_PRIORITY, Enum.KeyCode.P)
+
+	table.insert(
+		runtimeConnections,
+		PartyInviteReceived.OnClientEvent:Connect(function(invite)
+			showPartyInvite(invite)
+		end)
+	)
 end
 
 function AetherionGameplayUI.Create()
@@ -1279,6 +1644,7 @@ function AetherionGameplayUI.Create()
 	end
 
 	uiState.InventoryOpen = false
+	uiState.PartyOpen = false
 
 	local playerGui = player:WaitForChild("PlayerGui")
 
@@ -1289,13 +1655,6 @@ function AetherionGameplayUI.Create()
 	screenGui.Parent = playerGui
 
 	guiRefs.ScreenGui = screenGui
-
-	local quickUpgradeButton = makeButton(screenGui, "UPG", UDim2.new(0, 52, 0, 28), UDim2.new(1, -62, 0, 8))
-
-	quickUpgradeButton.MouseButton1Click:Connect(function()
-		uiState.UpgradeOpen = not uiState.UpgradeOpen
-		AetherionGameplayUI.Render()
-	end)
 
 	-- HUD kiri atas
 	local hudFrame =
@@ -1368,6 +1727,91 @@ function AetherionGameplayUI.Create()
 		AetherionGameplayUI.Render()
 	end)
 
+	-- Party panel
+	local partyFrame = makeFrame(
+		screenGui,
+		"PartyFrame",
+		UDim2.new(0, 330, 0, 315),
+		UDim2.new(0, 12, 0, 170),
+		Color3.fromRGB(16, 18, 22)
+	)
+	guiRefs.PartyFrame = partyFrame
+	partyFrame.Visible = uiState.PartyOpen
+
+	local partyHeader = Instance.new("Frame")
+	partyHeader.Name = "PartyHeader"
+	partyHeader.Size = UDim2.new(1, -12, 0, 52)
+	partyHeader.Position = UDim2.new(0, 6, 0, 6)
+	partyHeader.BackgroundColor3 = Color3.fromRGB(22, 24, 28)
+	partyHeader.BorderSizePixel = 0
+	partyHeader.Parent = partyFrame
+	createCorner(partyHeader, 2)
+	createStroke(partyHeader, Color3.fromRGB(87, 95, 102), 1)
+
+	guiRefs.PartyTitle = makeLabel(partyHeader, "Party 1/8", UDim2.new(0, 150, 0, 20), UDim2.new(0, 10, 0, 6), 15, true)
+	guiRefs.PartyTitle.TextColor3 = Color3.fromRGB(236, 236, 236)
+	guiRefs.PartyTargetLabel =
+		makeLabel(partyHeader, "Target: No target", UDim2.new(0, 150, 0, 14), UDim2.new(0, 10, 0, 30), 10, false)
+	guiRefs.PartyTargetLabel.TextColor3 = Color3.fromRGB(154, 162, 170)
+
+	local actionCluster = Instance.new("Frame")
+	actionCluster.Name = "ActionCluster"
+	actionCluster.Size = UDim2.new(0, 116, 0, 48)
+	actionCluster.Position = UDim2.new(1, -122, 0, 2)
+	actionCluster.BackgroundTransparency = 1
+	actionCluster.Parent = partyHeader
+
+	local actionLayout = {
+		{ Name = "Loot", Text = "01", X = 0 },
+		{ Name = "Inspect", Text = "02", X = 38 },
+		{ Name = "Invite", Text = "03", X = 76 },
+	}
+
+	for _, action in ipairs(actionLayout) do
+		local actionButton = Instance.new("TextButton")
+		actionButton.Name = action.Name
+		actionButton.Size = UDim2.new(0, 32, 0, 32)
+		actionButton.Position = UDim2.new(0, action.X, 0, 6)
+		actionButton.Text = action.Text
+		actionButton.TextSize = 11
+		actionButton.Font = Enum.Font.GothamBold
+		actionButton.TextColor3 = Color3.fromRGB(246, 248, 250)
+		actionButton.BackgroundColor3 = Color3.fromRGB(28, 31, 36)
+		actionButton.BorderSizePixel = 0
+		actionButton.Parent = actionCluster
+		createCorner(actionButton, 2)
+		createStroke(actionButton, Color3.fromRGB(147, 112, 107), 1)
+
+		actionButton.MouseButton1Click:Connect(function()
+			if action.Name == "Invite" then
+				inviteSelectedPartyTarget()
+			elseif action.Name == "Loot" then
+				setStatus("Loot mode: all members")
+			elseif action.Name == "Inspect" then
+				setStatus("Loot mode: party leader")
+			end
+		end)
+	end
+
+	local partyContent = Instance.new("Frame")
+	partyContent.Name = "PartyContent"
+	partyContent.BackgroundTransparency = 1
+	partyContent.Size = UDim2.new(1, -12, 0, 210)
+	partyContent.Position = UDim2.new(0, 6, 0, 62)
+	partyContent.Parent = partyFrame
+	guiRefs.PartyContent = partyContent
+
+	local lockButton = makeButton(partyFrame, "Lock", UDim2.new(0, 132, 0, 38), UDim2.new(0.5, -66, 1, -46))
+	guiRefs.PartyLockButton = lockButton
+	lockButton.MouseButton1Click:Connect(function()
+		togglePartyLock()
+	end)
+
+	local leaveButton = makeButton(partyFrame, "Leaving", UDim2.new(0, 82, 0, 26), UDim2.new(1, -94, 1, -40))
+	leaveButton.MouseButton1Click:Connect(function()
+		leaveParty()
+	end)
+
 	-- Upgrade UI
 	local upgradeFrame =
 		makeFrame(screenGui, "UpgradeFrame", UDim2.new(0, 260, 0, 285), UDim2.new(1, -275, 0, 510), RF_THEME.Window)
@@ -1423,13 +1867,46 @@ function AetherionGameplayUI.Create()
 	guiRefs.StatusLabel =
 		makeLabel(statusFrame, "Status: Ready.", UDim2.new(1, -12, 1, 0), UDim2.new(0, 6, 0, 0), 12, false)
 
+	local invitePrompt = makeFrame(
+		screenGui,
+		"PartyInvitePrompt",
+		UDim2.new(0, 520, 0, 66),
+		UDim2.new(0.5, -260, 1, -170),
+		Color3.fromRGB(17, 21, 28)
+	)
+	invitePrompt.Visible = false
+	invitePrompt.ZIndex = 40
+	guiRefs.PartyInvitePrompt = invitePrompt
+
+	guiRefs.PartyInviteText = makeLabel(
+		invitePrompt,
+		"Party invitation received.",
+		UDim2.new(1, -140, 0, 28),
+		UDim2.new(0, 12, 0, 8),
+		13,
+		true
+	)
+	guiRefs.PartyInviteText.ZIndex = 41
+
+	local inviteYesButton = makeButton(invitePrompt, "Yes", UDim2.new(0, 54, 0, 28), UDim2.new(1, -126, 0, 20))
+	inviteYesButton.ZIndex = 41
+	inviteYesButton.MouseButton1Click:Connect(function()
+		respondToPartyInvite(true)
+	end)
+
+	local inviteNoButton = makeButton(invitePrompt, "No", UDim2.new(0, 54, 0, 28), UDim2.new(1, -66, 0, 20))
+	inviteNoButton.ZIndex = 41
+	inviteNoButton.MouseButton1Click:Connect(function()
+		respondToPartyInvite(false)
+	end)
+
 	ensureTooltip()
 
 	refreshPlayerData()
 	refreshPlayerStats()
 	AetherionGameplayUI.Render()
 	setupRuntime()
-	setStatus("UI loaded. I = Inventory, U = Upgrade")
+	setStatus("UI loaded. I = Inventory, P = Party, right-click upgrader = Upgrade")
 end
 
 return AetherionGameplayUI
