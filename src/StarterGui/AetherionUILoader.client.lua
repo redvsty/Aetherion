@@ -1,33 +1,40 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 print("[Aetherion] AetherionUILoader started")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
-local function loadUI()
-	if playerGui:FindFirstChild("AetherionGameplayUI") then
-		print("[Aetherion] Gameplay UI already exists")
-		return
-	end
-
+local function getGameplayUIModule()
 	local shared = ReplicatedStorage:WaitForChild("Shared", 30)
 	if not shared then
-		warn("[Aetherion] Shared not found")
-		return
+		return nil, "ReplicatedStorage.Shared not found"
 	end
 
 	local client = shared:WaitForChild("Client", 30)
 	if not client then
-		warn("[Aetherion] Shared.Client not found")
-		return
+		return nil, "ReplicatedStorage.Shared.Client not found"
 	end
 
 	local uiModule = client:WaitForChild("AetherionGameplayUI", 30)
 	if not uiModule then
-		warn("[Aetherion] AetherionGameplayUI not found")
-		return
+		return nil, "AetherionGameplayUI module not found"
+	end
+
+	return uiModule, nil
+end
+
+local function loadUI()
+	if playerGui:FindFirstChild("AetherionGameplayUI") then
+		print("[Aetherion] Gameplay UI already exists")
+		return true
+	end
+
+	local uiModule, moduleErr = getGameplayUIModule()
+	if not uiModule then
+		warn("[Aetherion] Cannot load Gameplay UI:", moduleErr)
+		return false
 	end
 
 	local ok, UI = pcall(function()
@@ -36,7 +43,12 @@ local function loadUI()
 
 	if not ok then
 		warn("[Aetherion] Failed to require AetherionGameplayUI:", UI)
-		return
+		return false
+	end
+
+	if type(UI) ~= "table" or type(UI.Create) ~= "function" then
+		warn("[Aetherion] AetherionGameplayUI must return a table with Create()")
+		return false
 	end
 
 	local createOk, createErr = pcall(function()
@@ -45,10 +57,28 @@ local function loadUI()
 
 	if not createOk then
 		warn("[Aetherion] Failed to create Gameplay UI:", createErr)
-		return
+		return false
 	end
 
 	print("[Aetherion] Gameplay UI created from StarterGui loader")
+	return true
 end
 
-task.delay(1, loadUI)
+task.delay(1, function()
+	local loaded = loadUI()
+
+	if loaded then
+		return
+	end
+
+	task.wait(2)
+	loadUI()
+end)
+
+player.CharacterAdded:Connect(function()
+	task.wait(1)
+
+	if not playerGui:FindFirstChild("AetherionGameplayUI") then
+		loadUI()
+	end
+end)
