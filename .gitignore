@@ -14,3 +14,4 @@ sourcemap.json
 .DS_Store
 Thumbs.db
 .vscode/
+stylua.toml
