@@ -14,6 +14,8 @@ local StarterArmorByFaction = {
 	[GameConfig.Factions.MYSTIC] = "mystic_training_robe_001",
 }
 
+local STARTER_UPGRADER_ITEM_ID = "upgrader"
+
 local function createInventoryItem(itemId)
 	return {
 		Uid = HttpService:GenerateGUID(false),
@@ -26,8 +28,27 @@ local function createInventoryItem(itemId)
 	}
 end
 
+local function createPermanentItem(itemId)
+	return {
+		Uid = HttpService:GenerateGUID(false),
+		ItemId = itemId,
+		UpgradeLevel = 0,
+		Locked = true,
+		Slots = 0,
+		Durability = 0,
+		MaxDurability = 0,
+		IsPermanent = true,
+	}
+end
+
 local function giveItem(playerData, itemId)
 	local item = createInventoryItem(itemId)
+	InventoryService.AddItem(playerData, item)
+	return item
+end
+
+local function givePermanentItem(playerData, itemId)
+	local item = createPermanentItem(itemId)
 	InventoryService.AddItem(playerData, item)
 	return item
 end
@@ -77,6 +98,7 @@ function CharacterCreationService.SelectRaceAndClass(playerData, factionId, star
 
 	local weapon = giveItem(playerData, weaponId)
 	local armor = giveItem(playerData, armorId)
+	local upgrader = givePermanentItem(playerData, STARTER_UPGRADER_ITEM_ID)
 
 	playerData.Equipment.Weapon = weapon.Uid
 	playerData.Equipment.Armor = armor.Uid
@@ -86,6 +108,7 @@ function CharacterCreationService.SelectRaceAndClass(playerData, factionId, star
 		StartingClassId = startingClassId,
 		StarterWeaponUid = weapon.Uid,
 		StarterArmorUid = armor.Uid,
+		StarterUpgraderUid = upgrader.Uid,
 	}
 end
 

@@ -7,7 +7,6 @@ local EquipmentService = require(script.Parent.Parent.Services.EquipmentService)
 local UpgradeService = require(script.Parent.Parent.Services.UpgradeService)
 local CombatService = require(script.Parent.Parent.Services.CombatService)
 local WeaponService = require(script.Parent.Parent.Services.WeaponService)
-local EquipmentService = require(script.Parent.Parent.Services.EquipmentService)
 
 local profiles = {}
 

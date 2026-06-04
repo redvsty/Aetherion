@@ -211,6 +211,28 @@ local ItemDefinitions = {
 		Defense = 11,
 		MaxUpgrade = 7,
 	},
+
+	upgrader = {
+		Id = "upgrader",
+		Name = "Upgrader",
+		Type = "Tool",
+		Category = "Permanent",
+		Slot = nil,
+		EquipSlot = nil,
+
+		Description = "Permanent item used to open the upgrade interface.",
+
+		Stackable = false,
+		MaxStack = 1,
+		Consumable = false,
+		IsPermanent = true,
+
+		CanTrade = false,
+		CanSell = false,
+		CanDrop = false,
+
+		SpecialAction = "OpenUpgradeUI",
+	}
 }
 
 return ItemDefinitions
