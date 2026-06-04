@@ -14,8 +14,6 @@ local StarterArmorByFaction = {
 	[GameConfig.Factions.MYSTIC] = "mystic_training_robe_001",
 }
 
-local STARTER_UPGRADER_ITEM_ID = "upgrader"
-
 local function createInventoryItem(itemId)
 	return {
 		Uid = HttpService:GenerateGUID(false),
@@ -28,36 +26,22 @@ local function createInventoryItem(itemId)
 	}
 end
 
-local function createPermanentItem(itemId)
-	return {
-		Uid = HttpService:GenerateGUID(false),
-		ItemId = itemId,
-		UpgradeLevel = 0,
-		Locked = true,
-		Slots = 0,
-		Durability = 0,
-		MaxDurability = 0,
-		IsPermanent = true,
-	}
-end
-
 local function giveItem(playerData, itemId)
 	local item = createInventoryItem(itemId)
 	InventoryService.AddItem(playerData, item)
 	return item
 end
 
-local function givePermanentItem(playerData, itemId)
-	local item = createPermanentItem(itemId)
-	InventoryService.AddItem(playerData, item)
-	return item
-end
-
+-- Fix 4: Hanya init currency faction sendiri + Gold.
+-- Tidak lagi set semua faction currency.
 local function giveStartingCurrency(playerData, factionId)
 	local factionCurrencyId = CurrencyDefinitions.GetFactionCurrencyId(factionId)
 
 	playerData.Currencies.Gold = 100
-	playerData.Currencies[factionCurrencyId] = 1000
+
+	if factionCurrencyId then
+		playerData.Currencies[factionCurrencyId] = 1000
+	end
 end
 
 function CharacterCreationService.SelectRaceAndClass(playerData, factionId, startingClassId)
@@ -98,19 +82,16 @@ function CharacterCreationService.SelectRaceAndClass(playerData, factionId, star
 
 	local weapon = giveItem(playerData, weaponId)
 	local armor = giveItem(playerData, armorId)
-	local upgrader = givePermanentItem(playerData, STARTER_UPGRADER_ITEM_ID)
 
 	playerData.Equipment.Weapon = weapon.Uid
 	playerData.Equipment.Armor = armor.Uid
 
-	return true,
-		{
-			FactionId = factionId,
-			StartingClassId = startingClassId,
-			StarterWeaponUid = weapon.Uid,
-			StarterArmorUid = armor.Uid,
-			StarterUpgraderUid = upgrader.Uid,
-		}
+	return true, {
+		FactionId = factionId,
+		StartingClassId = startingClassId,
+		StarterWeaponUid = weapon.Uid,
+		StarterArmorUid = armor.Uid,
+	}
 end
 
 function CharacterCreationService.GetAvailableLevel30Classes(playerData)
@@ -118,7 +99,10 @@ function CharacterCreationService.GetAvailableLevel30Classes(playerData)
 		return nil
 	end
 
-	return ClassDefinitions.GetLevel30Options(playerData.FactionId, playerData.StartingClassId)
+	return ClassDefinitions.GetLevel30Options(
+		playerData.FactionId,
+		playerData.StartingClassId
+	)
 end
 
 function CharacterCreationService.SelectLevel30Class(playerData, classId)
@@ -134,7 +118,10 @@ function CharacterCreationService.SelectLevel30Class(playerData, classId)
 		return false, "Level 30 class already selected"
 	end
 
-	local options = ClassDefinitions.GetLevel30Options(playerData.FactionId, playerData.StartingClassId)
+	local options = ClassDefinitions.GetLevel30Options(
+		playerData.FactionId,
+		playerData.StartingClassId
+	)
 
 	if not ClassDefinitions.ContainsOption(options, classId) then
 		return false, "Invalid level 30 class"
@@ -151,7 +138,10 @@ function CharacterCreationService.GetAvailableLevel40Classes(playerData)
 		return nil
 	end
 
-	return ClassDefinitions.GetLevel40Options(playerData.FactionId, playerData.ClassLevel30Id)
+	return ClassDefinitions.GetLevel40Options(
+		playerData.FactionId,
+		playerData.ClassLevel30Id
+	)
 end
 
 function CharacterCreationService.SelectLevel40Class(playerData, classId)
@@ -171,7 +161,10 @@ function CharacterCreationService.SelectLevel40Class(playerData, classId)
 		return false, "Level 40 class already selected"
 	end
 
-	local options = ClassDefinitions.GetLevel40Options(playerData.FactionId, playerData.ClassLevel30Id)
+	local options = ClassDefinitions.GetLevel40Options(
+		playerData.FactionId,
+		playerData.ClassLevel30Id
+	)
 
 	if not ClassDefinitions.ContainsOption(options, classId) then
 		return false, "Invalid level 40 class"

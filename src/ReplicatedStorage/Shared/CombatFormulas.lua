@@ -27,7 +27,10 @@ function CombatFormulas.CalculateDamage(attackerStats, defenderStats)
 	local defense = defenderStats.Defense or 0
 	local critChance = attackerStats.CritChance or 0.05
 
-	local variance = randomFloat(GameConfig.Combat.BaseDamageVarianceMin, GameConfig.Combat.BaseDamageVarianceMax)
+	local variance = randomFloat(
+		GameConfig.Combat.BaseDamageVarianceMin,
+		GameConfig.Combat.BaseDamageVarianceMax
+	)
 
 	local defenseReduction = defense / (defense + GameConfig.Combat.DefenseScale)
 	local rawDamage = attack * variance

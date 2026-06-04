@@ -1,23 +1,30 @@
-local Players = game:GetService("Players")
-local HttpService = game:GetService("HttpService")
+-- GameServer.server.lua
+-- Updated: Integrasi DataPersistence (Fix 3), CombatService cleanup (Fix 5),
+-- dan semua service yang sudah dipatch.
+
+local Players          = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local PlayerDataFactory = require(script.Parent.Parent.Services.PlayerDataFactory)
+local DataPersistence          = require(script.Parent.Parent.Services.DataPersistence)
 local CharacterCreationService = require(script.Parent.Parent.Services.CharacterCreationService)
-local EquipmentService = require(script.Parent.Parent.Services.EquipmentService)
-local InventoryService = require(script.Parent.Parent.Services.InventoryService)
-local UpgradeService = require(script.Parent.Parent.Services.UpgradeService)
-local CombatService = require(script.Parent.Parent.Services.CombatService)
-local WeaponService = require(script.Parent.Parent.Services.WeaponService)
-local ItemDefinitions = require(ReplicatedStorage.Shared.Definitions.ItemDefinitions)
+local EquipmentService         = require(script.Parent.Parent.Services.EquipmentService)
+local UpgradeService           = require(script.Parent.Parent.Services.UpgradeService)
+local CombatService            = require(script.Parent.Parent.Services.CombatService)
 
-local profiles = {}
+-- profiles: [Player] = playerData (in-memory, sync dari DataStore)
+-- isLoadFailed: [Player] = bool — jika true, data tidak akan disave untuk proteksi
+local profiles       = {}
+local isLoadFailed   = {}
+
+-- ============================================================
+-- Remotes Setup
+-- ============================================================
 
 local remotes = ReplicatedStorage:FindFirstChild("Remotes")
 
 if not remotes then
 	remotes = Instance.new("Folder")
-	remotes.Name = "Remotes"
+	remotes.Name   = "Remotes"
 	remotes.Parent = ReplicatedStorage
 end
 
@@ -25,97 +32,68 @@ local function ensureRemoteFunction(name)
 	local remote = remotes:FindFirstChild(name)
 
 	if not remote then
-		remote = Instance.new("RemoteFunction")
-		remote.Name = name
+		remote        = Instance.new("RemoteFunction")
+		remote.Name   = name
 		remote.Parent = remotes
 	end
 
 	return remote
 end
 
-local GetPlayerDataRequest = ensureRemoteFunction("GetPlayerDataRequest")
+local GetPlayerDataRequest      = ensureRemoteFunction("GetPlayerDataRequest")
 local SelectRaceAndClassRequest = ensureRemoteFunction("SelectRaceAndClassRequest")
 local SelectLevel30ClassRequest = ensureRemoteFunction("SelectLevel30ClassRequest")
 local SelectLevel40ClassRequest = ensureRemoteFunction("SelectLevel40ClassRequest")
-local GetClassOptionsRequest = ensureRemoteFunction("GetClassOptionsRequest")
-local EquipItemRequest = ensureRemoteFunction("EquipItemRequest")
-local UpgradeItemRequest = ensureRemoteFunction("UpgradeItemRequest")
-local AttackRequest = ensureRemoteFunction("AttackRequest")
-local GetWeaponSummaryRequest = ensureRemoteFunction("GetWeaponSummaryRequest")
-local GetWeaponsByLevelRequest = ensureRemoteFunction("GetWeaponsByLevelRequest")
-local GetWeaponsByGradeRequest = ensureRemoteFunction("GetWeaponsByGradeRequest")
-local GiveWeaponRequest = ensureRemoteFunction("GiveWeaponRequest")
-local GiveItemRequest = ensureRemoteFunction("GiveItemRequest")
-local GetPlayerStatsRequest = ensureRemoteFunction("GetPlayerStatsRequest")
+local GetClassOptionsRequest    = ensureRemoteFunction("GetClassOptionsRequest")
+local EquipItemRequest          = ensureRemoteFunction("EquipItemRequest")
+local UpgradeItemRequest        = ensureRemoteFunction("UpgradeItemRequest")
+local AttackRequest             = ensureRemoteFunction("AttackRequest")
 
-local function addInventoryItem(data, itemId, amount)
-	local itemDef = ItemDefinitions[itemId]
-	local remaining = amount
-	local created = {}
-
-	if itemDef.Stackable then
-		for _, item in ipairs(data.Inventory) do
-			if remaining <= 0 then
-				break
-			end
-
-			if item.ItemId == itemId then
-				local maxStack = itemDef.MaxStack or 99
-				local currentQuantity = item.Quantity or 1
-				local space = math.max(0, maxStack - currentQuantity)
-				local toAdd = math.min(space, remaining)
-
-				if toAdd > 0 then
-					item.Quantity = currentQuantity + toAdd
-					remaining -= toAdd
-				end
-			end
-		end
-	end
-
-	while remaining > 0 do
-		local quantity = 1
-
-		if itemDef.Stackable then
-			quantity = math.min(remaining, itemDef.MaxStack or 99)
-		end
-
-		local inventoryItem = {
-			Uid = HttpService:GenerateGUID(false),
-			ItemId = itemId,
-			Quantity = quantity,
-		}
-
-		InventoryService.AddItem(data, inventoryItem)
-		table.insert(created, {
-			Uid = inventoryItem.Uid,
-			ItemId = inventoryItem.ItemId,
-			Quantity = inventoryItem.Quantity,
-		})
-
-		remaining -= quantity
-	end
-
-	return created
-end
+-- ============================================================
+-- Player Events
+-- ============================================================
 
 Players.PlayerAdded:Connect(function(player)
-	-- Untuk tahap debug logic, data masih in-memory.
-	-- Setelah flow stabil, sambungkan kembali ke DataStoreService.
-	profiles[player] = PlayerDataFactory.Create(player)
+	-- Fix 3: Load dari DataStore (dengan retry)
+	local data, loadFailed = DataPersistence.Load(player)
+	profiles[player]     = data
+	isLoadFailed[player] = loadFailed
 
 	player.CharacterAdded:Connect(function(character)
-		local data = profiles[player]
-		local humanoid = character:WaitForChild("Humanoid")
+		local currentData = profiles[player]
 
-		humanoid.MaxHealth = data.Stats.MaxHP
-		humanoid.Health = data.Stats.HP
+		if not currentData then
+			return
+		end
+
+		local humanoid = character:WaitForChild("Humanoid")
+		humanoid.MaxHealth = currentData.Stats.MaxHP
+		humanoid.Health    = currentData.Stats.HP
 	end)
 end)
 
 Players.PlayerRemoving:Connect(function(player)
-	profiles[player] = nil
+	local data   = profiles[player]
+	local failed = isLoadFailed[player]
+
+	-- Fix 3: Save saat leave, kecuali load awal gagal (proteksi overwrite data valid)
+	if data and not failed then
+		DataPersistence.Save(player, data)
+	end
+
+	-- Fix 5: Cleanup rate limit table di CombatService
+	CombatService.OnPlayerRemoving(player)
+
+	profiles[player]     = nil
+	isLoadFailed[player] = nil
 end)
+
+-- Fix 3: Auto-save setiap 2 menit
+DataPersistence.StartAutoSave(profiles)
+
+-- ============================================================
+-- Remote Handlers
+-- ============================================================
 
 GetPlayerDataRequest.OnServerInvoke = function(player)
 	return profiles[player]
@@ -158,86 +136,17 @@ EquipItemRequest.OnServerInvoke = function(player, itemUid)
 	return EquipmentService.Equip(data, itemUid)
 end
 
-UpgradeItemRequest.OnServerInvoke = function(player, itemUid, talicUids, catalystUid)
+UpgradeItemRequest.OnServerInvoke = function(player, itemUid, catalystPower)
 	local data = profiles[player]
 
 	if not data then
 		return false, "No player data"
 	end
 
-	return UpgradeService.TryUpgrade(data, itemUid, talicUids, catalystUid)
+	return UpgradeService.TryUpgrade(data, itemUid, catalystPower or 0)
 end
 
 AttackRequest.OnServerInvoke = function(player, targetModel)
+	-- Fix 5: Attack validation ada di CombatService
 	return CombatService.Attack(player, targetModel, profiles)
-end
-
-GetWeaponSummaryRequest.OnServerInvoke = function(_player)
-	return WeaponService.GetSummary()
-end
-
-GetWeaponsByLevelRequest.OnServerInvoke = function(_player, level, limit)
-	local weapons = WeaponService.ListByLevel(level)
-	return WeaponService.ToDebugRows(weapons, limit or 50)
-end
-
-GetWeaponsByGradeRequest.OnServerInvoke = function(_player, grade, limit)
-	local weapons = WeaponService.ListByGrade(grade)
-	return WeaponService.ToDebugRows(weapons, limit or 50)
-end
-
-GiveWeaponRequest.OnServerInvoke = function(player, weaponId)
-	local data = profiles[player]
-
-	if not data then
-		return false, "No player data"
-	end
-
-	local inventoryWeapon = WeaponService.CreateInventoryWeapon(weaponId)
-
-	if not inventoryWeapon then
-		return false, "Weapon not found"
-	end
-
-	table.insert(data.Inventory, inventoryWeapon)
-
-	return true, {
-		Uid = inventoryWeapon.Uid,
-		ItemId = inventoryWeapon.ItemId,
-	}
-end
-
-GiveItemRequest.OnServerInvoke = function(player, itemId, amount)
-	local data = profiles[player]
-
-	if not data then
-		return false, "No player data"
-	end
-
-	if type(itemId) ~= "string" or not ItemDefinitions[itemId] then
-		return false, "Item not found"
-	end
-
-	local parsedAmount = math.floor(tonumber(amount) or 1)
-	parsedAmount = math.clamp(parsedAmount, 1, 999)
-
-	local created = addInventoryItem(data, itemId, parsedAmount)
-
-	return true, {
-		ItemId = itemId,
-		Amount = parsedAmount,
-		Created = created,
-	}
-end
-
-GetPlayerStatsRequest.OnServerInvoke = function(player)
-	local data = profiles[player]
-
-	if not data then
-		return false, "No player data"
-	end
-
-	local stats = EquipmentService.GetTotalStats(data)
-
-	return true, stats
 end

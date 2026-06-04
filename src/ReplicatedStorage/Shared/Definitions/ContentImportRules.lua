@@ -73,7 +73,6 @@ function ContentImportRules.AllowShield(record)
 end
 
 function ContentImportRules.AllowMonster(_record)
-	-- Monster boleh semua level sesuai instruksi.
 	return true
 end
 

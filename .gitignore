@@ -7,11 +7,7 @@
 # Rojo
 sourcemap.json
 
-# Local importer/cache data
-.cache/
-
 # OS / editor
 .DS_Store
 Thumbs.db
 .vscode/
-stylua.toml
