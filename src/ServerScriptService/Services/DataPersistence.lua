@@ -11,7 +11,7 @@ local GameConfig = require(game.ReplicatedStorage.Shared.GameConfig)
 local CurrencyDefinitions = require(game.ReplicatedStorage.Shared.Definitions.CurrencyDefinitions)
 
 local DATASTORE_NAME = "AetherionPlayerData_v3"
-local CURRENT_SCHEMA = 3
+local CURRENT_SCHEMA = 4
 local MAX_RETRIES = 3
 local RETRY_DELAY = 2 -- detik antar retry
 local AUTO_SAVE_INTERVAL = 120 -- detik, auto-save tiap 2 menit
@@ -85,6 +85,23 @@ local function migrateData(data)
 		end
 
 		version = 3
+	end
+
+	-- v3 -> v4: equipment Armor legacy slot diganti menjadi Upper.
+	if version < 4 then
+		data.Equipment = data.Equipment or {}
+
+		if data.Equipment.Armor ~= nil and data.Equipment.Upper == nil then
+			data.Equipment.Upper = data.Equipment.Armor
+		end
+
+		data.Equipment.Armor = nil
+		data.Equipment.Helmet = data.Equipment.Helmet or nil
+		data.Equipment.Lower = data.Equipment.Lower or nil
+		data.Equipment.Gloves = data.Equipment.Gloves or nil
+		data.Equipment.Boots = data.Equipment.Boots or nil
+
+		version = 4
 	end
 
 	data.SchemaVersion = CURRENT_SCHEMA

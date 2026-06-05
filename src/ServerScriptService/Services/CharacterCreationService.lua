@@ -9,40 +9,58 @@ local InventoryService = require(script.Parent.InventoryService)
 local CharacterCreationService = {}
 
 local StarterArmorByFaction = {
-	[GameConfig.Factions.MECHA] = "mecha_training_armor_001",
-	[GameConfig.Factions.CYBORG] = "cyborg_training_armor_001",
-	[GameConfig.Factions.MYSTIC] = "mystic_training_robe_001",
+	[GameConfig.Factions.MECHA] = {
+		Helmet = "mecha_training_helmet_001",
+		Upper = "mecha_training_armor_001",
+		Lower = "mecha_training_lower_001",
+		Gloves = "mecha_training_gloves_001",
+		Boots = "mecha_training_boots_001",
+	},
+	[GameConfig.Factions.CYBORG] = {
+		Helmet = "cyborg_training_helmet_001",
+		Upper = "cyborg_training_armor_001",
+		Lower = "cyborg_training_lower_001",
+		Gloves = "cyborg_training_gloves_001",
+		Boots = "cyborg_training_boots_001",
+	},
+	[GameConfig.Factions.MYSTIC] = {
+		Helmet = "mystic_training_hood_001",
+		Upper = "mystic_training_robe_001",
+		Lower = "mystic_training_lower_001",
+		Gloves = "mystic_training_gloves_001",
+		Boots = "mystic_training_boots_001",
+	},
 }
 
 local function createInventoryItem(itemId, overrides)
-    overrides = overrides or {}
+	overrides = overrides or {}
 
-    return {
-        Uid = HttpService:GenerateGUID(false),
-        ItemId = itemId,
-        UpgradeLevel = overrides.UpgradeLevel or 0,
-        Locked = overrides.Locked or false,
-        Slots = overrides.Slots or math.random(0, 3),
-        Durability = overrides.Durability or 100,
-        MaxDurability = overrides.MaxDurability or 100,
-        Quantity = overrides.Quantity or 1,
-    }
+	return {
+		Uid = HttpService:GenerateGUID(false),
+		ItemId = itemId,
+		UpgradeLevel = overrides.UpgradeLevel or 0,
+		Locked = overrides.Locked or false,
+		Slots = overrides.Slots or math.random(0, 3),
+		Durability = overrides.Durability or 100,
+		MaxDurability = overrides.MaxDurability or 100,
+		Quantity = overrides.Quantity or 1,
+	}
 end
 
 local function giveItem(playerData, itemId, overrides)
-    local item = createInventoryItem(itemId, overrides)
-    InventoryService.AddItem(playerData, item)
-    return item
+	local item = createInventoryItem(itemId, overrides)
+	InventoryService.AddItem(playerData, item)
+	return item
 end
 
 local function giveStarterUtilityItem(playerData)
-    return giveItem(playerData, "upgrader", {
-        Locked = true,
-        Slots = 0,
-        Durability = 0,
-        MaxDurability = 0,
-        Quantity = 1,
-    })
+	return giveItem(playerData, "upgrader", {
+		Locked = true,
+		Slots = 0,
+		Durability = 0,
+		MaxDurability = 0,
+		Quantity = 1,
+	})
 end
 
 -- Fix 4: Hanya init currency faction sendiri + Gold.
@@ -80,9 +98,9 @@ function CharacterCreationService.SelectRaceAndClass(playerData, factionId, star
 
 	local startingClass = ClassDefinitions.Starting[startingClassId]
 	local weaponId = startingClass.StarterWeaponByFaction[factionId]
-	local armorId = StarterArmorByFaction[factionId]
+	local armorSet = StarterArmorByFaction[factionId]
 
-	if not weaponId or not armorId then
+	if not weaponId or not armorSet then
 		return false, "Missing starter item configuration"
 	end
 
@@ -92,22 +110,29 @@ function CharacterCreationService.SelectRaceAndClass(playerData, factionId, star
 	playerData.NeedsStartingClassSelection = false
 
 	giveStartingCurrency(playerData, factionId)
-	
+
 	local upgrader = giveStarterUtilityItem(playerData)
 
 	local weapon = giveItem(playerData, weaponId)
-	local armor = giveItem(playerData, armorId)
+	local starterArmorUids = {}
 
 	playerData.Equipment.Weapon = weapon.Uid
-	playerData.Equipment.Armor = armor.Uid
 
-	return true, {
-		FactionId = factionId,
-		StartingClassId = startingClassId,
-		StarterWeaponUid = weapon.Uid,
-		StarterArmorUid = armor.Uid,
-		StarterUpgraderUid = upgrader.Uid,
-	}
+	for slot, itemId in pairs(armorSet) do
+		local armor = giveItem(playerData, itemId)
+		playerData.Equipment[slot] = armor.Uid
+		starterArmorUids[slot] = armor.Uid
+	end
+
+	return true,
+		{
+			FactionId = factionId,
+			StartingClassId = startingClassId,
+			StarterWeaponUid = weapon.Uid,
+			StarterArmorUids = starterArmorUids,
+			StarterArmorUid = starterArmorUids.Upper,
+			StarterUpgraderUid = upgrader.Uid,
+		}
 end
 
 function CharacterCreationService.GetAvailableLevel30Classes(playerData)
@@ -115,10 +140,7 @@ function CharacterCreationService.GetAvailableLevel30Classes(playerData)
 		return nil
 	end
 
-	return ClassDefinitions.GetLevel30Options(
-		playerData.FactionId,
-		playerData.StartingClassId
-	)
+	return ClassDefinitions.GetLevel30Options(playerData.FactionId, playerData.StartingClassId)
 end
 
 function CharacterCreationService.SelectLevel30Class(playerData, classId)
@@ -134,10 +156,7 @@ function CharacterCreationService.SelectLevel30Class(playerData, classId)
 		return false, "Level 30 class already selected"
 	end
 
-	local options = ClassDefinitions.GetLevel30Options(
-		playerData.FactionId,
-		playerData.StartingClassId
-	)
+	local options = ClassDefinitions.GetLevel30Options(playerData.FactionId, playerData.StartingClassId)
 
 	if not ClassDefinitions.ContainsOption(options, classId) then
 		return false, "Invalid level 30 class"
@@ -154,10 +173,7 @@ function CharacterCreationService.GetAvailableLevel40Classes(playerData)
 		return nil
 	end
 
-	return ClassDefinitions.GetLevel40Options(
-		playerData.FactionId,
-		playerData.ClassLevel30Id
-	)
+	return ClassDefinitions.GetLevel40Options(playerData.FactionId, playerData.ClassLevel30Id)
 end
 
 function CharacterCreationService.SelectLevel40Class(playerData, classId)
@@ -177,10 +193,7 @@ function CharacterCreationService.SelectLevel40Class(playerData, classId)
 		return false, "Level 40 class already selected"
 	end
 
-	local options = ClassDefinitions.GetLevel40Options(
-		playerData.FactionId,
-		playerData.ClassLevel30Id
-	)
+	local options = ClassDefinitions.GetLevel40Options(playerData.FactionId, playerData.ClassLevel30Id)
 
 	if not ClassDefinitions.ContainsOption(options, classId) then
 		return false, "Invalid level 40 class"

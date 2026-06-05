@@ -1,5 +1,21 @@
 local GameConfig = require(script.Parent.Parent.GameConfig)
 
+local function starterArmorDefinition(id, name, slot, factionId, defense)
+	return {
+		Id = id,
+		Name = name,
+		Category = GameConfig.ItemCategories.Armor,
+		Slot = slot,
+		FactionId = factionId,
+		RequiredLevel = 1,
+		RequiredPT = { Type = GameConfig.PTTypes.Defense, Level = 1 },
+		AttackMin = 0,
+		AttackMax = 0,
+		Defense = defense,
+		MaxUpgrade = 7,
+	}
+end
+
 local ItemDefinitions = {
 	mecha_training_blade_001 = {
 		Id = "mecha_training_blade_001",
@@ -10,7 +26,10 @@ local ItemDefinitions = {
 		FactionId = GameConfig.Factions.MECHA,
 		RequiredLevel = 1,
 		RequiredPT = { Type = GameConfig.PTTypes.Melee, Level = 1 },
-		AttackMin = 8, AttackMax = 13, Defense = 0, MaxUpgrade = 7,
+		AttackMin = 8,
+		AttackMax = 13,
+		Defense = 0,
+		MaxUpgrade = 7,
 	},
 	mecha_training_rifle_001 = {
 		Id = "mecha_training_rifle_001",
@@ -21,7 +40,10 @@ local ItemDefinitions = {
 		FactionId = GameConfig.Factions.MECHA,
 		RequiredLevel = 1,
 		RequiredPT = { Type = GameConfig.PTTypes.Ranged, Level = 1 },
-		AttackMin = 7, AttackMax = 15, Defense = 0, MaxUpgrade = 7,
+		AttackMin = 7,
+		AttackMax = 15,
+		Defense = 0,
+		MaxUpgrade = 7,
 	},
 	mecha_training_reaver_001 = {
 		Id = "mecha_training_reaver_001",
@@ -32,8 +54,12 @@ local ItemDefinitions = {
 		FactionId = GameConfig.Factions.MECHA,
 		RequiredLevel = 1,
 		RequiredPT = { Type = GameConfig.PTTypes.Magic, Level = 1 },
-		AttackMin = 5, AttackMax = 10, ForceAttackMin = 8, ForceAttackMax = 15,
-		Defense = 0, MaxUpgrade = 7,
+		AttackMin = 5,
+		AttackMax = 10,
+		ForceAttackMin = 8,
+		ForceAttackMax = 15,
+		Defense = 0,
+		MaxUpgrade = 7,
 	},
 	mecha_training_tool_001 = {
 		Id = "mecha_training_tool_001",
@@ -44,7 +70,10 @@ local ItemDefinitions = {
 		FactionId = GameConfig.Factions.MECHA,
 		RequiredLevel = 1,
 		RequiredPT = { Type = GameConfig.PTTypes.Melee, Level = 1 },
-		AttackMin = 5, AttackMax = 9, Defense = 0, MaxUpgrade = 7,
+		AttackMin = 5,
+		AttackMax = 9,
+		Defense = 0,
+		MaxUpgrade = 7,
 	},
 	cyborg_training_blade_001 = {
 		Id = "cyborg_training_blade_001",
@@ -55,7 +84,10 @@ local ItemDefinitions = {
 		FactionId = GameConfig.Factions.CYBORG,
 		RequiredLevel = 1,
 		RequiredPT = { Type = GameConfig.PTTypes.Melee, Level = 1 },
-		AttackMin = 9, AttackMax = 14, Defense = 0, MaxUpgrade = 7,
+		AttackMin = 9,
+		AttackMax = 14,
+		Defense = 0,
+		MaxUpgrade = 7,
 	},
 	cyborg_training_launcher_001 = {
 		Id = "cyborg_training_launcher_001",
@@ -66,7 +98,10 @@ local ItemDefinitions = {
 		FactionId = GameConfig.Factions.CYBORG,
 		RequiredLevel = 1,
 		RequiredPT = { Type = GameConfig.PTTypes.Launcher, Level = 1 },
-		AttackMin = 12, AttackMax = 22, Defense = 0, MaxUpgrade = 7,
+		AttackMin = 12,
+		AttackMax = 22,
+		Defense = 0,
+		MaxUpgrade = 7,
 	},
 	cyborg_training_tool_001 = {
 		Id = "cyborg_training_tool_001",
@@ -77,7 +112,10 @@ local ItemDefinitions = {
 		FactionId = GameConfig.Factions.CYBORG,
 		RequiredLevel = 1,
 		RequiredPT = { Type = GameConfig.PTTypes.Melee, Level = 1 },
-		AttackMin = 6, AttackMax = 10, Defense = 0, MaxUpgrade = 7,
+		AttackMin = 6,
+		AttackMax = 10,
+		Defense = 0,
+		MaxUpgrade = 7,
 	},
 	mystic_training_blade_001 = {
 		Id = "mystic_training_blade_001",
@@ -88,7 +126,10 @@ local ItemDefinitions = {
 		FactionId = GameConfig.Factions.MYSTIC,
 		RequiredLevel = 1,
 		RequiredPT = { Type = GameConfig.PTTypes.Melee, Level = 1 },
-		AttackMin = 7, AttackMax = 12, Defense = 0, MaxUpgrade = 7,
+		AttackMin = 7,
+		AttackMax = 12,
+		Defense = 0,
+		MaxUpgrade = 7,
 	},
 	mystic_training_bow_001 = {
 		Id = "mystic_training_bow_001",
@@ -99,7 +140,10 @@ local ItemDefinitions = {
 		FactionId = GameConfig.Factions.MYSTIC,
 		RequiredLevel = 1,
 		RequiredPT = { Type = GameConfig.PTTypes.Ranged, Level = 1 },
-		AttackMin = 7, AttackMax = 14, Defense = 0, MaxUpgrade = 7,
+		AttackMin = 7,
+		AttackMax = 14,
+		Defense = 0,
+		MaxUpgrade = 7,
 	},
 	mystic_training_staff_001 = {
 		Id = "mystic_training_staff_001",
@@ -110,8 +154,12 @@ local ItemDefinitions = {
 		FactionId = GameConfig.Factions.MYSTIC,
 		RequiredLevel = 1,
 		RequiredPT = { Type = GameConfig.PTTypes.Magic, Level = 1 },
-		AttackMin = 4, AttackMax = 9, ForceAttackMin = 10, ForceAttackMax = 18,
-		Defense = 0, MaxUpgrade = 7,
+		AttackMin = 4,
+		AttackMax = 9,
+		ForceAttackMin = 10,
+		ForceAttackMax = 18,
+		Defense = 0,
+		MaxUpgrade = 7,
 	},
 	mystic_training_tool_001 = {
 		Id = "mystic_training_tool_001",
@@ -122,55 +170,132 @@ local ItemDefinitions = {
 		FactionId = GameConfig.Factions.MYSTIC,
 		RequiredLevel = 1,
 		RequiredPT = { Type = GameConfig.PTTypes.Melee, Level = 1 },
-		AttackMin = 5, AttackMax = 9, Defense = 0, MaxUpgrade = 7,
+		AttackMin = 5,
+		AttackMax = 9,
+		Defense = 0,
+		MaxUpgrade = 7,
 	},
-	mecha_training_armor_001 = {
-		Id = "mecha_training_armor_001",
-		Name = "Mechanica Recruit Armor",
-		Category = GameConfig.ItemCategories.Armor,
-		Slot = GameConfig.EquipmentSlots.Armor,
-		FactionId = GameConfig.Factions.MECHA,
-		RequiredLevel = 1,
-		RequiredPT = { Type = GameConfig.PTTypes.Defense, Level = 1 },
-		AttackMin = 0, AttackMax = 0, Defense = 15, MaxUpgrade = 7,
+	mecha_training_helmet_001 = starterArmorDefinition(
+		"mecha_training_helmet_001",
+		"Mechanica Recruit Helmet",
+		GameConfig.EquipmentSlots.Helmet,
+		GameConfig.Factions.MECHA,
+		4
+	),
+	mecha_training_armor_001 = starterArmorDefinition(
+		"mecha_training_armor_001",
+		"Mechanica Recruit Armor",
+		GameConfig.EquipmentSlots.Upper,
+		GameConfig.Factions.MECHA,
+		15
+	),
+	mecha_training_lower_001 = starterArmorDefinition(
+		"mecha_training_lower_001",
+		"Mechanica Recruit Greaves",
+		GameConfig.EquipmentSlots.Lower,
+		GameConfig.Factions.MECHA,
+		8
+	),
+	mecha_training_gloves_001 = starterArmorDefinition(
+		"mecha_training_gloves_001",
+		"Mechanica Recruit Gloves",
+		GameConfig.EquipmentSlots.Gloves,
+		GameConfig.Factions.MECHA,
+		3
+	),
+	mecha_training_boots_001 = starterArmorDefinition(
+		"mecha_training_boots_001",
+		"Mechanica Recruit Boots",
+		GameConfig.EquipmentSlots.Boots,
+		GameConfig.Factions.MECHA,
+		3
+	),
+	cyborg_training_helmet_001 = starterArmorDefinition(
+		"cyborg_training_helmet_001",
+		"Dominion Recruit Helm",
+		GameConfig.EquipmentSlots.Helmet,
+		GameConfig.Factions.CYBORG,
+		5
+	),
+	cyborg_training_armor_001 = starterArmorDefinition(
+		"cyborg_training_armor_001",
+		"Dominion Recruit Frame",
+		GameConfig.EquipmentSlots.Upper,
+		GameConfig.Factions.CYBORG,
+		18
+	),
+	cyborg_training_lower_001 = starterArmorDefinition(
+		"cyborg_training_lower_001",
+		"Dominion Recruit Leg Frame",
+		GameConfig.EquipmentSlots.Lower,
+		GameConfig.Factions.CYBORG,
+		9
+	),
+	cyborg_training_gloves_001 = starterArmorDefinition(
+		"cyborg_training_gloves_001",
+		"Dominion Recruit Gauntlets",
+		GameConfig.EquipmentSlots.Gloves,
+		GameConfig.Factions.CYBORG,
+		4
+	),
+	cyborg_training_boots_001 = starterArmorDefinition(
+		"cyborg_training_boots_001",
+		"Dominion Recruit Treads",
+		GameConfig.EquipmentSlots.Boots,
+		GameConfig.Factions.CYBORG,
+		4
+	),
+	mystic_training_hood_001 = starterArmorDefinition(
+		"mystic_training_hood_001",
+		"Elyndra Recruit Hood",
+		GameConfig.EquipmentSlots.Helmet,
+		GameConfig.Factions.MYSTIC,
+		3
+	),
+	mystic_training_robe_001 = starterArmorDefinition(
+		"mystic_training_robe_001",
+		"Elyndra Recruit Robe",
+		GameConfig.EquipmentSlots.Upper,
+		GameConfig.Factions.MYSTIC,
+		11
+	),
+	mystic_training_lower_001 = starterArmorDefinition(
+		"mystic_training_lower_001",
+		"Elyndra Recruit Legwraps",
+		GameConfig.EquipmentSlots.Lower,
+		GameConfig.Factions.MYSTIC,
+		6
+	),
+	mystic_training_gloves_001 = starterArmorDefinition(
+		"mystic_training_gloves_001",
+		"Elyndra Recruit Handwraps",
+		GameConfig.EquipmentSlots.Gloves,
+		GameConfig.Factions.MYSTIC,
+		2
+	),
+	mystic_training_boots_001 = starterArmorDefinition(
+		"mystic_training_boots_001",
+		"Elyndra Recruit Boots",
+		GameConfig.EquipmentSlots.Boots,
+		GameConfig.Factions.MYSTIC,
+		2
+	),
+	upgrader = {
+		Id = "upgrader",
+		Name = "Aetherion Upgrader",
+		Category = GameConfig.ItemCategories.Material,
+		Type = "Utility",
+		SpecialAction = "OpenUpgradeUI",
+		IsPermanent = true,
+		Locked = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
+		Stackable = false,
+		Slots = 0,
+		Durability = 0,
+		MaxDurability = 0,
 	},
-	cyborg_training_armor_001 = {
-		Id = "cyborg_training_armor_001",
-		Name = "Dominion Recruit Frame",
-		Category = GameConfig.ItemCategories.Armor,
-		Slot = GameConfig.EquipmentSlots.Armor,
-		FactionId = GameConfig.Factions.CYBORG,
-		RequiredLevel = 1,
-		RequiredPT = { Type = GameConfig.PTTypes.Defense, Level = 1 },
-		AttackMin = 0, AttackMax = 0, Defense = 18, MaxUpgrade = 7,
-	},
-	mystic_training_robe_001 = {
-		Id = "mystic_training_robe_001",
-		Name = "Elyndra Recruit Robe",
-		Category = GameConfig.ItemCategories.Armor,
-		Slot = GameConfig.EquipmentSlots.Armor,
-		FactionId = GameConfig.Factions.MYSTIC,
-		RequiredLevel = 1,
-		RequiredPT = { Type = GameConfig.PTTypes.Defense, Level = 1 },
-		AttackMin = 0, AttackMax = 0, Defense = 11, MaxUpgrade = 7,
-	},
-	    upgrader = {
-        Id = "upgrader",
-        Name = "Aetherion Upgrader",
-        Category = GameConfig.ItemCategories.Material,
-        Type = "Utility",
-        SpecialAction = "OpenUpgradeUI",
-        IsPermanent = true,
-        Locked = true,
-        CanSell = false,
-        CanDrop = false,
-        CanTrade = false,
-        Stackable = false,
-        Slots = 0,
-        Durability = 0,
-        MaxDurability = 0,
-    },
-
 
 	-- ============================================================
 	-- TALIC — sesuai RF Online asli
@@ -193,7 +318,10 @@ local ItemDefinitions = {
 		UpgradePower = 0.01,
 		UpgradeEffect = { Type = "WeaponAttackUpgrade" },
 		Description = "Increases weapon Attack Power.",
-		Stackable = true, CanSell = false, CanDrop = false, CanTrade = false,
+		Stackable = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
 	},
 
 	-- 1b. Keen Talic — Weapon — Increase Attack Power (stronger)
@@ -207,7 +335,10 @@ local ItemDefinitions = {
 		UpgradePower = 0.015,
 		UpgradeEffect = { Type = "WeaponAttackUpgrade" },
 		Description = "Increases weapon Attack Power.",
-		Stackable = true, CanSell = false, CanDrop = false, CanTrade = false,
+		Stackable = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
 	},
 
 	-- 2. Destruction Talic — Weapon — Absorbs some of target's HP
@@ -221,7 +352,10 @@ local ItemDefinitions = {
 		UpgradePower = 0.04,
 		UpgradeEffect = { Type = "LifeStealPercent", ValuePerTalic = 0.03 },
 		Description = "Absorbs some of the target's HP on each hit.",
-		Stackable = true, CanSell = false, CanDrop = false, CanTrade = false,
+		Stackable = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
 	},
 
 	-- 3. Darkness Talic — Weapon — Lowers target's Block Rate
@@ -235,7 +369,10 @@ local ItemDefinitions = {
 		UpgradePower = 0.02,
 		UpgradeEffect = { Type = "IgnoreBlockChance", ValuePerTalic = 0.03 },
 		Description = "Lowers the target's Block Rate.",
-		Stackable = true, CanSell = false, CanDrop = false, CanTrade = false,
+		Stackable = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
 	},
 
 	-- 4. Chaos Talic — Weapon + Jetpack (Cloak) — Temporarily Stuns target
@@ -249,7 +386,10 @@ local ItemDefinitions = {
 		UpgradePower = 0.05,
 		UpgradeEffect = { Type = "StunChance", ValuePerTalic = 0.03 },
 		Description = "Adds a chance to temporarily stun the target.",
-		Stackable = true, CanSell = false, CanDrop = false, CanTrade = false,
+		Stackable = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
 	},
 
 	-- 5. Hatred Talic — Ranged Weapons only — Increases Attack Range
@@ -263,7 +403,10 @@ local ItemDefinitions = {
 		UpgradePower = 0.02,
 		UpgradeEffect = { Type = "RangeMultiplier", ValuePerTalic = 0.05 },
 		Description = "Increases Attack Range. Ranged weapons only.",
-		Stackable = true, CanSell = false, CanDrop = false, CanTrade = false,
+		Stackable = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
 	},
 
 	-- 6. Favor Talic — All Armor (Helmet/Upper/Lower/Gloves/Boots/Shield/Cloak) — Increases Defense
@@ -277,7 +420,10 @@ local ItemDefinitions = {
 		UpgradePower = 0.02,
 		UpgradeEffect = { Type = "DefenseFlat", ValuePerTalic = 2 },
 		Description = "Increases Defense. Can be used on any armor piece.",
-		Stackable = true, CanSell = false, CanDrop = false, CanTrade = false,
+		Stackable = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
 	},
 
 	-- 7. Wisdom Talic — Helmet only — Reduces Debuff Duration
@@ -291,7 +437,10 @@ local ItemDefinitions = {
 		UpgradePower = 0.025,
 		UpgradeEffect = { Type = "DebuffDurationReduction", ValuePerTalic = 0.05 },
 		Description = "Reduces the duration of debuffs on the wearer. Helmet only.",
-		Stackable = true, CanSell = false, CanDrop = false, CanTrade = false,
+		Stackable = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
 	},
 
 	-- 8. Sacredfire Talic — Upper/Lower/Shield/Jetpack/Melee Weapon — Fire Resistance
@@ -305,7 +454,10 @@ local ItemDefinitions = {
 		UpgradePower = 0.03,
 		UpgradeEffect = { Type = "FireResistanceFlat", ValuePerTalic = 1 },
 		Description = "Increases Fire Resistance.",
-		Stackable = true, CanSell = false, CanDrop = false, CanTrade = false,
+		Stackable = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
 	},
 
 	-- 9. Belief Talic — Upper/Lower/Shield/Jetpack/Melee Weapon — Water Resistance
@@ -319,7 +471,10 @@ local ItemDefinitions = {
 		UpgradePower = 0.035,
 		UpgradeEffect = { Type = "AquaResistanceFlat", ValuePerTalic = 1 },
 		Description = "Increases Water Resistance.",
-		Stackable = true, CanSell = false, CanDrop = false, CanTrade = false,
+		Stackable = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
 	},
 
 	-- 10. Guard Talic — Upper/Lower/Shield/Jetpack/Melee Weapon — Terra Resistance
@@ -333,7 +488,10 @@ local ItemDefinitions = {
 		UpgradePower = 0.015,
 		UpgradeEffect = { Type = "TerraResistanceFlat", ValuePerTalic = 1 },
 		Description = "Increases Terra Resistance.",
-		Stackable = true, CanSell = false, CanDrop = false, CanTrade = false,
+		Stackable = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
 	},
 
 	-- 11. Glory Talic — Upper/Lower/Shield/Jetpack/Melee Weapon — Wind Resistance
@@ -347,7 +505,10 @@ local ItemDefinitions = {
 		UpgradePower = 0.02,
 		UpgradeEffect = { Type = "WindResistanceFlat", ValuePerTalic = 1 },
 		Description = "Increases Wind Resistance.",
-		Stackable = true, CanSell = false, CanDrop = false, CanTrade = false,
+		Stackable = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
 	},
 
 	-- 12. Grace Talic — Gloves only — Increases Accuracy
@@ -361,7 +522,10 @@ local ItemDefinitions = {
 		UpgradePower = 0.02,
 		UpgradeEffect = { Type = "AccuracyFlat", ValuePerTalic = 2 },
 		Description = "Increases Accuracy. Gloves only.",
-		Stackable = true, CanSell = false, CanDrop = false, CanTrade = false,
+		Stackable = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
 	},
 
 	-- 13. Mercy Talic — Boots only — Increases Avoidance Rate
@@ -375,7 +539,10 @@ local ItemDefinitions = {
 		UpgradePower = 0.02,
 		UpgradeEffect = { Type = "DodgeFlat", ValuePerTalic = 2 },
 		Description = "Increases Avoidance Rate. Boots only.",
-		Stackable = true, CanSell = false, CanDrop = false, CanTrade = false,
+		Stackable = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
 	},
 
 	-- 14. Restoration Talic — All equipment — Removes the last added Talic
@@ -390,7 +557,10 @@ local ItemDefinitions = {
 		UpgradePower = 0,
 		UpgradeEffect = { Type = "RemoveLastTalic" },
 		Description = "Removes the last added Talic from any equipment.",
-		Stackable = true, CanSell = false, CanDrop = false, CanTrade = false,
+		Stackable = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
 	},
 
 	-- ============================================================
@@ -406,7 +576,10 @@ local ItemDefinitions = {
 		AppliesTo = "All",
 		UpgradePower = 0.02,
 		Description = "Slightly increases upgrade success rate.",
-		Stackable = true, CanSell = false, CanDrop = false, CanTrade = false,
+		Stackable = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
 	},
 
 	upgrade_catalyst_medium = {
@@ -418,7 +591,10 @@ local ItemDefinitions = {
 		AppliesTo = "All",
 		UpgradePower = 0.04,
 		Description = "Moderately increases upgrade success rate.",
-		Stackable = true, CanSell = false, CanDrop = false, CanTrade = false,
+		Stackable = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
 	},
 
 	upgrade_catalyst_high = {
@@ -430,7 +606,10 @@ local ItemDefinitions = {
 		AppliesTo = "All",
 		UpgradePower = 0.06,
 		Description = "Greatly increases upgrade success rate.",
-		Stackable = true, CanSell = false, CanDrop = false, CanTrade = false,
+		Stackable = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
 	},
 }
 

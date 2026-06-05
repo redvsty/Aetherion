@@ -9,36 +9,36 @@ local PlayerDataFactory = {}
 
 local function defaultPT()
 	return {
-		Melee   = { Level = 1, Exp = 0 },
-		Ranged  = { Level = 1, Exp = 0 },
-		Launcher= { Level = 1, Exp = 0 },
-		Shield  = { Level = 1, Exp = 0 },
+		Melee = { Level = 1, Exp = 0 },
+		Ranged = { Level = 1, Exp = 0 },
+		Launcher = { Level = 1, Exp = 0 },
+		Shield = { Level = 1, Exp = 0 },
 		Defense = { Level = 1, Exp = 0 },
-		Magic   = { Level = 1, Exp = 0 },
-		Unit    = { Level = 1, Exp = 0 },
+		Magic = { Level = 1, Exp = 0 },
+		Unit = { Level = 1, Exp = 0 },
 	}
 end
 
 function PlayerDataFactory.Create(player)
 	return {
-		SchemaVersion = 3,
+		SchemaVersion = 4,
 
-		UserId  = player.UserId,
-		Name    = player.Name,
+		UserId = player.UserId,
+		Name = player.Name,
 
-		Level   = 1,
-		Exp     = 0,
+		Level = 1,
+		Exp = 0,
 		MaxLevel = GameConfig.MaxLevel,
 
-		FactionId        = nil,
-		StartingClassId  = nil,
-		ClassLevel30Id   = nil,
-		ClassLevel40Id   = nil,
+		FactionId = nil,
+		StartingClassId = nil,
+		ClassLevel30Id = nil,
+		ClassLevel40Id = nil,
 
-		NeedsRaceSelection          = true,
+		NeedsRaceSelection = true,
 		NeedsStartingClassSelection = true,
-		NeedsLevel30ClassSelection  = false,
-		NeedsLevel40ClassSelection  = false,
+		NeedsLevel30ClassSelection = false,
+		NeedsLevel40ClassSelection = false,
 
 		-- Fix: hanya Gold yang ada dari awal.
 		-- Faction currency (MechaCredits / CyborgCredits / ElyndraSignil)
@@ -49,11 +49,11 @@ function PlayerDataFactory.Create(player)
 
 		Stats = {
 			MaxHP = 150,
-			HP    = 150,
+			HP = 150,
 			MaxFP = 100,
-			FP    = 100,
+			FP = 100,
 			MaxSP = 100,
-			SP    = 100,
+			SP = 100,
 		},
 
 		PT = defaultPT(),
@@ -61,10 +61,14 @@ function PlayerDataFactory.Create(player)
 		Inventory = {},
 
 		Equipment = {
-			Weapon     = nil,
-			Armor      = nil,
-			Shield     = nil,
-			Cloak      = nil,
+			Weapon = nil,
+			Helmet = nil,
+			Upper = nil,
+			Lower = nil,
+			Gloves = nil,
+			Boots = nil,
+			Shield = nil,
+			Cloak = nil,
 			Accessory1 = nil,
 			Accessory2 = nil,
 			Accessory3 = nil,
@@ -72,7 +76,7 @@ function PlayerDataFactory.Create(player)
 		},
 
 		ContributionPoints = 0,
-		ChaosUntil         = 0,
+		ChaosUntil = 0,
 	}
 end
 
