@@ -1521,9 +1521,20 @@ local function buildHotbar()
 		local slotButton = createSlot(
 			guiRefs.HotbarSlots,
 			"Hotbar" .. tostring(index),
-			UDim2.new(0, 48, 0, 48),
-			UDim2.new(0, (index - 1) * 52, 0, 0)
+			UDim2.new(0, 38, 0, 38),
+			UDim2.new(0, (index - 1) * 42, 0, 0)
 		)
+		slotButton.BackgroundTransparency = 0.32
+
+		local inner = slotButton:FindFirstChild("Inner")
+		if inner then
+			inner.BackgroundTransparency = 0.36
+		end
+
+		local stroke = slotButton:FindFirstChildOfClass("UIStroke")
+		if stroke then
+			stroke.Transparency = 0.86
+		end
 
 		local assigned = uiState.HotbarAssignments[index]
 		renderSlotVisual(slotButton, assigned, tostring(index % 10))
@@ -1549,10 +1560,6 @@ function AetherionGameplayUI.Render()
 
 	if guiRefs.UpgradeFrame then
 		applyResponsiveScale(guiRefs.UpgradeFrame, 0.78, 0.95)
-	end
-
-	if guiRefs.HotbarFrame then
-		applyResponsiveScale(guiRefs.HotbarFrame, 0.78, 1)
 	end
 
 	buildHUD()
@@ -1922,7 +1929,6 @@ function AetherionGameplayUI.Create()
 	local hudFrame =
 		makeFrame(screenGui, "HUDFrame", UDim2.new(0, 300, 0, 135), UDim2.new(0, 12, 0, 12), Color3.fromRGB(18, 20, 26))
 	guiRefs.HUDFrame = hudFrame
-	createDragHandle(hudFrame, "HUDDragHandle", 28)
 
 	local levelLabel = makeLabel(hudFrame, "Lv. 1", UDim2.new(0, 80, 0, 22), UDim2.new(0, 8, 0, 6), 18, true)
 	guiRefs.LevelLabel = levelLabel
@@ -2004,7 +2010,7 @@ function AetherionGameplayUI.Create()
 		screenGui,
 		"PartyFrame",
 		UDim2.new(0, 330, 0, 315),
-		UDim2.new(0, 12, 0, 170),
+		UDim2.new(0, math.max(8, viewport.X - 350), 0, 42),
 		Color3.fromRGB(16, 18, 22)
 	)
 	guiRefs.PartyFrame = partyFrame
@@ -2117,18 +2123,21 @@ function AetherionGameplayUI.Create()
 	local hotbarFrame = makeFrame(
 		screenGui,
 		"HotbarFrame",
-		UDim2.new(0, 560, 0, 74),
-		UDim2.new(0.5, -280, 1, -94),
-		Color3.fromRGB(18, 20, 26)
+		UDim2.new(0, 450, 0, 54),
+		UDim2.new(0.5, -225, 1, -72),
+		Color3.fromRGB(10, 13, 18),
+		0.32
 	)
 	guiRefs.HotbarFrame = hotbarFrame
-	applyResponsiveScale(hotbarFrame, 0.78, 1)
-	createDragHandle(hotbarFrame, "HotbarDragHandle", 10)
+	local hotbarStroke = hotbarFrame:FindFirstChildOfClass("UIStroke")
+	if hotbarStroke then
+		hotbarStroke.Transparency = 0.84
+	end
 
 	local hotbarSlots = Instance.new("Frame")
 	hotbarSlots.BackgroundTransparency = 1
-	hotbarSlots.Size = UDim2.new(0, 520, 0, 48)
-	hotbarSlots.Position = UDim2.new(0, 20, 0, 13)
+	hotbarSlots.Size = UDim2.new(0, 416, 0, 38)
+	hotbarSlots.Position = UDim2.new(0.5, -208, 0, 8)
 	hotbarSlots.Parent = hotbarFrame
 	guiRefs.HotbarSlots = hotbarSlots
 
