@@ -524,11 +524,10 @@ end
 -- ============================================================
 
 -- Client mengirim event saat player tekan hotkey toggle run/walk
-ToggleRunWalkRequest.OnServerReceived = function(player)
+ToggleRunWalkRequest.OnServerEvent:Connect(function(player)
 	local isRunning = StaminaService.ToggleRunWalk(player)
-	-- Kirim state baru kembali ke client
 	RunWalkStateChanged:FireClient(player, isRunning)
-end
+end)
 
 -- ============================================================
 -- Patch RF-Accuracy: Macro handlers
@@ -591,7 +590,7 @@ UseItemRequest.OnServerInvoke = function(player, itemUid)
 	local ItemDefinitions = require(game.ReplicatedStorage.Shared.Definitions.ItemDefinitions)
 	local def = ItemDefinitions[found.ItemId]
 
-	if not def or def.Category ~= "Consumable" then
+	if not def or not (def.RestoreHP or def.RestoreFP or def.RestoreSP) then
 		return false, "Item is not usable"
 	end
 
