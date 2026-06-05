@@ -5,6 +5,7 @@ local RaceDefinitions = require(game.ReplicatedStorage.Shared.Definitions.RaceDe
 local ClassDefinitions = require(game.ReplicatedStorage.Shared.Definitions.ClassDefinitions)
 local CurrencyDefinitions = require(game.ReplicatedStorage.Shared.Definitions.CurrencyDefinitions)
 local InventoryService = require(script.Parent.InventoryService)
+local LevelService = require(script.Parent.LevelService)
 
 local CharacterCreationService = {}
 
@@ -108,6 +109,9 @@ function CharacterCreationService.SelectRaceAndClass(playerData, factionId, star
 	playerData.StartingClassId = startingClassId
 	playerData.NeedsRaceSelection = false
 	playerData.NeedsStartingClassSelection = false
+
+	-- Batch 3: Apply stats awal berdasarkan class + ras (dengan restore penuh)
+	LevelService.ApplyStats(playerData, true)
 
 	giveStartingCurrency(playerData, factionId)
 
