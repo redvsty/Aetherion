@@ -6,11 +6,13 @@ local function randomFloat(minValue, maxValue)
 	return minValue + math.random() * (maxValue - minValue)
 end
 
--- Hitung FP cost untuk satu Force Attack, mempertimbangkan FPCostReduction dari equipment.
+-- Hitung FP cost untuk Force Attack otomatis (weapon-based auto-attack magic).
+-- Ini berbeda dari Skill/Force manual yang punya FPCost sendiri di definisi.
+-- Base cost: 10 FP (hardcoded untuk auto force attack)
 -- FPCostReduction: 0.0 (tidak ada pengurangan) s/d 0.80 (80% lebih murah).
 -- FPCostIncrease: multiplier tambahan, 0.0 = tidak ada tambahan, 0.5 = 50% lebih mahal.
 function CombatFormulas.GetFPCost(attackerStats)
-	local base = GameConfig.ForceAttack.FPCostBase
+	local base = 10 -- base FP cost untuk auto Force Attack (bukan skill manual)
 	local reduction = math.clamp(attackerStats.FPCostReduction or 0, 0, 0.80)
 	local increase = math.clamp(attackerStats.FPCostIncrease or 0, 0, 3.00)
 	local cost = base * (1 - reduction) * (1 + increase)

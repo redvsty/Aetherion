@@ -129,16 +129,28 @@ GameConfig.Combat = {
 -- Force Attack / FP Settings
 -- FP dipakai saat player menggunakan Force Attack (class Magic/Spiritualist).
 -- Weapon dengan ForceAttackMin/Max akan trigger force attack otomatis.
+-- CATATAN: FPCostBase dihapus di Batch 2.5 — setiap Skill/Force punya FP cost sendiri
+-- yang didefinisikan di SkillDefinitions.lua dan ForceDefinitions.lua.
 GameConfig.ForceAttack = {
-	-- FP yang dikonsumsi per satu Force Attack
-	FPCostBase = 10,
-
 	-- Variance damage force attack (sedikit lebih konsisten dari normal attack)
 	DamageVarianceMin = 0.92,
 	DamageVarianceMax = 1.08,
 
 	-- Jika player tidak punya cukup FP, force attack tidak bisa dipakai
 	MinFPRequired = 5,
+}
+
+-- Skill System (Batch 2.5)
+-- Tier unlock: Basic → Expert (butuh 30 PT Basic) → Elite (butuh 50 PT Expert)
+GameConfig.SkillSystem = {
+	-- Jumlah aggregate skill level di tier Basic yang dibutuhkan untuk buka Expert
+	BasicPTForExpert = 30,
+	-- Jumlah aggregate skill level di tier Expert yang dibutuhkan untuk buka Elite
+	ExpertPTForElite = 50,
+	-- Exp yang diberikan per hit untuk skill attack
+	ExpPerHit = 1,
+	-- Exp yang diberikan per cast untuk skill buff
+	ExpPerBuff = 5,
 }
 
 -- FP Regeneration

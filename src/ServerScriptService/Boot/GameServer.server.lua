@@ -12,6 +12,9 @@ local CombatService = require(script.Parent.Parent.Services.CombatService)
 local InventoryService = require(script.Parent.Parent.Services.InventoryService)
 local PartyService = require(script.Parent.Parent.Services.PartyService)
 local WeaponService = require(script.Parent.Parent.Services.WeaponService)
+local SkillService = require(script.Parent.Parent.Services.SkillService)
+
+local EquipmentServiceRef = EquipmentService -- alias untuk dipakai di SkillService cast
 
 local ItemDefinitions = require(game.ReplicatedStorage.Shared.Definitions.ItemDefinitions)
 local Weapons = require(game.ReplicatedStorage.Shared.Database.Weapons.Weapons)
@@ -60,6 +63,10 @@ local GetClassOptionsRequest = ensureRemoteFunction("GetClassOptionsRequest")
 local EquipItemRequest = ensureRemoteFunction("EquipItemRequest")
 local UpgradeItemRequest = ensureRemoteFunction("UpgradeItemRequest")
 local AttackRequest = ensureRemoteFunction("AttackRequest")
+-- Batch 2.5: Skill & Force remotes
+local CastSkillRequest = ensureRemoteFunction("CastSkillRequest")
+local GetSkillDataRequest = ensureRemoteFunction("GetSkillDataRequest")
+local GetSkillCooldownsRequest = ensureRemoteFunction("GetSkillCooldownsRequest")
 local GiveWeaponRequest = ensureRemoteFunction("GiveWeaponRequest")
 local GiveItemRequest = ensureRemoteFunction("GiveItemRequest")
 -- Weapon query remotes (dipanggil dari AetherionDebug)
@@ -148,6 +155,7 @@ Players.PlayerRemoving:Connect(function(player)
 
 	CombatService.OnPlayerRemoving(player)
 	PartyService.OnPlayerRemoving(player, profiles)
+	SkillService.OnPlayerRemoving(player)
 	lastFPUseTime[player] = nil
 	profiles[player] = nil
 	isLoadFailed[player] = nil
@@ -372,6 +380,72 @@ task.spawn(function()
 end)
 
 -- Cleanup lastFPUseTime saat player leave (sudah ada di PlayerRemoving tapi perlu tambah ini)
+
+-- ============================================================
+-- Batch 2.5: Skill & Force Handlers
+-- ============================================================
+
+-- CastSkillRequest(skillId, targetModel?) → ok, result
+CastSkillRequest.OnServerInvoke = function(player, skillId, targetModel)
+	local data = profiles[player]
+
+	if not data then
+		return false, "No player data"
+	end
+
+	if not data.FactionId then
+		return false, "No faction selected"
+	end
+
+	if type(skillId) ~= "string" then
+		return false, "Invalid skill id"
+	end
+
+	-- Ambil attacker stats
+	local attackerStats = EquipmentServiceRef.GetTotalStats(data)
+
+	-- Ambil defender stats jika target adalah player
+	local defenderStats = { Defense = 5 }
+
+	if targetModel and typeof(targetModel) == "Instance" then
+		local targetPlayer = Players:GetPlayerFromCharacter(targetModel)
+		local targetData = targetPlayer and profiles[targetPlayer]
+
+		if targetData then
+			defenderStats = EquipmentServiceRef.GetTotalStats(targetData)
+		end
+	end
+
+	return SkillService.Cast(
+		player,
+		skillId,
+		targetModel,
+		attackerStats,
+		defenderStats,
+		profiles,
+		onFPConsumed
+	)
+end
+
+-- GetSkillDataRequest() → ok, { Skills, SkillPT }
+GetSkillDataRequest.OnServerInvoke = function(player)
+	local data = profiles[player]
+
+	if not data then
+		return false, "No player data"
+	end
+
+	return true, {
+		Skills = data.Skills or {},
+		SkillPT = data.SkillPT or {},
+		ActiveBuffs = data.ActiveBuffs or {},
+	}
+end
+
+-- GetSkillCooldownsRequest() → ok, { [skillId] = remainingSeconds }
+GetSkillCooldownsRequest.OnServerInvoke = function(player)
+	return true, SkillService.GetCooldowns(player)
+end
 
 AttackRequest.OnServerInvoke = function(player, targetModel)
 	return CombatService.Attack(player, targetModel, profiles)

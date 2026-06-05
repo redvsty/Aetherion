@@ -60,6 +60,35 @@ local function loadUI()
 		return false
 	end
 
+	-- Batch 2.5: Load SkillPanelUI setelah GameplayUI
+	task.spawn(function()
+		local client = ReplicatedStorage:WaitForChild("Shared", 10):WaitForChild("Client", 10)
+		local skillModule = client:WaitForChild("SkillPanelUI", 10)
+
+		if not skillModule then
+			warn("[Aetherion] SkillPanelUI module not found, skill UI will not load")
+			return
+		end
+
+		local okSkill, SkillUI = pcall(require, skillModule)
+
+		if not okSkill then
+			warn("[Aetherion] Failed to require SkillPanelUI:", SkillUI)
+			return
+		end
+
+		local initOk, initErr = pcall(function()
+			SkillUI.Init()
+		end)
+
+		if not initOk then
+			warn("[Aetherion] Failed to init SkillPanelUI:", initErr)
+			return
+		end
+
+		print("[Aetherion] SkillPanelUI initialized (press K to open)")
+	end)
+
 	print("[Aetherion] Gameplay UI created from StarterGui loader")
 	return true
 end
