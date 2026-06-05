@@ -142,6 +142,7 @@ local runtimeConnections = {}
 local lastInventoryToggleAt = 0
 local INVENTORY_ACTION_PRIORITY = 10000
 local PARTY_ACTION_PRIORITY = INVENTORY_ACTION_PRIORITY + 1
+local activeDragWindow = nil
 
 local function invokeRemote(remote, ...)
 	local ok, a, b = pcall(function(...)
@@ -437,16 +438,18 @@ local function createStroke(parent, color, thickness)
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = color or Color3.fromRGB(80, 80, 90)
 	stroke.Thickness = thickness or 1
+	stroke.Transparency = 0.62
 	stroke.Parent = parent
 	return stroke
 end
 
-local function makeFrame(parent, name, size, position, color)
+local function makeFrame(parent, name, size, position, color, backgroundTransparency)
 	local frame = Instance.new("Frame")
 	frame.Name = name
 	frame.Size = size
 	frame.Position = position
 	frame.BackgroundColor3 = color or RF_THEME.Window
+	frame.BackgroundTransparency = backgroundTransparency or 0.08
 	frame.BorderSizePixel = 0
 	frame.Parent = parent
 
@@ -463,6 +466,89 @@ local function makeFrame(parent, name, size, position, color)
 	gradient.Parent = frame
 
 	return frame
+end
+
+local function getViewportSize()
+	local camera = workspace.CurrentCamera
+	if camera then
+		return camera.ViewportSize
+	end
+
+	return Vector2.new(1280, 720)
+end
+
+local function getAbsolutePanelSize(frame)
+	return frame.AbsoluteSize
+end
+
+local function clampFrameToViewport(frame, position)
+	local viewport = getViewportSize()
+	local panelSize = getAbsolutePanelSize(frame)
+	local minX = 8
+	local minY = 8
+	local maxX = math.max(minX, viewport.X - panelSize.X - 8)
+	local maxY = math.max(minY, viewport.Y - panelSize.Y - 8)
+	local x = math.clamp(position.X.Offset, minX, maxX)
+	local y = math.clamp(position.Y.Offset, minY, maxY)
+
+	return UDim2.new(0, x, 0, y)
+end
+
+local function makeDraggable(frame, handle)
+	handle.Active = true
+	handle.InputBegan:Connect(function(input)
+		if input.UserInputType ~= Enum.UserInputType.MouseButton1 then
+			return
+		end
+
+		activeDragWindow = {
+			Frame = frame,
+			StartMouse = UserInputService:GetMouseLocation(),
+			StartPosition = frame.Position,
+		}
+	end)
+
+	handle.InputEnded:Connect(function(input)
+		if
+			input.UserInputType == Enum.UserInputType.MouseButton1
+			and activeDragWindow
+			and activeDragWindow.Frame == frame
+		then
+			activeDragWindow = nil
+		end
+	end)
+end
+
+local function createDragHandle(frame, name, height)
+	local handle = Instance.new("TextButton")
+	handle.Name = name or "DragHandle"
+	handle.Size = UDim2.new(1, -42, 0, height or 34)
+	handle.Position = UDim2.new(0, 8, 0, 4)
+	handle.BackgroundTransparency = 1
+	handle.Text = ""
+	handle.AutoButtonColor = false
+	handle.ZIndex = 1
+	handle.Parent = frame
+
+	makeDraggable(frame, handle)
+	return handle
+end
+
+local function applyResponsiveScale(frame, minScale, maxScale)
+	local scaleObject = frame:FindFirstChild("ResponsiveScale")
+	if not scaleObject then
+		scaleObject = Instance.new("UIScale")
+		scaleObject.Name = "ResponsiveScale"
+		scaleObject.Parent = frame
+	end
+
+	local viewport = getViewportSize()
+	local widthScale = (viewport.X * 0.86) / frame.Size.X.Offset
+	local heightScale = (viewport.Y * 0.78) / frame.Size.Y.Offset
+	scaleObject.Scale = math.clamp(math.min(widthScale, heightScale, maxScale or 1), minScale or 0.72, maxScale or 1)
+
+	frame.Position = clampFrameToViewport(frame, frame.Position)
+	return scaleObject.Scale
 end
 
 local function makeLabel(parent, text, size, position, textSize, bold)
@@ -726,23 +812,27 @@ local function createSlot(parent, slotName, size, position)
 	button.Text = ""
 	button.AutoButtonColor = false
 	button.BackgroundColor3 = RF_THEME.Slot
+	button.BackgroundTransparency = 0.18
 	button.BorderSizePixel = 0
 	button.Parent = parent
 
 	createCorner(button, 1)
-	createStroke(button, RF_THEME.Border, 1)
+	local outerStroke = createStroke(button, RF_THEME.Border, 1)
+	outerStroke.Transparency = 0.78
 
 	local inner = Instance.new("Frame")
 	inner.Name = "Inner"
 	inner.Size = UDim2.new(1, -6, 1, -6)
 	inner.Position = UDim2.new(0, 3, 0, 3)
 	inner.BackgroundColor3 = Color3.fromRGB(17, 21, 28)
+	inner.BackgroundTransparency = 0.22
 	inner.BorderSizePixel = 0
 	inner.Parent = button
 
 	local innerStroke = Instance.new("UIStroke")
 	innerStroke.Color = Color3.fromRGB(35, 43, 55)
 	innerStroke.Thickness = 1
+	innerStroke.Transparency = 0.82
 	innerStroke.Parent = inner
 
 	local icon = Instance.new("TextLabel")
@@ -1049,6 +1139,7 @@ local function renderSlotVisual(button, item, placeholderText)
 		icon.TextColor3 = Color3.fromRGB(120, 120, 130)
 		bottomText.Text = ""
 		stroke.Color = Color3.fromRGB(85, 85, 95)
+		stroke.Transparency = 0.82
 		return
 	end
 
@@ -1066,6 +1157,7 @@ local function renderSlotVisual(button, item, placeholderText)
 	end
 
 	stroke.Color = getGradeColor(def)
+	stroke.Transparency = 0.48
 end
 
 local function buildHUD()
@@ -1451,6 +1543,18 @@ function AetherionGameplayUI.Render()
 		return
 	end
 
+	if guiRefs.InventoryFrame then
+		applyResponsiveScale(guiRefs.InventoryFrame, 0.68, 0.86)
+	end
+
+	if guiRefs.UpgradeFrame then
+		applyResponsiveScale(guiRefs.UpgradeFrame, 0.78, 0.95)
+	end
+
+	if guiRefs.HotbarFrame then
+		applyResponsiveScale(guiRefs.HotbarFrame, 0.78, 1)
+	end
+
 	buildHUD()
 	buildInventory()
 	buildPartyUI()
@@ -1670,6 +1774,10 @@ local function setupRuntime()
 	table.insert(
 		runtimeConnections,
 		UserInputService.InputEnded:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 and activeDragWindow then
+				activeDragWindow = nil
+			end
+
 			if input.UserInputType == Enum.UserInputType.MouseButton1 and uiState.DraggedItem then
 				endDrag()
 			end
@@ -1679,6 +1787,16 @@ local function setupRuntime()
 	table.insert(
 		runtimeConnections,
 		RunService.RenderStepped:Connect(function()
+			if activeDragWindow then
+				local mousePos = UserInputService:GetMouseLocation()
+				local delta = mousePos - activeDragWindow.StartMouse
+				local startPosition = activeDragWindow.StartPosition
+				activeDragWindow.Frame.Position = clampFrameToViewport(
+					activeDragWindow.Frame,
+					UDim2.new(0, startPosition.X.Offset + delta.X, 0, startPosition.Y.Offset + delta.Y)
+				)
+			end
+
 			if uiState.DragVisual then
 				local mousePos = UserInputService:GetMouseLocation()
 				uiState.DragVisual.Position = UDim2.new(0, mousePos.X + 8, 0, mousePos.Y + 8)
@@ -1804,6 +1922,7 @@ function AetherionGameplayUI.Create()
 	local hudFrame =
 		makeFrame(screenGui, "HUDFrame", UDim2.new(0, 300, 0, 135), UDim2.new(0, 12, 0, 12), Color3.fromRGB(18, 20, 26))
 	guiRefs.HUDFrame = hudFrame
+	createDragHandle(hudFrame, "HUDDragHandle", 28)
 
 	local levelLabel = makeLabel(hudFrame, "Lv. 1", UDim2.new(0, 80, 0, 22), UDim2.new(0, 8, 0, 6), 18, true)
 	guiRefs.LevelLabel = levelLabel
@@ -1822,10 +1941,19 @@ function AetherionGameplayUI.Create()
 		makeLabel(hudFrame, "Point Emas 0", UDim2.new(0, 160, 0, 18), UDim2.new(0, 8, 0, 160), 12, false)
 
 	-- Inventory kanan atas
-	local inventoryFrame =
-		makeFrame(screenGui, "InventoryFrame", UDim2.new(0, 520, 0, 500), UDim2.new(1, -535, 0, 42), RF_THEME.Window)
+	local viewport = getViewportSize()
+	local inventoryFrame = makeFrame(
+		screenGui,
+		"InventoryFrame",
+		UDim2.new(0, 520, 0, 500),
+		UDim2.new(0, math.max(8, viewport.X - 470), 0, 42),
+		RF_THEME.Window,
+		0.14
+	)
 	guiRefs.InventoryFrame = inventoryFrame
 	inventoryFrame.Visible = uiState.InventoryOpen
+	applyResponsiveScale(inventoryFrame, 0.68, 0.86)
+	createDragHandle(inventoryFrame, "InventoryDragHandle", 34)
 
 	local invTitle = makeLabel(inventoryFrame, "Inventory", UDim2.new(1, -20, 0, 24), UDim2.new(0, 10, 0, 8), 15, true)
 	invTitle.TextColor3 = RF_THEME.Gold
@@ -1881,6 +2009,7 @@ function AetherionGameplayUI.Create()
 	)
 	guiRefs.PartyFrame = partyFrame
 	partyFrame.Visible = uiState.PartyOpen
+	createDragHandle(partyFrame, "PartyDragHandle", 54)
 
 	local partyHeader = Instance.new("Frame")
 	partyHeader.Name = "PartyHeader"
@@ -1961,6 +2090,8 @@ function AetherionGameplayUI.Create()
 		makeFrame(screenGui, "UpgradeFrame", UDim2.new(0, 260, 0, 285), UDim2.new(1, -275, 0, 510), RF_THEME.Window)
 	guiRefs.UpgradeFrame = upgradeFrame
 	upgradeFrame.Visible = uiState.UpgradeOpen
+	applyResponsiveScale(upgradeFrame, 0.78, 0.95)
+	createDragHandle(upgradeFrame, "UpgradeDragHandle", 34)
 
 	makeLabel(upgradeFrame, "Upgrade", UDim2.new(0, 120, 0, 24), UDim2.new(0, 10, 0, 8), 16, true)
 
@@ -1991,6 +2122,8 @@ function AetherionGameplayUI.Create()
 		Color3.fromRGB(18, 20, 26)
 	)
 	guiRefs.HotbarFrame = hotbarFrame
+	applyResponsiveScale(hotbarFrame, 0.78, 1)
+	createDragHandle(hotbarFrame, "HotbarDragHandle", 10)
 
 	local hotbarSlots = Instance.new("Frame")
 	hotbarSlots.BackgroundTransparency = 1
@@ -2008,6 +2141,7 @@ function AetherionGameplayUI.Create()
 		Color3.fromRGB(18, 20, 26)
 	)
 	guiRefs.StatusFrame = statusFrame
+	createDragHandle(statusFrame, "StatusDragHandle", 30)
 	guiRefs.StatusLabel =
 		makeLabel(statusFrame, "Status: Ready.", UDim2.new(1, -12, 1, 0), UDim2.new(0, 6, 0, 0), 12, false)
 
