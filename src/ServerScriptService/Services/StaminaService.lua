@@ -18,17 +18,20 @@ local StaminaService = {}
 -- Konstanta SP
 -- ============================================================
 
+-- RF Classic SP mechanics:
+-- MaxSP base 200 di level 1, naik ~10 per level (level 50 → ~700)
+-- RunCostPerSec ~1 SP/detik → bisa lari ~3-4 menit non-stop
+-- Regen cukup cepat agar tidak frustrasi
 local SP_CONFIG = {
-	MaxSP           = 100,    -- maksimum SP (bisa di-override per player dari equipment)
-	RunCostPerSec   = 3,      -- SP drain saat running
-	WalkRegenPerSec = 5,      -- SP regen saat walking / idle
-	IdleRegenPerSec = 8,      -- SP regen saat tidak bergerak (berdiri)
+	BaseMaxSP       = 200,    -- MaxSP di level 1
+	MaxSPPerLevel   = 10,     -- tambahan MaxSP per level naik
+	RunCostPerSec   = 1,      -- SP drain saat running (RF Classic: lambat agar tidak terlalu restrictive)
+	WalkRegenPerSec = 5,      -- SP regen saat walk (tidak dipakai saat ini, regen = idle)
+	IdleRegenPerSec = 10,     -- SP regen saat walk/idle
 	RunSpeed        = 16,     -- WalkSpeed saat run (studs/sec, default Roblox = 16)
 	WalkSpeed       = 8,      -- WalkSpeed saat walk (setengah)
-	-- Saat SP habis, paksa ke walk mode
-	ForcedWalkThreshold = 5,
-	-- SP harus >= ini untuk bisa kembali run
-	RunResumeThreshold  = 20,
+	ForcedWalkThreshold = 10, -- SP < ini → paksa walk
+	RunResumeThreshold  = 30, -- SP >= ini → bisa run lagi
 }
 
 -- State per player: [player] = { IsRunning = bool, SP = number, ForcedWalk = bool }
@@ -37,11 +40,22 @@ local playerStates = {}
 -- ============================================================
 -- Init state untuk player baru
 -- ============================================================
+local function calcMaxSP(playerData)
+	local level = (playerData and playerData.Level) or 1
+	-- Jika playerData sudah punya MaxSP dari equipment/buff, pakai itu sebagai override
+	local savedMaxSP = playerData and playerData.Stats and playerData.Stats.MaxSP
+	if savedMaxSP and savedMaxSP > SP_CONFIG.BaseMaxSP then
+		return savedMaxSP
+	end
+	return SP_CONFIG.BaseMaxSP + (level - 1) * SP_CONFIG.MaxSPPerLevel
+end
+
 function StaminaService.InitPlayer(player, playerData)
-	local maxSP = (playerData and playerData.Stats and playerData.Stats.MaxSP) or SP_CONFIG.MaxSP
+	local maxSP = calcMaxSP(playerData)
+	local savedSP = playerData and playerData.Stats and playerData.Stats.SP
 	playerStates[player] = {
 		IsRunning    = true,
-		SP           = maxSP,
+		SP           = savedSP or maxSP,
 		MaxSP        = maxSP,
 		ForcedWalk   = false,
 		LastMoveTick = tick(),
@@ -49,10 +63,21 @@ function StaminaService.InitPlayer(player, playerData)
 		LastPosition = nil,
 	}
 
-	-- Sync MaxSP ke playerData.Stats
 	if playerData and playerData.Stats then
 		playerData.Stats.SP    = playerData.Stats.SP or maxSP
 		playerData.Stats.MaxSP = maxSP
+	end
+end
+
+-- Dipanggil setiap kali player level up agar MaxSP ikut naik
+function StaminaService.RefreshMaxSP(player, playerData)
+	local state = playerStates[player]
+	if not state then return end
+	local newMaxSP = calcMaxSP(playerData)
+	state.MaxSP = newMaxSP
+	state.SP = math.min(state.SP, newMaxSP)
+	if playerData and playerData.Stats then
+		playerData.Stats.MaxSP = newMaxSP
 	end
 end
 
@@ -116,10 +141,6 @@ function StaminaService.Tick(deltaTime, profiles, getBuffedSpeed)
 		else
 			local playerData = profiles and profiles[player]
 			local stats = playerData and playerData.Stats
-
-			-- Debug: konfirmasi tick berjalan
-			print(string.format("[Stamina] %s SP=%.1f IsRunning=%s ForcedWalk=%s",
-				player.Name, state.SP, tostring(state.IsRunning), tostring(state.ForcedWalk)))
 
 			if state.IsRunning and not state.ForcedWalk then
 				state.SP = math.max(0, state.SP - SP_CONFIG.RunCostPerSec * deltaTime)
