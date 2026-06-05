@@ -2031,6 +2031,13 @@ local function setupRuntime()
 				return
 			end
 
+			-- TAB: cycle belt set — cek sebelum gameProcessed karena Roblox
+			-- bisa consume Tab untuk UI focus cycling
+			if input.KeyCode == Enum.KeyCode.Tab then
+				cycleBeltSet()
+				return
+			end
+
 			if gameProcessed then
 				return
 			end
@@ -2045,12 +2052,6 @@ local function setupRuntime()
 			}
 			if beltKeyMap[input.KeyCode] then
 				executeBeltSlot(beltKeyMap[input.KeyCode])
-				return
-			end
-
-			-- TAB: cycle belt set
-			if input.KeyCode == Enum.KeyCode.Tab then
-				cycleBeltSet()
 				return
 			end
 
@@ -2220,10 +2221,17 @@ function AetherionGameplayUI.Create()
 	if guiRefs.ScreenGui then
 		guiRefs.ScreenGui:Destroy()
 		guiRefs = {}
+		slotRegistry = {}
 	end
 
-	uiState.InventoryOpen = false
-	uiState.PartyOpen = false
+	uiState.InventoryOpen  = false
+	uiState.PartyOpen      = false
+	uiState.MacroOpen      = false
+	uiState.CharacterOpen  = false
+	uiState.BattleMode     = false
+	uiState.LastBattleTick = 0
+	uiState.MacroData      = nil
+	uiState.BeltSet        = 1
 
 	local playerGui = player:WaitForChild("PlayerGui")
 
@@ -2472,7 +2480,7 @@ function AetherionGameplayUI.Create()
 	guiRefs.BeltSetLabel = beltSetLabel
 
 	-- ============================================================
-	-- Macro Window (Y key) — F1-F9 slots
+	-- Macro Window (Y key) — 9 slots, F1-F8 via keyboard (F9 = dev console)
 	-- ============================================================
 	local macroFrame = makeFrame(screenGui, "MacroFrame",
 		UDim2.new(0, 380, 0, 352), UDim2.new(0.5, -190, 0.5, -176),
