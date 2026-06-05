@@ -650,8 +650,8 @@ game:GetService("Players").PlayerAdded:Connect(function(player)
 			return
 		end
 
-		-- /whisper <name> <message>  atau  /w <name> <message>
-		local wTarget, wMsg = msg:match("^/w[whisper]*%s+(%S+)%s+(.+)$")
+		-- /w <name> <message>  atau  /whisper <name> <message>
+		local wTarget, wMsg = msg:match("^/w%s+(%S+)%s+(.+)$")
 		if not wTarget then
 			wTarget, wMsg = msg:match("^/whisper%s+(%S+)%s+(.+)$")
 		end

@@ -2,28 +2,34 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 
-local player = Players.LocalPlayer
-local remotes = ReplicatedStorage:WaitForChild("Remotes")
+local REMOTE_TIMEOUT = 30
 
-local GetPlayerDataRequest = remotes:WaitForChild("GetPlayerDataRequest")
-local SelectRaceAndClassRequest = remotes:WaitForChild("SelectRaceAndClassRequest")
-local SelectLevel30ClassRequest = remotes:WaitForChild("SelectLevel30ClassRequest")
-local SelectLevel40ClassRequest = remotes:WaitForChild("SelectLevel40ClassRequest")
-local GetClassOptionsRequest = remotes:WaitForChild("GetClassOptionsRequest")
-local EquipItemRequest = remotes:WaitForChild("EquipItemRequest")
-local UpgradeItemRequest = remotes:WaitForChild("UpgradeItemRequest")
-local AttackRequest = remotes:WaitForChild("AttackRequest")
--- Patch RF-Accuracy: Stamina / Walk-Run
-local ToggleRunWalkRequest = remotes:WaitForChild("ToggleRunWalkRequest")
-local RunWalkStateChanged = remotes:WaitForChild("RunWalkStateChanged")
--- Patch RF-Accuracy: Macro
-local SetMacroRequest = remotes:WaitForChild("SetMacroRequest")
-local ClearMacroRequest = remotes:WaitForChild("ClearMacroRequest")
-local ExecuteMacroRequest = remotes:WaitForChild("ExecuteMacroRequest")
-local GetMacrosRequest = remotes:WaitForChild("GetMacrosRequest")
--- Patch RF-Accuracy: Defense Gauge & Buffed Stats
-local GetDefenseGaugeRequest = remotes:WaitForChild("GetDefenseGaugeRequest")
-local GetBuffedStatsRequest = remotes:WaitForChild("GetBuffedStatsRequest")
+local player = Players.LocalPlayer
+local remotes = ReplicatedStorage:WaitForChild("Remotes", REMOTE_TIMEOUT)
+if not remotes then error("[ClientController] Remotes folder not found after " .. REMOTE_TIMEOUT .. "s") end
+
+local function waitRemote(name)
+	local r = remotes:WaitForChild(name, REMOTE_TIMEOUT)
+	if not r then error("[ClientController] Remote not found: " .. name) end
+	return r
+end
+
+local GetPlayerDataRequest       = waitRemote("GetPlayerDataRequest")
+local SelectRaceAndClassRequest  = waitRemote("SelectRaceAndClassRequest")
+local SelectLevel30ClassRequest  = waitRemote("SelectLevel30ClassRequest")
+local SelectLevel40ClassRequest  = waitRemote("SelectLevel40ClassRequest")
+local GetClassOptionsRequest     = waitRemote("GetClassOptionsRequest")
+local EquipItemRequest           = waitRemote("EquipItemRequest")
+local UpgradeItemRequest         = waitRemote("UpgradeItemRequest")
+local AttackRequest              = waitRemote("AttackRequest")
+local ToggleRunWalkRequest       = waitRemote("ToggleRunWalkRequest")
+local RunWalkStateChanged        = waitRemote("RunWalkStateChanged")
+local SetMacroRequest            = waitRemote("SetMacroRequest")
+local ClearMacroRequest          = waitRemote("ClearMacroRequest")
+local ExecuteMacroRequest        = waitRemote("ExecuteMacroRequest")
+local GetMacrosRequest           = waitRemote("GetMacrosRequest")
+local GetDefenseGaugeRequest     = waitRemote("GetDefenseGaugeRequest")
+local GetBuffedStatsRequest      = waitRemote("GetBuffedStatsRequest")
 
 local function printTable(tbl, indent)
 	indent = indent or 0

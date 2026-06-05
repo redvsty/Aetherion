@@ -2054,11 +2054,11 @@ local function setupRuntime()
 				return
 			end
 
-			-- F1-F9: execute macro
+			-- F1-F8: execute macro (F9 dipakai Roblox untuk dev console)
 			local macroKeyMap = {
 				[Enum.KeyCode.F1] = 1, [Enum.KeyCode.F2] = 2, [Enum.KeyCode.F3] = 3,
 				[Enum.KeyCode.F4] = 4, [Enum.KeyCode.F5] = 5, [Enum.KeyCode.F6] = 6,
-				[Enum.KeyCode.F7] = 7, [Enum.KeyCode.F8] = 8, [Enum.KeyCode.F9] = 9,
+				[Enum.KeyCode.F7] = 7, [Enum.KeyCode.F8] = 8,
 			}
 			if macroKeyMap[input.KeyCode] then
 				executeMacro(macroKeyMap[input.KeyCode])
@@ -2202,6 +2202,16 @@ local function setupRuntime()
 		runtimeConnections,
 		BattleModeNotify.OnClientEvent:Connect(function()
 			uiState.LastBattleTick = tick()
+		end)
+	)
+
+	table.insert(
+		runtimeConnections,
+		RunWalkStateChanged.OnClientEvent:Connect(function(newIsRunning)
+			walkRunIsRunning = newIsRunning
+			if guiRefs.UpdateWalkRunButton then
+				guiRefs.UpdateWalkRunButton(newIsRunning)
+			end
 		end)
 	)
 end
@@ -2477,7 +2487,7 @@ function AetherionGameplayUI.Create()
 	macroTitle.TextColor3 = RF_THEME.Gold
 	macroTitle.TextXAlignment = Enum.TextXAlignment.Center
 
-	local macroHint = makeLabel(macroFrame, "Press F1-F9 to execute  |  Drag skills from skill bar",
+	local macroHint = makeLabel(macroFrame, "F1-F8 = execute  |  Slot 9 = klik ▶ RUN (F9 = dev console)",
 		UDim2.new(1, -16, 0, 16), UDim2.new(0, 8, 0, 28), 9, false)
 	macroHint.TextColor3 = RF_THEME.TextDim
 	macroHint.TextXAlignment = Enum.TextXAlignment.Center
@@ -2635,13 +2645,9 @@ function AetherionGameplayUI.Create()
 		walkRunBtn.BackgroundTransparency = 0
 	end)
 
-	RunWalkStateChanged.OnClientEvent:Connect(function(newIsRunning)
-		walkRunIsRunning = newIsRunning
-		updateWalkRunButton(newIsRunning)
-	end)
-
 	updateWalkRunButton(walkRunIsRunning)
 	guiRefs.WalkRunButton = walkRunBtn
+	guiRefs.UpdateWalkRunButton = updateWalkRunButton
 
 	-- Status bawah
 	local statusFrame = makeFrame(
