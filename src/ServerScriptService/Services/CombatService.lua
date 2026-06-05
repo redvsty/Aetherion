@@ -5,11 +5,13 @@
 --   - Validasi distance server-side (tidak bergantung client)
 --   - Validasi target humanoid masih hidup
 --   - Cek attacker character server-side
+-- Batch 2: Force Attack system — weapon Magic class pakai ForceAttack + konsumsi FP.
 
 local Players = game:GetService("Players")
 
 local GameConfig = require(game.ReplicatedStorage.Shared.GameConfig)
 local ItemDefinitions = require(game.ReplicatedStorage.Shared.Definitions.ItemDefinitions)
+local ClassDefinitions = require(game.ReplicatedStorage.Shared.Definitions.ClassDefinitions)
 local CombatFormulas = require(game.ReplicatedStorage.Shared.CombatFormulas)
 local EquipmentService = require(script.Parent.EquipmentService)
 local LevelService = require(script.Parent.LevelService)
@@ -114,6 +116,54 @@ local function grantPartyDefenseBonus(attackerPlayer, attackerData, profiles, at
 	end
 end
 
+-- ============================================================
+-- Force Attack / FP helpers
+-- ============================================================
+
+-- Cek apakah kondisi memungkinkan Force Attack:
+-- 1. Hanya Magic class (Spiritualist dan advancement-nya) yang bisa Force Attack
+-- 2. Weapon harus punya ForceAttack stat (ForceAttackMin > 0)
+-- 3. FP harus >= cost DAN >= MinFPRequired
+local function canUseForceAttack(attackerData, attackerStats)
+	-- Gate 1: class role harus Magic
+	local role = ClassDefinitions.GetStartingClassRole(attackerData)
+	if role ~= "Magic" then
+		return false
+	end
+
+	-- Gate 2: weapon harus support force attack
+	if not EquipmentService.HasForceAttack(attackerData) then
+		return false
+	end
+
+	-- Gate 3: FP harus cukup (lebih besar dari cost dan min threshold)
+	local fp = attackerData.Stats and attackerData.Stats.FP or 0
+	local cost = CombatFormulas.GetFPCost(attackerStats)
+	local minRequired = math.max(cost, GameConfig.ForceAttack.MinFPRequired)
+
+	return fp >= minRequired
+end
+
+-- Kurangi FP attacker setelah Force Attack berhasil.
+local function consumeFP(attackerData, attackerStats, attackerPlayer)
+	local cost = CombatFormulas.GetFPCost(attackerStats)
+	local stats = attackerData.Stats
+
+	if not stats then
+		return 0
+	end
+
+	local actual = math.min(cost, stats.FP)
+	stats.FP = math.max(0, stats.FP - actual)
+
+	-- Notifikasi GameServer agar regen delay dimulai ulang
+	if actual > 0 and CombatService.OnFPConsumed and attackerPlayer then
+		CombatService.OnFPConsumed(attackerPlayer)
+	end
+
+	return actual
+end
+
 function CombatService.CanDamage(attackerData, targetData)
 	if not attackerData or not targetData then
 		return false
@@ -203,7 +253,20 @@ function CombatService.Attack(attackerPlayer, targetModel, profiles)
 		defenderStats = EquipmentService.GetTotalStats(targetData)
 	end
 
-	local damage, isCrit = CombatFormulas.CalculateDamage(attackerStats, defenderStats)
+	-- Batch 2: Gunakan Force Attack jika weapon support dan FP cukup.
+	-- Magic class (Spiritualist) dengan weapon reaver/staff akan otomatis
+	-- menggunakan force damage dan mengonsumsi FP.
+	local damage, isCrit, isForceAttack
+	local fpConsumed = 0
+
+	if canUseForceAttack(attackerData, attackerStats) then
+		damage, isCrit = CombatFormulas.CalculateForceAttack(attackerStats, defenderStats)
+		fpConsumed = consumeFP(attackerData, attackerStats, attackerPlayer)
+		isForceAttack = true
+	else
+		damage, isCrit = CombatFormulas.CalculateDamage(attackerStats, defenderStats)
+		isForceAttack = false
+	end
 
 	targetHumanoid:TakeDamage(damage)
 
@@ -224,6 +287,8 @@ function CombatService.Attack(attackerPlayer, targetModel, profiles)
 	return true, {
 		Damage = damage,
 		Crit = isCrit,
+		IsForceAttack = isForceAttack,
+		FPConsumed = fpConsumed,
 	}
 end
 

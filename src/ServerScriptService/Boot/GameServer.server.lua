@@ -2,6 +2,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
+local RunService = game:GetService("RunService")
 
 local DataPersistence = require(script.Parent.Parent.Services.DataPersistence)
 local CharacterCreationService = require(script.Parent.Parent.Services.CharacterCreationService)
@@ -147,6 +148,7 @@ Players.PlayerRemoving:Connect(function(player)
 
 	CombatService.OnPlayerRemoving(player)
 	PartyService.OnPlayerRemoving(player, profiles)
+	lastFPUseTime[player] = nil
 	profiles[player] = nil
 	isLoadFailed[player] = nil
 end)
@@ -326,6 +328,50 @@ GetWeaponsByGradeRequest.OnServerInvoke = function(_player, grade, limit)
 	end
 	return WeaponService.GetByGrade(grade, limit or 50)
 end
+
+-- ============================================================
+-- FP Regen Loop
+-- Regen FP passif semua player tiap detik.
+-- IdleRegenRate (3 FP/s) aktif jika tidak baru pakai FP dalam RegenDelay detik.
+-- CombatRegenRate (1 FP/s) aktif selama dalam combat delay.
+-- Menggunakan task.spawn agar tidak blocking server init.
+-- ============================================================
+local FP_TICK = 1 -- interval regen dalam detik
+local lastFPUseTime = {} -- [player] = tick(), diupdate CombatService via callback
+
+-- Expose callback agar CombatService bisa catat kapan FP terakhir dipakai
+local function onFPConsumed(player)
+	lastFPUseTime[player] = tick()
+end
+
+-- Injeksi callback ke CombatService setelah keduanya loaded
+CombatService.OnFPConsumed = onFPConsumed
+
+task.spawn(function()
+	while true do
+		task.wait(FP_TICK)
+
+		local regenConfig = GameConfig.FPRegen
+		local now = tick()
+
+		for player, data in pairs(profiles) do
+			if player and player.Parent and data and data.Stats then
+				local stats = data.Stats
+				local maxFP = stats.MaxFP or 100
+
+				if stats.FP < maxFP then
+					local sinceLastUse = now - (lastFPUseTime[player] or 0)
+					local isIdle = sinceLastUse >= regenConfig.RegenDelay
+					local rate = isIdle and regenConfig.IdleRegenRate or regenConfig.CombatRegenRate
+
+					stats.FP = math.min(maxFP, stats.FP + rate)
+				end
+			end
+		end
+	end
+end)
+
+-- Cleanup lastFPUseTime saat player leave (sudah ada di PlayerRemoving tapi perlu tambah ini)
 
 AttackRequest.OnServerInvoke = function(player, targetModel)
 	return CombatService.Attack(player, targetModel, profiles)

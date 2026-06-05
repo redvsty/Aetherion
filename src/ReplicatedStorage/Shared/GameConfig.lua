@@ -126,4 +126,31 @@ GameConfig.Combat = {
 	MaxAttackDistance = 18,
 }
 
+-- Force Attack / FP Settings
+-- FP dipakai saat player menggunakan Force Attack (class Magic/Spiritualist).
+-- Weapon dengan ForceAttackMin/Max akan trigger force attack otomatis.
+GameConfig.ForceAttack = {
+	-- FP yang dikonsumsi per satu Force Attack
+	FPCostBase = 10,
+
+	-- Variance damage force attack (sedikit lebih konsisten dari normal attack)
+	DamageVarianceMin = 0.92,
+	DamageVarianceMax = 1.08,
+
+	-- Jika player tidak punya cukup FP, force attack tidak bisa dipakai
+	MinFPRequired = 5,
+}
+
+-- FP Regeneration
+GameConfig.FPRegen = {
+	-- FP yang di-regen per detik saat idle (di luar combat)
+	IdleRegenRate = 3,
+
+	-- FP yang di-regen per detik saat dalam combat
+	CombatRegenRate = 1,
+
+	-- Delay (detik) setelah terakhir kali menggunakan FP sebelum regen aktif
+	RegenDelay = 2,
+}
+
 return GameConfig

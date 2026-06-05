@@ -96,6 +96,33 @@ local function collectInstalledTalicEffects(stats, effects, item)
 	end
 end
 
+-- Sync Stats.MaxHP dan Stats.MaxFP dari total equipment stats ke playerData.
+-- Dipanggil setelah Equip/Unequip agar MaxFP dari weapon ability (misal Advanced
+-- Strength Wand: MaxFPPercent +6%) langsung tercermin di Stats player.
+-- HP/FP aktual di-clamp agar tidak melebihi max baru.
+function EquipmentService.SyncDerivedStats(playerData)
+	local equipStats = EquipmentService.GetTotalStats(playerData)
+	local stats = playerData.Stats
+
+	if not stats then
+		return
+	end
+
+	-- Base MaxHP/MaxFP dari level (sederhana, bisa dikembangkan dengan formula level nanti)
+	local baseMaxHP = 150
+	local baseMaxFP = 100
+
+	local newMaxHP = baseMaxHP + (equipStats.MaxHP or 0)
+	local newMaxFP = baseMaxFP + (equipStats.MaxFP or 0)
+
+	stats.MaxHP = math.max(1, newMaxHP)
+	stats.MaxFP = math.max(1, newMaxFP)
+
+	-- Clamp HP/FP aktual agar tidak melebihi max baru
+	stats.HP = math.clamp(stats.HP or stats.MaxHP, 0, stats.MaxHP)
+	stats.FP = math.clamp(stats.FP or stats.MaxFP, 0, stats.MaxFP)
+end
+
 function EquipmentService.CanEquip(playerData, item)
 	local itemDef = getItemDef(item)
 
@@ -148,7 +175,31 @@ function EquipmentService.Equip(playerData, itemUid)
 
 	playerData.Equipment[slot] = itemUid
 
+	-- Sync MaxHP/MaxFP setelah equip karena weapon ability bisa mengubah max stats
+	EquipmentService.SyncDerivedStats(playerData)
+
 	return true, "Equipped"
+end
+
+-- Kembalikan definisi item dari weapon yang sedang diequip.
+-- Digunakan CombatService untuk cek apakah weapon support Force Attack.
+function EquipmentService.GetEquippedWeaponDef(playerData)
+	local item = EquipmentService.GetEquippedItem(playerData, GameConfig.EquipmentSlots.Weapon)
+	if not item then
+		return nil
+	end
+	return getItemDef(item)
+end
+
+-- Cek apakah weapon yang diequip memiliki ForceAttack (ForceAttackMin > 0).
+-- Magic class weapons (reaver, staff) yang punya field ini.
+function EquipmentService.HasForceAttack(playerData)
+	local weaponDef = EquipmentService.GetEquippedWeaponDef(playerData)
+	if not weaponDef then
+		return false
+	end
+	local min = tonumber(weaponDef.ForceAttackMin) or 0
+	return min > 0
 end
 
 function EquipmentService.GetEquippedItem(playerData, slot)

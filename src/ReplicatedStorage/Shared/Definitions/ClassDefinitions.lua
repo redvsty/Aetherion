@@ -113,6 +113,18 @@ function ClassDefinitions.IsValidStartingClass(classId)
 	return ClassDefinitions.Starting[classId] ~= nil
 end
 
+-- Kembalikan Role dari starting class player ("Melee", "Ranged", "Magic", "SupportCraft").
+-- Digunakan CombatService untuk gate Force Attack ke Magic class saja.
+-- Jika player belum punya StartingClassId, return nil.
+function ClassDefinitions.GetStartingClassRole(playerData)
+	if not playerData or not playerData.StartingClassId then
+		return nil
+	end
+
+	local classDef = ClassDefinitions.Starting[playerData.StartingClassId]
+	return classDef and classDef.Role or nil
+end
+
 function ClassDefinitions.GetLevel30Options(factionId, startingClassId)
 	local raceTable = ClassDefinitions.Advancement30[factionId]
 	return raceTable and raceTable[startingClassId] or nil
