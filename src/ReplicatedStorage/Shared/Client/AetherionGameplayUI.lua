@@ -2221,19 +2221,30 @@ local function setupRuntime()
 		end)
 	)
 
-	-- Server push SP langsung setiap detik — reliable, tidak bergantung polling
+	-- Server push SP langsung setiap detik
 	table.insert(
 		runtimeConnections,
 		SPUpdateEvent.OnClientEvent:Connect(function(sp, maxSP, isRunning)
-			if not uiState.PlayerData then return end
+			-- Pastikan PlayerData tersedia (init minimal jika belum ada)
+			if not uiState.PlayerData then
+				uiState.PlayerData = { Stats = {} }
+			end
 			uiState.PlayerData.Stats = uiState.PlayerData.Stats or {}
 			uiState.PlayerData.Stats.SP    = sp
 			uiState.PlayerData.Stats.MaxSP = maxSP
+
+			-- Update SP bar langsung tanpa melewati full buildHUD
+			if guiRefs.SPBar then
+				local ratio = maxSP > 0 and math.clamp(sp / maxSP, 0, 1) or 0
+				guiRefs.SPBar.Fill.Size  = UDim2.new(ratio, 0, 1, 0)
+				guiRefs.SPBar.Value.Text = tostring(sp) .. " / " .. tostring(maxSP)
+			end
+
+			-- Sync walk/run button
 			walkRunIsRunning = isRunning
 			if guiRefs.UpdateWalkRunButton then
 				guiRefs.UpdateWalkRunButton(isRunning)
 			end
-			buildHUD()
 		end)
 	)
 
@@ -2632,9 +2643,8 @@ function AetherionGameplayUI.Create()
 	-- Macro Window (Y key) — 9 slots, F1-F8 via keyboard (F9 = dev console)
 	-- ============================================================
 	local macroFrame = makeFrame(screenGui, "MacroFrame",
-		UDim2.new(0, 380, 0, 352), UDim2.new(0.5, -190, 0.5, -176),
-		RF_THEME.Window, 0.12)
-	-- Hapus gradient gelap agar konten terlihat jelas
+		UDim2.new(0, 400, 0, 360), UDim2.new(0.5, -200, 0.5, -180),
+		Color3.fromRGB(20, 26, 36), 0.06)
 	do local g = macroFrame:FindFirstChildOfClass("UIGradient") if g then g:Destroy() end end
 	macroFrame.Visible = false
 	macroFrame.ZIndex = 25
@@ -2659,38 +2669,51 @@ function AetherionGameplayUI.Create()
 
 	guiRefs.MacroRows = {}
 	for i = 1, 9 do
-		local rowY = 46 + (i - 1) * 33
+		local rowY = 46 + (i - 1) * 34
 		local row = Instance.new("Frame")
 		row.Name = "MacroRow" .. i
-		row.Size = UDim2.new(1, -16, 0, 28)
+		row.Size = UDim2.new(1, -16, 0, 30)
 		row.Position = UDim2.new(0, 8, 0, rowY)
-		row.BackgroundColor3 = RF_THEME.Panel
-		row.BackgroundTransparency = 0.2
+		row.BackgroundColor3 = Color3.fromRGB(40, 52, 68)  -- lebih terang
+		row.BackgroundTransparency = 0.1
 		row.BorderSizePixel = 0
 		row.Parent = macroFrame
-		createCorner(row, 2)
+		createCorner(row, 3)
 
-		local fLabel = makeLabel(row, (i < 9 and "F" .. i or "F9*"),
-			UDim2.new(0, 32, 1, 0), UDim2.new(0, 4, 0, 0), 12, true)
-		fLabel.TextColor3 = RF_THEME.Gold
+		local fLabel = Instance.new("TextLabel")
+		fLabel.Size = UDim2.new(0, 36, 1, 0)
+		fLabel.Position = UDim2.new(0, 4, 0, 0)
+		fLabel.BackgroundTransparency = 1
+		fLabel.Text = i < 9 and "F" .. i or "F9*"
+		fLabel.Font = Enum.Font.GothamBold
+		fLabel.TextSize = 13
+		fLabel.TextColor3 = Color3.fromRGB(255, 210, 80)
+		fLabel.TextXAlignment = Enum.TextXAlignment.Left
+		fLabel.TextYAlignment = Enum.TextYAlignment.Center
 		fLabel.TextStrokeTransparency = 0.5
+		fLabel.Parent = row
 
-		local nameLabel = makeLabel(row, "(empty)",
-			UDim2.new(1, -120, 1, 0), UDim2.new(0, 38, 0, 0), 12, false)
-		nameLabel.TextColor3 = RF_THEME.Text
+		local nameLabel = Instance.new("TextLabel")
+		nameLabel.Size = UDim2.new(1, -120, 1, 0)
+		nameLabel.Position = UDim2.new(0, 44, 0, 0)
+		nameLabel.BackgroundTransparency = 1
+		nameLabel.Text = "(empty)"
+		nameLabel.Font = Enum.Font.Gotham
+		nameLabel.TextSize = 12
+		nameLabel.TextColor3 = Color3.fromRGB(200, 210, 225)
 		nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-		nameLabel.TextStrokeTransparency = 0.5
+		nameLabel.TextYAlignment = Enum.TextYAlignment.Center
+		nameLabel.TextStrokeTransparency = 0.4
 		nameLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+		nameLabel.Parent = row
 
-		local execBtn = makeButton(row, "▶", UDim2.new(0, 28, 0, 20), UDim2.new(1, -68, 0, 4))
-		execBtn.TextSize = 12
-		execBtn.TextColor3 = Color3.fromRGB(100, 220, 100)
+		local execBtn = makeButton(row, "▶", UDim2.new(0, 28, 0, 22), UDim2.new(1, -66, 0, 4))
+		execBtn.TextSize = 13
+		execBtn.TextColor3 = Color3.fromRGB(100, 230, 100)
 		local capturedI = i
-		execBtn.MouseButton1Click:Connect(function()
-			executeMacro(capturedI)
-		end)
+		execBtn.MouseButton1Click:Connect(function() executeMacro(capturedI) end)
 
-		local clearBtn = makeButton(row, "CLR", UDim2.new(0, 34, 0, 20), UDim2.new(1, -36, 0, 4))
+		local clearBtn = makeButton(row, "CLR", UDim2.new(0, 34, 0, 22), UDim2.new(1, -36, 0, 4))
 		clearBtn.TextSize = 10
 		clearBtn.MouseButton1Click:Connect(function()
 			invokeRemote(ClearMacroRequest, capturedI)
@@ -2704,9 +2727,8 @@ function AetherionGameplayUI.Create()
 	-- Character Window (C key)
 	-- ============================================================
 	local charFrame = makeFrame(screenGui, "CharacterFrame",
-		UDim2.new(0, 260, 0, 310), UDim2.new(0.5, -130, 0.5, -155),
-		RF_THEME.Window, 0.08)
-	-- Hapus gradient gelap agar stat rows terlihat jelas
+		UDim2.new(0, 270, 0, 320), UDim2.new(0.5, -135, 0.5, -160),
+		Color3.fromRGB(20, 26, 36), 0.06)
 	do local g = charFrame:FindFirstChildOfClass("UIGradient") if g then g:Destroy() end end
 	charFrame.Visible = false
 	charFrame.ZIndex = 24
@@ -2749,30 +2771,44 @@ function AetherionGameplayUI.Create()
 
 	guiRefs.CharStatLabels = {}
 	for i, row in ipairs(CHAR_STAT_ROWS) do
-		local rowY = 82 + (i - 1) * 26
-		-- Plain row frame (bukan makeFrame agar tidak ada gradient/stroke yg mengaburkan)
+		local rowY = 86 + (i - 1) * 28
 		local rowFrame = Instance.new("Frame")
 		rowFrame.Name = "CharStat" .. i
-		rowFrame.Size = UDim2.new(1, -16, 0, 22)
+		rowFrame.Size = UDim2.new(1, -16, 0, 24)
 		rowFrame.Position = UDim2.new(0, 8, 0, rowY)
-		rowFrame.BackgroundColor3 = Color3.fromRGB(30, 38, 50)
-		rowFrame.BackgroundTransparency = 0.3
+		rowFrame.BackgroundColor3 = Color3.fromRGB(40, 52, 68)  -- lebih terang
+		rowFrame.BackgroundTransparency = 0.1
 		rowFrame.BorderSizePixel = 0
 		rowFrame.Parent = charFrame
-		createCorner(rowFrame, 2)
+		createCorner(rowFrame, 3)
 
-		local keyLbl = makeLabel(rowFrame, row.Label,
-			UDim2.new(0, 90, 1, 0), UDim2.new(0, 6, 0, 0), 12, false)
-		keyLbl.TextColor3 = RF_THEME.TextDim
+		local keyLbl = Instance.new("TextLabel")
+		keyLbl.Size = UDim2.new(0, 110, 1, 0)
+		keyLbl.Position = UDim2.new(0, 8, 0, 0)
+		keyLbl.BackgroundTransparency = 1
+		keyLbl.Text = row.Label
+		keyLbl.Font = Enum.Font.Gotham
+		keyLbl.TextSize = 12
+		keyLbl.TextColor3 = Color3.fromRGB(180, 195, 215)
+		keyLbl.TextXAlignment = Enum.TextXAlignment.Left
+		keyLbl.TextYAlignment = Enum.TextYAlignment.Center
 		keyLbl.TextStrokeTransparency = 0.5
 		keyLbl.TextStrokeColor3 = Color3.new(0, 0, 0)
+		keyLbl.Parent = rowFrame
 
-		local valLbl = makeLabel(rowFrame, "0",
-			UDim2.new(0, 100, 1, 0), UDim2.new(1, -106, 0, 0), 12, true)
-		valLbl.TextColor3 = Color3.fromRGB(240, 240, 240)
+		local valLbl = Instance.new("TextLabel")
+		valLbl.Size = UDim2.new(0, 110, 1, 0)
+		valLbl.Position = UDim2.new(1, -118, 0, 0)
+		valLbl.BackgroundTransparency = 1
+		valLbl.Text = "0"
+		valLbl.Font = Enum.Font.GothamBold
+		valLbl.TextSize = 13
+		valLbl.TextColor3 = Color3.fromRGB(245, 245, 255)
 		valLbl.TextXAlignment = Enum.TextXAlignment.Right
+		valLbl.TextYAlignment = Enum.TextYAlignment.Center
 		valLbl.TextStrokeTransparency = 0.4
 		valLbl.TextStrokeColor3 = Color3.new(0, 0, 0)
+		valLbl.Parent = rowFrame
 		guiRefs.CharStatLabels[i] = valLbl
 	end
 
