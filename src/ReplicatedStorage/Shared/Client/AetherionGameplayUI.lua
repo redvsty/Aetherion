@@ -69,7 +69,8 @@ local CastSkillRequest = waitRemoteFunction("CastSkillRequest")
 local ClearMacroRequest = waitRemoteFunction("ClearMacroRequest")
 local UseItemRequest = waitRemoteFunction("UseItemRequest")
 local PartyChatReceived = waitRemoteEvent("PartyChatReceived")
-local BattleModeNotify = waitRemoteEvent("BattleModeNotify")
+local BattleModeNotify  = waitRemoteEvent("BattleModeNotify")
+local SPUpdateEvent     = waitRemoteEvent("SPUpdateEvent")
 
 local BAG_COUNT = 5
 local BAG_SIZE = 20
@@ -2220,6 +2221,22 @@ local function setupRuntime()
 		end)
 	)
 
+	-- Server push SP langsung setiap detik — reliable, tidak bergantung polling
+	table.insert(
+		runtimeConnections,
+		SPUpdateEvent.OnClientEvent:Connect(function(sp, maxSP, isRunning)
+			if not uiState.PlayerData then return end
+			uiState.PlayerData.Stats = uiState.PlayerData.Stats or {}
+			uiState.PlayerData.Stats.SP    = sp
+			uiState.PlayerData.Stats.MaxSP = maxSP
+			walkRunIsRunning = isRunning
+			if guiRefs.UpdateWalkRunButton then
+				guiRefs.UpdateWalkRunButton(isRunning)
+			end
+			buildHUD()
+		end)
+	)
+
 	table.insert(
 		runtimeConnections,
 		RunWalkStateChanged.OnClientEvent:Connect(function(newIsRunning)
@@ -2617,6 +2634,8 @@ function AetherionGameplayUI.Create()
 	local macroFrame = makeFrame(screenGui, "MacroFrame",
 		UDim2.new(0, 380, 0, 352), UDim2.new(0.5, -190, 0.5, -176),
 		RF_THEME.Window, 0.12)
+	-- Hapus gradient gelap agar konten terlihat jelas
+	do local g = macroFrame:FindFirstChildOfClass("UIGradient") if g then g:Destroy() end end
 	macroFrame.Visible = false
 	macroFrame.ZIndex = 25
 	guiRefs.MacroFrame = macroFrame
@@ -2685,8 +2704,10 @@ function AetherionGameplayUI.Create()
 	-- Character Window (C key)
 	-- ============================================================
 	local charFrame = makeFrame(screenGui, "CharacterFrame",
-		UDim2.new(0, 240, 0, 300), UDim2.new(0.5, -120, 0.5, -150),
-		RF_THEME.Window, 0.12)
+		UDim2.new(0, 260, 0, 310), UDim2.new(0.5, -130, 0.5, -155),
+		RF_THEME.Window, 0.08)
+	-- Hapus gradient gelap agar stat rows terlihat jelas
+	do local g = charFrame:FindFirstChildOfClass("UIGradient") if g then g:Destroy() end end
 	charFrame.Visible = false
 	charFrame.ZIndex = 24
 	guiRefs.CharacterFrame = charFrame

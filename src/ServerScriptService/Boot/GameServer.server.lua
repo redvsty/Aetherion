@@ -86,7 +86,8 @@ local PartyToggleLockRequest = ensureRemoteFunction("PartyToggleLockRequest")
 local PartyInviteReceived = ensureRemoteEvent("PartyInviteReceived")
 -- Patch RF-Accuracy: Stamina / Walk-Run remotes
 local ToggleRunWalkRequest = ensureRemoteEvent("ToggleRunWalkRequest")
-local RunWalkStateChanged = ensureRemoteEvent("RunWalkStateChanged")
+local RunWalkStateChanged  = ensureRemoteEvent("RunWalkStateChanged")
+local SPUpdateEvent        = ensureRemoteEvent("SPUpdateEvent")
 -- Patch RF-Accuracy: Macro remotes
 local SetMacroRequest = ensureRemoteFunction("SetMacroRequest")
 local ClearMacroRequest = ensureRemoteFunction("ClearMacroRequest")
@@ -423,7 +424,6 @@ task.spawn(function()
 
 		-- Patch RF-Accuracy: Stamina tick (walk/run SP system)
 		StaminaService.Tick(FP_TICK, profiles, function(player)
-			-- Velocity buff speed bonus
 			local data = profiles[player]
 			if not data or not data.ActiveBuffs then return 0 end
 			local buffedStats = BuffEffectProcessor.ApplyBuffStats(
@@ -431,8 +431,16 @@ task.spawn(function()
 				data.ActiveBuffs,
 				data
 			)
-			return (buffedStats.MoveSpeed or 16) - 16  -- delta dari baseline
+			return (buffedStats.MoveSpeed or 16) - 16
 		end)
+
+		-- Push SP ke tiap client langsung (reliable, tidak perlu polling)
+		for _, p in ipairs(Players:GetPlayers()) do
+			local st = StaminaService.GetState(p)
+			if st then
+				SPUpdateEvent:FireClient(p, math.floor(st.SP), st.MaxSP, st.IsRunning)
+			end
+		end
 	end
 end)
 
