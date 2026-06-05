@@ -70,6 +70,12 @@ local function addTalicEffect(stats, effects, installedTalic)
 		})
 	elseif talicEffect.Type == "DefenseFlat" then
 		stats.Defense += value or 0
+	elseif talicEffect.Type == "MaxHPFlat" then
+		stats.MaxHP += value or 0
+	elseif talicEffect.Type == "MaxFPFlat" then
+		stats.MaxFP += value or 0
+	elseif talicEffect.Type == "MoveSpeedFlat" then
+		stats.MoveSpeed += value or 0
 	elseif talicEffect.Type == "RangeMultiplier" then
 		table.insert(effects, {
 			Type = "RangePercent",
@@ -123,6 +129,12 @@ function EquipmentService.SyncDerivedStats(playerData)
 	stats.FP = math.clamp(stats.FP or stats.MaxFP, 0, stats.MaxFP)
 end
 
+-- RF Classic level milestones:
+--   L4  : armor bisa dipakai (kecuali training armor L1 — RequiredLevel tetap 1)
+--   L13 : class-specific armor mulai tersedia (dihandle via RequiredLevel di item def)
+--   L15 : Launcher hanya bisa dipakai CYBORG mulai L15
+local LAUNCHER_MIN_LEVEL = 15
+
 function EquipmentService.CanEquip(playerData, item)
 	local itemDef = getItemDef(item)
 
@@ -132,6 +144,25 @@ function EquipmentService.CanEquip(playerData, item)
 
 	if itemDef.FactionId and itemDef.FactionId ~= "ALL" and itemDef.FactionId ~= playerData.FactionId then
 		return false, "Wrong faction"
+	end
+
+	-- RF Classic L4 milestone: armor tidak bisa diequip sebelum level 4
+	-- Training armor (RequiredLevel=1) dikecualikan agar pemain bisa mulai
+	local slot = getEquipSlot(itemDef)
+	local isArmorSlot = slot == "Helmet" or slot == "Upper" or slot == "Lower"
+		or slot == "Gloves" or slot == "Boots" or slot == "Shield" or slot == "Cloak"
+	if isArmorSlot and (itemDef.RequiredLevel or 1) > 1 and playerData.Level < 4 then
+		return false, "Requires level 4 to equip armor"
+	end
+
+	-- RF Classic L15 milestone: Launcher hanya untuk CYBORG level 15+
+	if itemDef.WeaponType == "Launcher" then
+		if playerData.FactionId ~= "CYBORG" then
+			return false, "Only Iron Dominion can use Launchers"
+		end
+		if playerData.Level < LAUNCHER_MIN_LEVEL then
+			return false, "Requires level " .. LAUNCHER_MIN_LEVEL .. " to use Launcher"
+		end
 	end
 
 	if itemDef.RequiredLevel and playerData.Level < itemDef.RequiredLevel then

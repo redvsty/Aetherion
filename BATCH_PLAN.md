@@ -1,421 +1,534 @@
 # Aetherion — Master Batch Plan
-> Target: 100% RF Classic mechanics, beda nama saja.
-> Setiap batch bisa dikerjakan mandiri. Dependensi dicantumkan di tiap batch.
+> Target: 1:1 RF Classic mechanics, nama berbeda.
+> Direvisi 2026-06-05 berdasarkan audit eksplisit kode vs memory RF Classic.
+>
+> Phase 1 = Max Level 50 — semua batch di bawah ini
+> Phase 2 = Max Level 66 — tambah map baru, equipment tier baru, content L51-66
+> Phase 3 = Max Level 75 — tambah map baru, equipment tier baru, content L67-75
 
 ---
 
-## STATUS BATCH SEBELUMNYA
+## STATUS BATCH
 
 | Batch | Nama | Status |
 |-------|------|--------|
-| 1 | Core Foundation (data, schema, equipment) | ✅ Done |
-| 2 | Combat, Skills, Buff, Defense Gauge | ✅ Done |
-| 2.5 | UI Gameplay (HUD, belt, hotkey, macro, SP) | ✅ Done |
+| Batch 0 | Foundation Fix | ✅ Done |
+| Batch 1 | HUD + Belt + UI Windows | ✅ Done |
+| Batch 2 | Skill + Force System | ✅ Done |
+| Batch 3 | Class + Race System | ✅ Done |
+| Batch 3.1 | Pre-Batch Fix (Audit Gaps) | 🔲 Next |
+| Batch 4 | Monster + PvE Core | 🔲 Pending |
+| Batch 5 | Potion + NPC + Quest Dasar | 🔲 Pending |
+| Batch 6 | MAU + Launcher Siege | 🔲 Pending |
+| Batch 7 | Animus System | 🔲 Pending |
+| Batch 8 | World + Zone + Mining | 🔲 Pending |
+| Batch 9 | Chip War + PvP System | 🔲 Pending |
+| Batch 10 | Economy + Guild | 🔲 Pending |
+| Batch 11 | Quest Lanjutan + Archon | 🔲 Pending |
+| Batch 12 | Dungeon + Boss | 🔲 Pending |
+| Batch 13 | Polish + Audio + VFX | 🔲 Pending |
 
 ---
 
-## BATCH 3 — Class System Lengkap
-> Dep: Batch 1 (CharacterCreation, PT system)
+## BATCH 3.1 — Pre-Batch Fix (Deviasi Struktural)
+> Harus selesai sebelum Batch 4. Memperbaiki deviasi hasil audit RF Classic.
 
-RF Classic punya tiga jalur class per ras. Tiap ras punya nama class sendiri.
+### Tujuan
+Memperbaiki bagian yang sudah diimplementasi tapi tidak akurat vs RF Classic.
 
-### 3A — Starting Classes (Level 1)
-Semua ras punya 4 pilihan awal:
+### Tasks
 
-| RF Class | Aetherion Name | Spesialisasi |
-|----------|---------------|--------------|
-| Warrior | Vanguard | Melee DPS/Tank |
-| Ranger | Striker | Ranged physical |
-| Specialist | Technician | Support, ammo, craft |
-| Spiritualist | Invoker | Force/magic, heal |
+**Fix 1: Accretia/CYBORG Specialist L30 — dari 2 opsi jadi 1**
+- RF Classic: Specialist → L30: Engineer (satu) → L40: Scientist / Battle Leader
+- Aetherion sekarang: MechanicEngineer + BloodMedic (dua L30)
+- Fix: Hapus BloodMedic dari L30, jadikan FieldSurgeon + BloodArsenal tetap di L40 dari MechanicEngineer
+- File: `ClassDefinitions.lua` → `Advancement30.CYBORG.Specialist`
 
-### 3B — Level 30 Advancement
-Setiap starting class bercabang jadi 2:
+**Fix 2: Cora/MYSTIC Specialist L30 — dari 2 opsi jadi 1**
+- RF Classic: Specialist → L30: Craftsman (satu) → L40: Artisan
+- Aetherion sekarang: SoulArtisan + RuneEngineer (dua L30)
+- Fix: Jadikan satu L30 (SoulArtisan), RuneEngineer pindah ke L40
+- File: `ClassDefinitions.lua` → `Advancement30.MYSTIC.Specialist`
 
-| Starting | Branch A | Branch B |
-|----------|----------|----------|
-| Vanguard | Berserker (pure DPS) | Sentinel (tank/shield) |
-| Striker | Sniper (single target) | Blaster (launcher/AoE) |
-| Technician | Medic (heal support) | Saboteur (debuff/trap) |
-| Invoker | Sage (Force DPS) | Warden (buff/support) |
+**Fix 3: Tambah 4 Talic yang Hilang**
+- Vital Talic → HP flat increase (semua armor)
+- Force Talic → FP flat increase (semua armor)
+- Speed Talic → Movement speed % (boots)
+- Luck Talic → Crit rate / item drop rate increase
+- File: `ItemDefinitions.lua`
 
-### 3C — Level 40 Final Advancement
-Tiap branch L30 maju ke versi final (total 8 end-class per ras).
+**Fix 4: Tambah Summoning PT ke GameConfig**
+- RF Classic: Cora punya Summoning PT (untuk Animus)
+- File: `GameConfig.lua` → tambah `Summoning = "Summoning"` ke PTTypes
+- File: `PlayerDataFactory.lua` → tambah Summoning ke PT field
 
-### 3D — Stat Scaling Per Class
-- Tiap class punya multiplier HP/FP/SP per level yang berbeda
-- Vanguard: HP tinggi, FP rendah
-- Invoker: FP tinggi, HP rendah
-- Technician: SP tinggi (lebih banyak ammo = lebih lama run)
+**Fix 5: Level milestones di level gating**
+- L4: Armor hanya bisa dipakai mulai level 4 (training armor tetap L1)
+- L13: Class-specific armor harus cek level 13
+- L15: Launcher hanya bisa dipakai CYBORG mulai level 15
+- File: `EquipmentService.lua`
 
-**Files yang perlu dibuat/edit:**
-- `GameConfig.lua` — tambah class definitions lengkap
-- `CharacterCreationService.lua` — validasi branch per class
-- `DataPersistence.lua` — schema migration untuk class baru
-- `AetherionGameplayUI.lua` — UI class selection visual upgrade
-
----
-
-## BATCH 4 — Skill System Lengkap
-> Dep: Batch 2 (SkillService), Batch 3 (class system)
-
-### 4A — Skill Trees Per Class
-Setiap class punya skill tree sendiri, mirip RF:
-- **Vanguard/Berserker**: Slash, Wild Rage, Aura Blade, Battle Cry
-- **Sentinel**: Shield Bash, Iron Wall, Provoke, Fortress Aura
-- **Sniper**: Aimed Shot, Piercing Arrow, Eagle Eye, Rapid Fire
-- **Blaster**: Grenade Launcher, Cluster Bomb, Smoke Screen, Barrage
-- **Sage (Invoker)**: Force Bolt, Force Storm, Gravity Well, Arcane Pulse
-- **Warden**: Bless, Restoration, Holy Barrier, Spirit Link
-- **Medic/Technician**: Blood Shot (heal ally via ammo), Repair Drone, Shield Boost
-- **Saboteur**: Stun Trap, Acid Shot, Debilitate, Overclock
-
-### 4B — Force System (Sage/Warden/Invoker)
-- Skill Force pakai FP
-- Tiap skill Force punya Element: Fire / Ice / Lightning / Holy / Dark
-- Cora Sage > Bellato Sage dalam power Force (sesuai lore RF)
-- Accretia tidak punya Invoker (diganti Technician hybrid)
-
-### 4C — Blood Ammo System (Accretia Technician/Medic)
-> Mekanik unik Accretia — heal via tembakan ammo ke ally
-
-- Technician punya ammo type: **Blood Round**
-- Saat tembak ke **ally** → restore HP (heal)
-- Saat tembak ke **enemy** → damage biasa (atau sedikit lebih lemah)
-- Ammo terbatas, bisa dibeli/craft
-- Implementasi: `ProjectileType = "BloodRound"`, target faction check di server
-
-### 4D — Buff/Debuff Lengkap
-- Duration system sudah ada (ActiveBuffs)
-- Tambah: Stun, Slow, Silence (tidak bisa cast Force), Bleed
-- Visual indicator buff di HUD
-
-### 4E — Skill PT Gating
-- Skill tier 1 buka di PT level 1-10
-- Skill tier 2 buka di PT level 20-30
-- Skill tier 3 (ultimate) buka di PT level 40+
-- Sama persis dengan sistem PT RF Classic
-
-**Files yang perlu dibuat/edit:**
-- `src/ReplicatedStorage/Shared/Definitions/SkillDefinitions.lua` — semua skill per class
-- `SkillService.lua` — Blood Ammo logic, element system
-- `CombatService.lua` — element damage calculation
-- `AetherionGameplayUI.lua` — skill tree UI panel
+### Deliverables
+- [ ] ClassDefinitions.lua: Specialist path CYBORG dan MYSTIC diperbaiki
+- [ ] ItemDefinitions.lua: +4 talic (Vital, Force, Speed, Luck)
+- [ ] GameConfig.lua: PTTypes += Summoning
+- [ ] PlayerDataFactory.lua: PT field += Summoning
+- [ ] EquipmentService.lua: Level gate L4/L13/L15
 
 ---
 
-## BATCH 5 — Item & Potion System Lengkap
-> Dep: Batch 1 (InventoryService, ItemDefinitions)
+## BATCH 4 — Monster + PvE Core
+> Dependensi: Batch 3.1 selesai.
 
-### 5A — Potion Definitions (RF Classic tiers)
+### Tujuan
+Membuat game bisa dimainkan untuk PvE. Tanpa ini, tidak ada progression loop.
 
-**Bless HP Potion** (restore HP):
-| Tier | Nama | Restore |
-|------|------|---------|
-| 1 | Small Bless Potion | +100 HP |
-| 2 | Medium Bless Potion | +250 HP |
-| 3 | Large Bless Potion | +500 HP |
-| 4 | Grand Bless Potion | +1000 HP |
-| 5 | Special Bless Potion | +2000 HP |
-| 6 | Major Bless Potion | +3000 HP |
+### Tasks
 
-**Aid FP Potion** (restore FP):
-| Tier | Nama | Restore |
-|------|------|---------|
-| 1 | Small Aid Potion | +50 FP |
-| 2 | Medium Aid Potion | +125 FP |
-| 3 | Large Aid Potion | +250 FP |
-| 4 | Grand Aid Potion | +500 FP |
-| 5 | Special Aid Potion | +1000 FP |
+**Monster System**
+- `MonsterDefinitions.lua` — definisi semua monster dengan stats:
+  - Level, MaxHP, Attack, Defense, ExpReward, GoldDrop
+  - Monster RF level 1-20 (near HQ): Anabola, Warbeast, Frog, Tweezer, Splinter
+  - DropTable: item apa yang bisa drop + probabilitas
+- `MonsterService.lua` (Server) — spawn, respawn timer, AI
+  - Spawn di posisi tertentu di map
+  - Respawn 30 detik setelah mati
+  - Patrol AI: idle, aggro radius (deteksi player), chase, attack
+  - Leash: kembali ke spawn jika player kabur terlalu jauh
+- RemoteEvent: `MonsterHitEvent`, `MonsterDiedEvent`
 
-**Bless SP Potion** (restore SP):
-| Tier | Nama | Restore |
-|------|------|---------|
-| 1 | Stamina Vial | +100 SP |
-| 2 | Stamina Flask | +250 SP |
-| 3 | Stamina Elixir | +500 SP |
+**Death Penalty (RF Classic accurate)**
+- PvE death: kehilangan EXP 2% (sesuai RF default)
+- PvP death: kehilangan CP, TIDAK kehilangan EXP
+- Respawn: muncul di HQ ras masing-masing
+- L8+: Bisa di-resurrect oleh NPC (tombol) — akan disambungkan ke Batch 5 NPC
 
-### 5B — Equipment Tiers & Grades
-RF Classic punya grade equipment: Normal → Rare → Unique → Legendary
-- Normal: drop dari monster biasa
-- Rare: drop dari elite monster / quest reward
-- Unique: drop dari boss / event
-- Legendary: craft atau world boss
+**Combat Visual Feedback**
+- Damage numbers mengambang di atas target (putih=normal, kuning=crit, merah=miss)
+- HP bar di atas kepala monster
+- Buff/debuff icons di HUD (di bawah HP/FP/SP bar)
+- Skill cast visual (glow sederhana di tangan)
 
-### 5C — Blood Ammo Item (Accretia Technician)
-- `blood_round_small`: stack 100, restore 50 HP ke ally
-- `blood_round_medium`: stack 100, restore 150 HP ke ally
-- `blood_round_large`: stack 100, restore 350 HP ke ally
+**Loot System**
+- Saat monster mati: spawn loot bag di lokasi monster
+- Loot bag bisa diklik untuk pickup
+- Item masuk ke inventory player
+- Gold langsung masuk ke wallet
+- Loot protected: hanya player yang membunuh yang bisa ambil (10 detik), setelah itu free-for-all
 
-### 5D — Upgrade & Talic System (expand existing)
-- Talic types: Attack / Defense / Speed / Force / Element
-- Slot max per item: 0-4 (random saat item drop)
-- Upgrade level: +0 → +9 (sudah ada), tambah visual glow per +level
-
-**Files yang perlu dibuat/edit:**
-- `ItemDefinitions.lua` — semua potion + blood ammo
-- `InventoryService.lua` — stack logic untuk ammo
-- `UseItemRequest` handler — sudah ada, tinggal data
+### Deliverables
+- [ ] MonsterDefinitions.lua
+- [ ] MonsterService.lua (server)
+- [ ] MonsterController.client.lua (client AI update)
+- [ ] Death penalty di GameServer/LevelService
+- [ ] Damage numbers UI
+- [ ] Buff/debuff icon HUD
+- [ ] Loot system (bag, pickup, inventory insert)
 
 ---
 
-## BATCH 6 — MAU System (Bellato/MECHA)
-> Dep: Batch 3 (class system), Batch 5 (item system)
+## BATCH 5 — Potion + NPC + Quest Dasar
+> Dependensi: Batch 4 (monster + loot ada).
 
-Fitur paling ikonik Bellato. MAU = Mechanical Armor Unit = robot besar yang bisa dinaiki.
+### Tujuan
+Player bisa beli potion, ada NPC vendor, ada quest sederhana untuk progression awal.
 
-### 6A — MAU Types
-| Tipe | RF Name | Spesialisasi |
-|------|---------|--------------|
-| Scout MAU | Scouter | Cepat, DPS ringan |
-| Fighter MAU | Golem | Tank, melee berat |
-| Blaster MAU | Tyrant | Ranged, AoE |
+### Tasks
 
-### 6B — MAU Mechanics
-- Hanya **Bellato Vanguard/Berserker** dan **Blaster** yang bisa naik MAU
-- MAU punya HP sendiri (bukan HP player)
-- Saat MAU HP = 0 → eject otomatis ke character normal
-- MAU punya Fuel (SP analog) — habis fuel = tidak bisa gerak
-- MAU lebih lambat dari karakter normal tapi jauh lebih kuat
-- MAU tidak bisa masuk dungeon/instanced zone tertentu
+**Potion Items (RF Classic accurate)**
+Tambahkan ke `ItemDefinitions.lua`:
+- HP Potion 7 tier: Small(100), Normal(250), Medium(500), Large(1000), Great(2000), Super(3000), Major(5000)
+- FP Potion 7 tier: Small(50), Normal(125), Medium(250), Large(500), Great(1000), Super(1500), Major(2500)
+- SP Potion: 3 tier (nilai estimasi: 50/150/300)
 
-### 6C — MAU Implementation
-- MAU = Model terpisah di workspace, player "mount" ke MAU
-- Server-side: MAU state per player, HP/Fuel tracking
-- Client: UI MAU stats (HP bar, Fuel bar) menggantikan normal HUD saat riding
-- Keyboard: E = mount/dismount MAU
+**Potion Mechanics**
+- `UseItemRequest` handler di GameServer
+- HP/FP/SP restore sesuai definisi
+- Cooldown per tipe: HP cooldown 10 detik, FP cooldown 10 detik, SP cooldown 15 detik
+- Cooldown terpisah (bisa minum HP + FP bersamaan)
+- Macro auto-potion: jika HP < threshold, otomatis pakai HP potion dari hotbar
 
-**Files yang perlu dibuat:**
-- `src/ServerScriptService/Services/MAUService.lua`
-- `src/ReplicatedStorage/Shared/Definitions/MAUDefinitions.lua`
-- `src/ReplicatedStorage/Shared/Client/MAUPanel.lua` (UI)
+**NPC System**
+- `NPCDefinitions.lua` — definisi NPC (id, nama, tipe, posisi, inventory jual)
+- `NPCService.lua` — interaksi NPC
+- Tipe NPC:
+  - Weapon Vendor: jual senjata sesuai level range
+  - Armor Vendor: jual armor sesuai level range
+  - Potion Vendor: jual semua tier potion
+  - Buffer NPC: kasih buff gratis (durasi pendek)
+- Shop UI: tampilkan item NPC, tombol beli, cek gold
 
----
+**Quest System Dasar**
+- `QuestDefinitions.lua` — definisi quest:
+  - Kill Quest: bunuh X monster
+  - Collect Quest: kumpulkan X item drop
+- `QuestService.lua` — track progress, reward
+- Quest UI (J key): daftar quest aktif, progress, objective
+- Starter quest per ras (masing-masing 3 quest level 1-20)
 
-## BATCH 7 — Animus System (Cora/MYSTIC)
-> Dep: Batch 3 (class system)
+**Chat Commands**
+- `/party` — info party
+- `/whisper [nama]` — pesan private
+- `/guild` — info guild (placeholder)
 
-Fitur ikonik Cora. Animus = creature companion yang ikut battle.
-
-### 7A — Animus Types
-| Tipe | Spesialisasi |
-|------|--------------|
-| Combat Animus | Attack enemy |
-| Support Animus | Buff/heal owner |
-| Scout Animus | Detect enemy/stealth |
-
-### 7B — Animus Mechanics
-- Hanya **Cora** yang bisa punya Animus
-- Animus punya level dan stats sendiri
-- Animus level naik dari kill bersama player
-- Animus bisa mati (perlu revive dengan item)
-- Max 1 Animus aktif per player
-
-### 7C — Animus Implementation
-- Animus = NPC yang follow player, server-side AI
-- Stats Animus saved di playerData
-- Client UI: panel Animus (stats, command: attack/stay/follow)
-
-**Files yang perlu dibuat:**
-- `src/ServerScriptService/Services/AnimusService.lua`
-- `src/ReplicatedStorage/Shared/Definitions/AnimusDefinitions.lua`
-- `src/ReplicatedStorage/Shared/Client/AnimusPanel.lua`
+### Deliverables
+- [ ] ItemDefinitions.lua: +HP/FP/SP potions (17 item)
+- [ ] UseItemRequest handler di GameServer
+- [ ] PotionCooldown tracking di PlayerData atau server state
+- [ ] NPCDefinitions.lua
+- [ ] NPCService.lua + shop UI
+- [ ] QuestDefinitions.lua (starter quests)
+- [ ] QuestService.lua
+- [ ] Quest UI (J key)
+- [ ] Chat commands /party /whisper
 
 ---
 
-## BATCH 8 — World & Zone System
-> Dep: Batch 1-5
+## BATCH 6 — MAU + Launcher Siege Mode
+> Dependensi: Batch 5 selesai. Batch ini butuh map yang sudah ada.
 
-### 8A — Zone Types (RF Classic)
-| Tipe | Keterangan |
-|------|-----------|
-| Starter Zone | Per ras, aman (no PvP) |
-| Neutral Zone | Bisa farming, PvP terbatas |
-| Contested Zone | Full PvP, Chip War area |
-| Outpost Zone | Capture point location |
+### Tujuan
+Mengimplementasi unique mechanic MECHA (MAU) dan CYBORG (Siege Mode) — dua dari tiga RF signature feature.
 
-### 8B — Monster System
-- Monster spawn di lokasi tertentu per zone
-- Monster punya faction preference (attack enemy ras, neutral ke ras sendiri)
-- Elite monster / mini-boss spawn jarang, drop rare item
-- World boss spawn terjadwal (RF Classic: Archon / Phoenia / dll)
+### Tasks
 
-### 8C — Resource Nodes
-- Ore deposit: bisa ditambang Technician/Specialist
-- Hasil: material untuk craft item/upgrade
+**MAU System (MECHA/Bellato exclusive)**
+- Hanya bisa dipakai class ArmorDriver (L30) dan GoliathPilot/CatapultPilot (L40)
+- MAU sebagai item di inventory (beli dari NPC ~1 juta Gold)
+- Saat aktif: player masuk ke MAU model
+  - MAU punya HP sendiri (bukan HP player)
+  - MAU punya Fuel (analog SP) — habis saat bergerak
+  - Speed lebih lambat dari karakter normal
+  - DEF jauh lebih tinggi, ATK lebih tinggi
+- Saat MAU HP = 0: player eject, MAU hancur (bisa repair)
+- 2 tipe MAU:
+  - Goliath: melee tank, energy blade weapon
+  - Catapult: ranged, AoE attack
+- Repair MAU: NPC Mechanic atau item Repair Kit
 
-**Files yang perlu dibuat:**
-- `src/ServerScriptService/Services/SpawnService.lua`
-- `src/ServerScriptService/Services/ZoneService.lua`
-- `src/ReplicatedStorage/Shared/Definitions/MonsterDefinitions.lua`
+**Launcher Siege Mode (CYBORG/Accretia exclusive)**
+- Launcher sudah ada sebagai weapon type
+- Tambah Siege Mode activation:
+  - Item Siege Kit di inventory
+  - Klik "Enter Siege Mode" saat equip Launcher
+  - Karakter tidak bisa bergerak saat Siege Mode
+  - Damage launcher meningkat 150%
+  - AoE radius lebih besar
+  - Chain Rocket (L40 Striker only): tembak 3 roket sekaligus
+- Exit Siege Mode: tombol atau kena interrupt
+- Ammo system: launcher butuh ammo item, bisa habis
 
----
-
-## BATCH 9 — Chip War / Sector War System
-> Dep: Batch 8 (Zone), Batch 3 (class)
-> **Fitur utama RF Classic — ini alasan orang main RF**
-
-### 9A — Chip War Mechanics
-RF Classic Chip War:
-- Tiap ras punya **Chip** (inti kekuatan ras)
-- Chip diletakkan di **HQ (Headquarters)** ras masing-masing
-- Tujuan: **hancurkan Chip milik 2 ras lain** sebelum chip kamu dihancurkan
-- Chip War terjadwal: server-wide event (misal 3x seminggu)
-- Menang → ras pemenang dapat buff ekonomi/resource 1 minggu
-
-### 9B — Sector Capture
-- Map dibagi dalam sector/zone
-- Sector punya **Control Point** yang bisa di-capture
-- Capture = bertahan di area X detik tanpa interrupted
-- Makin banyak sector → makin besar bonus resource ras
-
-### 9C — Kill System (RF Classic style)
-- Kill enemy ras → dapat **Kill Point** (KP)
-- KP dipakai untuk rank dalam ras
-- Death → kehilangan sebagian EXP (RF Classic: death penalty)
-
-### 9D — Council System
-- Tiap ras punya **Council** (pemimpin ras)
-- Dipilih dari player dengan KP/rank tertinggi
-- Council punya power: deklarasi war, bagi resource, dll
-
-**Files yang perlu dibuat:**
-- `src/ServerScriptService/Services/ChipWarService.lua`
-- `src/ServerScriptService/Services/SectorService.lua`
-- `src/ServerScriptService/Services/CouncilService.lua`
-- `src/ReplicatedStorage/Shared/Client/WarHUDPanel.lua`
+### Deliverables
+- [ ] MAU item definitions (Goliath, Catapult)
+- [ ] MAUService.lua (server: enter/exit MAU, HP tracking, fuel)
+- [ ] MAU model controller (client: input saat di MAU)
+- [ ] Siege Mode state di StaminaService atau baru SiegeService.lua
+- [ ] Ammo item definitions + consumption system
+- [ ] Siege Mode UI indicator
 
 ---
 
-## BATCH 10 — Economy & Trading
-> Dep: Batch 5 (item system)
+## BATCH 7 — Animus System
+> Dependensi: Batch 5 selesai.
 
-### 10A — NPC Shops
-- Tiap ras punya NPC shop di starter zone
-- Jual: potion, basic ammo, basic equipment
-- Beli: item drop dari player (di harga bawah market)
+### Tujuan
+Mengimplementasi unique mechanic MYSTIC (Cora) — Animus companion.
 
-### 10B — Player Market
-- Market system: player bisa list item untuk dijual
-- Buyer beli tanpa harus ketemu seller (async)
-- Fee listing: kecil (anti dump)
+### Tasks
 
-### 10C — Currency
-- Primary: **Dalant** (RF Classic = Dalant) → sudah ada di Currencies
-- Secondary: **Carat** (premium, event reward)
-- Ore/material sebagai barter di market
+**Animus System (MYSTIC/Cora exclusive)**
+- Hanya AnimusCaller (L30) dan SummonMaster/SoulBinder (L40) yang bisa summon
+- 4 tipe Animus (item Animus Egg per tipe):
+  - Paimon (Sword): melee attacker, close combat
+  - Inanna (Cure): healer — heal summoner + ally sesama MYSTIC
+  - Hecate (Flame): Force damage attacker, fastest Force growth
+  - Isis (Lightning): highest ATK, efektif vs heavy armor
+- Mechanic:
+  - Max 1 Animus aktif per player
+  - Animus punya level dan EXP sendiri (naik dari ikut membunuh monster)
+  - Animus punya HP — bisa mati → perlu Animus Revival item
+  - Animus berubah model saat level naik (milestone tertentu)
+  - AI: follow summoner, auto-attack target summoner
+- Summoning PT naik setiap Animus membunuh atau aktif
+- Jika summoner mati, Animus menghilang (tidak mati permanen)
 
-### 10D — Crafting System
-- Technician/Specialist bisa craft item dari material
-- Craft recipe: public, material dari drop/mining
-- Gagal craft → material hilang (RF Classic style risk)
-
-**Files yang perlu dibuat:**
-- `src/ServerScriptService/Services/ShopService.lua`
-- `src/ServerScriptService/Services/MarketService.lua`
-- `src/ServerScriptService/Services/CraftService.lua`
-- `src/ReplicatedStorage/Shared/Definitions/RecipeDefinitions.lua`
-
----
-
-## BATCH 11 — Quest & Mission System
-> Dep: Batch 8 (zone/monster)
-
-### 11A — Quest Types (RF Classic)
-| Tipe | Keterangan |
-|------|-----------|
-| Starter Quest | Tutorial per ras |
-| Kill Quest | Bunuh X monster |
-| Gather Quest | Kumpulkan X item |
-| Escort Quest | Antar NPC ke titik tujuan |
-| War Quest | Participate di Chip War |
-
-### 11B — Daily Missions
-- Reset tiap hari
-- Reward: EXP bonus + Dalant + rare item chance
-
-### 11C — Faction Quest
-- Quest yang progress war story per ras
-- Unlock lore dan NPC dialog
-
-**Files yang perlu dibuat:**
-- `src/ServerScriptService/Services/QuestService.lua`
-- `src/ReplicatedStorage/Shared/Definitions/QuestDefinitions.lua`
-- `src/ReplicatedStorage/Shared/Client/QuestPanel.lua`
+### Deliverables
+- [ ] AnimusDefinitions.lua (4 tipe, stat scaling per level)
+- [ ] AnimusService.lua (server: summon, AI, level, HP)
+- [ ] Animus item definitions (4 Egg + Revival)
+- [ ] Animus model per tipe (basic model)
+- [ ] Summoning PT naik saat Animus aktif
+- [ ] Animus HUD indicator (nama, HP, level)
 
 ---
 
-## BATCH 12 — Polish & RF Fidelity
-> Dep: semua batch di atas
+## BATCH 8 — World + Zone + Mining
+> Dependensi: Batch 4-5 selesai.
 
-### 12A — Death Penalty (RF Classic)
-- Mati → kehilangan X% EXP (amount tergantung level)
-- Level < 10: tidak ada penalty (newbie protection)
-- Level 10-30: -2% EXP
-- Level 30+: -5% EXP
-- Mati di Chip War zone: -1% extra
+### Tujuan
+World navigation, zona berbeda dengan monster berbeda, dan mining system RF Classic.
 
-### 12B — Resurrection System
-- Mati → respawn di HQ ras sendiri
-- Cora Warden punya skill Resurrection (revive ally in-place)
-- Item: Resurrection Stone (revive diri sendiri in-place, cooldown)
+### Tasks
 
-### 12C — PvP Flag System
-- Di neutral zone: harus **flag dulu** sebelum bisa attack player lain ras
-- Di contested zone: auto-flag semua ras musuh
-- Friendly fire: TIDAK ada (tidak bisa attack sesama ras)
+**Zone System**
+- `ZoneDefinitions.lua` — definisi zona (nama, level range, faction akses, monster list)
+- Zona Phase 2:
+  - HQ per ras (MECHA HQ, CYBORG HQ, MYSTIC HQ)
+  - Starter zone (L1-20) per ras
+  - Mid zone (L20-35): Haram/213 equivalents
+  - Ether zone (L35-45)
+  - Crag Mine (contested, level 30+)
+- Zone transition: teleport ke zona lain via portal
+- Mini-map: tampilkan posisi player + zona saat ini
 
-### 12D — Spawn Protection
-- Baru spawn: 5 detik invincible + tidak bisa attack
-- Prevents spawn camping
+**Mining System (RF Classic accurate)**
+- 5 ore type items: Blue Ore, Red Ore, Yellow Ore, Green Ore, Black Ore
+- Mining Tool + Battery items
+- `MiningService.lua` (server):
+  - Klik ore node → mulai mining (animasi + progress bar)
+  - Butuh Mining Tool + Battery di inventory
+  - Battery drain per ore mined
+  - Hasil: ore item masuk inventory
+- Ore Processing NPC:
+  - Input ore → output ore lain + talic + gems
+  - T1-T5 gems dari ore biasa/+1/+2/+3
+- Crag Mine: hanya bisa diakses ras yang menang Chip War
 
-### 12E — Anti-AFK System
-- Idle > 15 menit → kick ke login screen
-- Farming bot prevention
+**World Map UI**
+- M key: buka world map
+- Tampilkan zona yang sudah unlocked
+- Fast travel via waypoint (bayar gold)
 
----
-
-## URUTAN PENGERJAAN YANG DISARANKAN
-
-```
-Batch 5A (Potion items)     ← paling cepat, langsung berguna
-    ↓
-Batch 4A (Skill trees)      ← content terbesar, kerjakan bertahap
-    ↓
-Batch 4C (Blood Ammo)       ← unique mechanic, bikin game berasa RF
-    ↓
-Batch 3 (Class system)      ← foundation banyak batch lain
-    ↓
-Batch 9 (Chip War)          ← endgame content, paling penting buat retensi
-    ↓
-Batch 6 (MAU)               ← Bellato identity
-    ↓
-Batch 7 (Animus)            ← Cora identity
-    ↓
-Batch 8 (World/Zone)        ← butuh map design di Roblox Studio
-    ↓
-Batch 10 (Economy)
-    ↓
-Batch 11 (Quest)
-    ↓
-Batch 12 (Polish)
-```
+### Deliverables
+- [ ] ZoneDefinitions.lua
+- [ ] ZoneService.lua (server: zone tracking, access control)
+- [ ] Portal objects di Roblox map
+- [ ] Ore node objects di Crag Mine
+- [ ] Ore + Gems item definitions
+- [ ] MiningService.lua
+- [ ] Ore Processing NPC + UI
+- [ ] Mini-map UI
+- [ ] World map UI (M key)
 
 ---
 
-## CATATAN NAMA (RF → Aetherion)
+## BATCH 9 — Chip War + PvP System
+> Dependensi: Batch 8 (Zone + Crag Mine ada).
 
-| RF Classic | Aetherion |
-|-----------|-----------|
-| Bellato | MECHA |
-| Cora | MYSTIC |
-| Accretia | CYBORG |
-| Dalant | Dalant (sama) |
-| Animus | TBD |
-| MAU | TBD |
-| Chip | TBD |
-| HQ | TBD |
-| Council | TBD |
-| Chip War | TBD |
+### Tujuan
+Chip War sebagai core PvP loop RF Classic. CP rank system.
 
-> Nama TBD bisa ditentukan user kapan saja, implementasi tidak bergantung pada nama.
+### Tasks
+
+**Chip War (RF Classic accurate)**
+- Schedule: 3x per hari (bisa diconfig server)
+- Lokasi: Crag Mine (zona khusus)
+- Level minimum peserta: 30
+- Mechanic:
+  - Setiap ras punya Control Chip (object dengan HP bar besar)
+  - Tujuan: hancurkan chip 2 ras musuh
+  - Ras pertama yang menghancurkan chip lawan = menang sesi itu
+  - Timer per sesi (15 menit default)
+- Reward pemenang:
+  - Mining rights Crag Mine sampai Chip War berikutnya
+  - Buff: Victorious Vigor (+stat selama durasi)
+- Penalty kalah:
+  - Debuff: Car of Defeat (-stat)
+  - Tidak bisa masuk area tengah Crag Mine
+
+**CP Rank System (RF Classic accurate)**
+- 8 rank total
+- CP didapat dari: membunuh player ras lain, menang Chip War, quest reward
+- PvP death → kehilangan CP (sudah di death penalty Batch 4)
+- Higher rank kill higher rank → lebih banyak CP
+- CP loss lebih besar jika dibunuh lower rank
+- Rank ditampilkan di Character window (C key)
+
+**PvP Zone**
+- Zona tertentu = PvP zone (semua ras bisa saling serang)
+- Zona safe = tidak bisa serang sesama atau musuh
+- Chaos flag: player yang menyerang sesama ras di zona tertentu jadi chaos
+
+### Deliverables
+- [ ] ChipWarService.lua (scheduler, chip HP, reward/penalty)
+- [ ] Chip object di Crag Mine map
+- [ ] Chip War UI (timer, chip HP bar 3 ras)
+- [ ] CP gain/loss mechanics di CombatService
+- [ ] Rank calculation dari CP total
+- [ ] Rank display di Character window
+- [ ] PvP zone flag system
+
+---
+
+## BATCH 10 — Economy + Guild
+> Dependensi: Batch 9 (CP ada, Chip War ada).
+
+### Tujuan
+Player economy RF Classic: trading, auction, guild system.
+
+### Tasks
+
+**Trading System**
+- Player-to-player trade (sesama ras saja — RF Classic accurate)
+- Trade window: 5 item slot (10 untuk Specialist — RF accurate)
+- Konfirmasi dua pihak sebelum trade terjadi
+
+**Auction House**
+- Player bisa listing item + harga
+- Player lain bisa beli
+- Fee 0.1% dari harga (RF Classic accurate)
+- Filter: by item type, level, faction
+- Notifikasi saat item terjual
+
+**Guild System**
+- Buat guild: butuh level 30+ dan bayar gold
+- Tipe guild: Battle Guild atau Friendly Guild
+- Struktur: Guild Leader + Committee (top 10% rank)
+- Guild roster, guild chat
+- Circle Zone Scramble (guild vs guild mini-PvP):
+  - Entry fee: 5000 gold per member
+  - Skor dari gravity stone mechanic
+  - Pemenang: 10000 gold
+
+### Deliverables
+- [ ] TradeService.lua + trade UI
+- [ ] AuctionService.lua + auction UI
+- [ ] GuildService.lua (create, join, roster, chat)
+- [ ] Guild UI (G key)
+- [ ] Circle Zone Scramble scheduler
+
+---
+
+## BATCH 11 — Quest Lanjutan + Archon
+> Dependensi: Batch 10.
+
+### Tujuan
+Quest 2nd tier dan Archon election system.
+
+### Tasks
+
+**Quest Lanjutan**
+- 2nd Quest (L51-55): quest chains dengan rewards lebih baik
+- Repeatable Quest: bisa diulang daily, reward currency
+- Time-Limit Quest: contoh "bunuh 10 monster dalam 10 menit"
+- Quest NPC dialogue sederhana
+
+**Archon Election System (RF Classic accurate)**
+- 1 Archon per ras, dipilih via voting
+- Syarat kandidat: Rank 30+ (dari CP rank system)
+- Jadwal: voting minggu 20:00-22:00
+- Bobot suara: dipengaruhi level + rank player
+- Masa jabatan: 1 minggu
+- Archon privileges:
+  - Broadcast ke seluruh ras
+  - Bisa chat dengan Archon ras lain
+  - Armor khusus + aura
+
+**Primary Council (4 posisi)**
+- Consul (suara terbanyak ke-2)
+- Strike Team Leader
+- Defense Team Leader
+- Support Team Leader
+
+### Deliverables
+- [ ] 2nd Quest definitions + service update
+- [ ] Repeatable/Time-Limit quest types
+- [ ] Archon election scheduler
+- [ ] Archon voting UI
+- [ ] Council role assignment
+- [ ] Archon broadcast command
+- [ ] Archon cosmetic (armor override + aura)
+
+---
+
+## BATCH 12 — Dungeon + Boss
+> Dependensi: Batch 8 (zone system).
+
+### Tujuan
+Instanced content RF Classic: Battle Dungeon + boss encounters.
+
+### Tasks
+
+**Battle Dungeon System**
+- Akses: Level 53+
+- 3 tipe dungeon:
+  1. Normal Battle Dungeon: briefing + objective
+  2. Boss Fight Battle Dungeon: kill target dalam timer
+  3. Dark Hole Battle Dungeon: puzzle + clues
+- Instance: setiap grup punya copy dungeon sendiri
+- Reward: D-grade weapon/armor, rare items
+
+**DDD Brothers Boss**
+- Dagon + Dagan: bisa dilawan satu ras
+- Dagnu: butuh aliansi temporer — mechanic unik RF Classic
+  - Semua ras bisa masuk ke area Dagnu bersama
+  - PvP dimatikan sementara di area Dagnu
+  - Setelah Dagnu mati: PvP kembali aktif
+
+**PB (Point Boss) System**
+- Boss dengan respawn timer
+- Drop D-grade (Rare D) weapon/armor
+- Contested: ras lain bisa rebut kill
+- PB spawn di zona PvP
+
+### Deliverables
+- [ ] DungeonDefinitions.lua (3 tipe, 10 dungeon)
+- [ ] DungeonService.lua (instancing, timer, reward)
+- [ ] Boss definitions (Dagon, Dagan, Dagnu)
+- [ ] Dagnu cease-fire mechanic
+- [ ] PB spawn system + respawn timer
+- [ ] Dungeon entry portal + UI
+
+---
+
+## BATCH 13 — Polish + Audio + VFX
+> Dependensi: Semua batch sebelumnya.
+
+### Tujuan
+Membuat game terasa seperti RF Classic: audio, animasi, efek visual.
+
+### Tasks
+
+- Sound effects: combat hit, skill cast, force cast, UI click, level up, item pickup
+- BGM per zona (RF-inspired tracks atau original)
+- Skill VFX: Slash glow, Multi Shot projectile, Elemental force visuals
+- Force VFX: Fire Arrow particle, Meteor Swarm, Terra Destruction
+- MAU entry/exit animation
+- Animus summon effect
+- Launcher rocket trail + explosion
+- Character level up effect (aura burst)
+- Chip War ambiance (explosions, warning siren)
+- Death screen + respawn countdown
+- Loading screen per zona
+- Character creation screen polish
+
+### Deliverables
+- [ ] SoundService.lua + asset setup
+- [ ] VFX per skill/force (ParticleEmitter + Beam)
+- [ ] BGM per zone
+- [ ] Character creation polish
+- [ ] Loading screen system
+- [ ] Death + respawn UI
+
+---
+
+## CATATAN PENTING
+
+### Jangan Diubah Sampai User Minta
+- `GameConfig.MaxLevel = 50` — tetap 50 sampai semua Batch 3.1-13 selesai dan game sudah jalan
+- Phase 2 dan 3 bukan batch baru — hanya update MaxLevel + tambah equipment tier + map baru untuk level yang lebih tinggi
+- Nama race/class Aetherion (MECHA/CYBORG/MYSTIC, bukan Bellato/Accretia/Cora) — intentional
+
+### Deviasi yang Diizinkan (Creative Addition)
+- Blood Ammo CYBORG Specialist — tidak ada di wiki RF resmi tapi user menyetujui sebagai mechanic unik
+- Nama class Aetherion (MechaGuardian, DarkInvoker, dll) — beda nama, sama role
+- Aetherion skill names (Slash, Blitz, dll) — beda nama, sama mechanic
+
+### Source of Truth
+Semua implementasi harus mengacu ke memory files:
+- `rf_classic_mechanics.md` — race/class facts
+- `rf_classes_detailed.md` — class trees
+- `rf_game_systems.md` — game systems
+- `rf_controls_progression.md` — controls, milestones, maps
+- `rf_items_database.md` — items, potions, talics
+- `aetherion_rf_gaps.md` — checklist gap audit

@@ -22,13 +22,14 @@ GameConfig.StartingClasses = {
 }
 
 GameConfig.PTTypes = {
-	Melee = "Melee",
-	Ranged = "Ranged",
-	Launcher = "Launcher",
-	Shield = "Shield",
-	Defense = "Defense",
-	Magic = "Magic",
-	Unit = "Unit",
+	Melee      = "Melee",
+	Ranged     = "Ranged",
+	Launcher   = "Launcher",
+	Shield     = "Shield",
+	Defense    = "Defense",
+	Magic      = "Magic",
+	Unit       = "Unit",
+	Summoning  = "Summoning",  -- Cora/MYSTIC exclusive: naik saat Animus aktif/membunuh
 }
 
 GameConfig.ItemCategories = {

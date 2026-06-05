@@ -11,7 +11,7 @@ local GameConfig = require(game.ReplicatedStorage.Shared.GameConfig)
 local CurrencyDefinitions = require(game.ReplicatedStorage.Shared.Definitions.CurrencyDefinitions)
 
 local DATASTORE_NAME = "AetherionPlayerData_v3"
-local CURRENT_SCHEMA = 5
+local CURRENT_SCHEMA = 6
 local MAX_RETRIES = 3
 local RETRY_DELAY = 2 -- detik antar retry
 local AUTO_SAVE_INTERVAL = 120 -- detik, auto-save tiap 2 menit
@@ -118,6 +118,15 @@ local function migrateData(data)
 		eq.Accessory3 = nil
 		eq.Accessory4 = nil
 		version = 5
+	end
+
+	-- v5 → v6: tambah Summoning PT (MYSTIC/Cora Animus system)
+	if version < 6 then
+		data.PT = data.PT or {}
+		if data.PT.Summoning == nil then
+			data.PT.Summoning = { Level = 1, Exp = 0 }
+		end
+		version = 6
 	end
 
 	data.SchemaVersion = CURRENT_SCHEMA

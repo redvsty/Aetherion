@@ -111,17 +111,19 @@ ClassDefinitions.Advancement30 = {
 
 	-- CYBORG tidak punya Spiritualist — Accretia tidak bisa magic sama sekali di RF Classic
 	-- Heal Accretia = Blood Ammo dari Specialist, bukan Force skill
+	-- RF Classic: Accretia Specialist L30 hanya 1 opsi (Engineer), L40 baru 2 (Scientist/BattleLeader)
 	CYBORG = {
-		Warrior    = { "SteelDestroyer", "ShieldBreaker"    },
-		Ranger     = { "SiegeGunner",    "StealthScout"     },
-		Specialist = { "MechanicEngineer", "BloodMedic"     }, -- BloodMedic = Blood Ammo healer
+		Warrior    = { "SteelDestroyer", "ShieldBreaker" },
+		Ranger     = { "SiegeGunner",    "StealthScout"  },
+		Specialist = { "MechanicEngineer" },               -- RF accurate: 1 opsi di L30
 	},
 
+	-- RF Classic: Cora Specialist L30 hanya 1 opsi (Craftsman), L40 baru Artisan
 	MYSTIC = {
-		Warrior      = { "RuneKnight",     "SpiritGuard"    },
-		Ranger       = { "ShadowArcher",   "WindStalker"    },
-		Spiritualist = { "DarkInvoker",    "AnimusCaller"   },
-		Specialist   = { "SoulArtisan",    "RuneEngineer"   },
+		Warrior      = { "RuneKnight",   "SpiritGuard"  },
+		Ranger       = { "ShadowArcher", "WindStalker"  },
+		Spiritualist = { "DarkInvoker",  "AnimusCaller" },
+		Specialist   = { "SoulArtisan" },                  -- RF accurate: 1 opsi di L30
 	},
 }
 
@@ -146,8 +148,9 @@ ClassDefinitions.Advancement40 = {
 		ShieldBreaker    = { "Mercenary",      "Bulwark"      },
 		SiegeGunner      = { "Striker",        "Dementer"     },
 		StealthScout     = { "PhantomShadow",  "Infiltrator"  },
-		MechanicEngineer = { "Scientist",      "BattleLeader" },
-		BloodMedic       = { "FieldSurgeon",   "BloodArsenal" },
+		-- RF accurate: Engineer (MechanicEngineer) → Scientist / BattleLeader
+		-- BloodMedic role digabung ke MechanicEngineer sebagai salah satu path L40
+		MechanicEngineer = { "Scientist",    "BattleLeader" },
 	},
 
 	MYSTIC = {
@@ -157,8 +160,9 @@ ClassDefinitions.Advancement40 = {
 		WindStalker    = { "PhantomWind",      "BeastHunter"      },
 		DarkInvoker    = { "Warlock",          "DarkPriest"       },
 		AnimusCaller   = { "SummonMaster",     "SoulBinder"       },
-		SoulArtisan    = { "ArcaneSmith",      "SpiritMechanic"   },
-		RuneEngineer   = { "RuneArchitect",    "SupportOracle"    },
+		-- RF accurate: Craftsman (SoulArtisan) → Artisan path (2 L40 options)
+		-- RuneEngineer dihapus dari L30, dilebur ke SoulArtisan L40 path
+		SoulArtisan    = { "ArcaneSmith",      "RuneArchitect"    },
 	},
 }
 
@@ -199,7 +203,6 @@ ClassDefinitions.AdvancementMeta = {
 	SiegeGunner      = { DisplayName = "Siege Gunner",     Role = "Ranged"  },
 	StealthScout     = { DisplayName = "Stealth Scout",    Role = "Ranged"  },
 	MechanicEngineer = { DisplayName = "Mechanic Engineer",Role = "Support" },
-	BloodMedic       = { DisplayName = "Blood Medic",      Role = "Heal"    }, -- heal via Blood Ammo
 	-- CYBORG L40
 	Punisher         = { DisplayName = "Punisher",         Role = "Melee"   },
 	Assaulter        = { DisplayName = "Assaulter",        Role = "Melee"   },
@@ -209,10 +212,8 @@ ClassDefinitions.AdvancementMeta = {
 	Dementer         = { DisplayName = "Dementer",         Role = "Ranged"  },
 	PhantomShadow    = { DisplayName = "Phantom Shadow",   Role = "Ranged"  },
 	Infiltrator      = { DisplayName = "Infiltrator",      Role = "Ranged"  },
-	Scientist        = { DisplayName = "Scientist",        Role = "Support" },
+	Scientist        = { DisplayName = "Scientist",        Role = "Support" }, -- healer Accretia via skill, bukan Force
 	BattleLeader     = { DisplayName = "Battle Leader",    Role = "Support" },
-	FieldSurgeon     = { DisplayName = "Field Surgeon",    Role = "Heal"    },
-	BloodArsenal     = { DisplayName = "Blood Arsenal",    Role = "Heal"    },
 	-- MYSTIC L30
 	RuneKnight       = { DisplayName = "Rune Knight",      Role = "Tank"    },
 	SpiritGuard      = { DisplayName = "Spirit Guard",     Role = "Tank"    },
@@ -236,9 +237,7 @@ ClassDefinitions.AdvancementMeta = {
 	SummonMaster     = { DisplayName = "Summon Master",    Role = "Magic"   },
 	SoulBinder       = { DisplayName = "Soul Binder",      Role = "Support" },
 	ArcaneSmith      = { DisplayName = "Arcane Smith",     Role = "Support" },
-	SpiritMechanic   = { DisplayName = "Spirit Mechanic",  Role = "Support" },
 	RuneArchitect    = { DisplayName = "Rune Architect",   Role = "Support" },
-	SupportOracle    = { DisplayName = "Support Oracle",   Role = "Support" },
 }
 
 -- ============================================================

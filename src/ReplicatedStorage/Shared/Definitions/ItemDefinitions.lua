@@ -650,7 +650,75 @@ local ItemDefinitions = {
 		CanTrade = false,
 	},
 
-	-- 14. Restoration Talic — All equipment — Removes the last added Talic
+	-- 14. Vital Talic — All Armor — Increases Max HP
+	vital_talic = {
+		Id = "vital_talic",
+		Name = "Vital Talic",
+		Category = GameConfig.ItemCategories.Material,
+		Type = "Talic",
+		UpgradeRole = "Talic",
+		AppliesTo = "AllArmor",
+		UpgradePower = 0.02,
+		UpgradeEffect = { Type = "MaxHPFlat", ValuePerTalic = 50 },
+		Description = "Increases Max HP.",
+		Stackable = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
+	},
+
+	-- 15. Force Talic — All Armor — Increases Max FP
+	force_talic = {
+		Id = "force_talic",
+		Name = "Force Talic",
+		Category = GameConfig.ItemCategories.Material,
+		Type = "Talic",
+		UpgradeRole = "Talic",
+		AppliesTo = "AllArmor",
+		UpgradePower = 0.02,
+		UpgradeEffect = { Type = "MaxFPFlat", ValuePerTalic = 30 },
+		Description = "Increases Max FP.",
+		Stackable = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
+	},
+
+	-- 16. Speed Talic — Boots only — Increases Movement Speed
+	speed_talic = {
+		Id = "speed_talic",
+		Name = "Speed Talic",
+		Category = GameConfig.ItemCategories.Material,
+		Type = "Talic",
+		UpgradeRole = "Talic",
+		AppliesTo = "Boots",
+		UpgradePower = 0.02,
+		UpgradeEffect = { Type = "MoveSpeedFlat", ValuePerTalic = 1 },
+		Description = "Increases Movement Speed. Boots only.",
+		Stackable = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
+	},
+
+	-- 17. Luck Talic — All Armor — Increases Critical Rate and item drop rate
+	luck_talic = {
+		Id = "luck_talic",
+		Name = "Luck Talic",
+		Category = GameConfig.ItemCategories.Material,
+		Type = "Talic",
+		UpgradeRole = "Talic",
+		AppliesTo = "AllArmor",
+		UpgradePower = 0.02,
+		UpgradeEffect = { Type = "CritChanceFlat", ValuePerTalic = 0.01 },
+		Description = "Increases Critical Rate.",
+		Stackable = true,
+		CanSell = false,
+		CanDrop = false,
+		CanTrade = false,
+	},
+
+	-- 18. Restoration Talic — All equipment — Removes the last added Talic
 	-- UpgradeRole = "Restoration" → UpgradeService handle ini sebagai kasus khusus
 	restoration_talic = {
 		Id = "restoration_talic",

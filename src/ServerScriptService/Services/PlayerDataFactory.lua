@@ -13,13 +13,14 @@ local PlayerDataFactory = {}
 
 local function defaultPT()
 	return {
-		Melee = { Level = 1, Exp = 0 },
-		Ranged = { Level = 1, Exp = 0 },
-		Launcher = { Level = 1, Exp = 0 },
-		Shield = { Level = 1, Exp = 0 },
-		Defense = { Level = 1, Exp = 0 },
-		Magic = { Level = 1, Exp = 0 },
-		Unit = { Level = 1, Exp = 0 },
+		Melee     = { Level = 1, Exp = 0 },
+		Ranged    = { Level = 1, Exp = 0 },
+		Launcher  = { Level = 1, Exp = 0 },
+		Shield    = { Level = 1, Exp = 0 },
+		Defense   = { Level = 1, Exp = 0 },
+		Magic     = { Level = 1, Exp = 0 },
+		Unit      = { Level = 1, Exp = 0 },
+		Summoning = { Level = 1, Exp = 0 }, -- Cora/MYSTIC exclusive, naik saat Animus aktif
 	}
 end
 
@@ -59,7 +60,7 @@ end
 
 function PlayerDataFactory.Create(player)
 	return {
-		SchemaVersion = 5,
+		SchemaVersion = 6,
 
 		UserId = player.UserId,
 		Name = player.Name,
