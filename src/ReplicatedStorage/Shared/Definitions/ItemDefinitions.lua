@@ -298,6 +298,111 @@ local ItemDefinitions = {
 	},
 
 	-- ============================================================
+	-- RING & AMULET — Elemental Accessories (RF Online Classic)
+	--
+	-- Normal Elementals:
+	--   Bellato → Wristlets, Cora → Armlets  (EquipSlot = "Ring")
+	-- Rare Elementals (PitBoss drops):
+	--   Ring  → EquipSlot = "Ring"
+	--   Leash → EquipSlot = "Amulet"
+	--
+	-- Element variants: Fire / Aqua / Terra / Wind
+	-- Stats: Attack, ForceAttack, Accuracy, ElementalAttack per element
+	-- ============================================================
+
+	-- helper lokal untuk buat elemental item
+	-- (tidak di-export, hanya dipakai sekali saat build table)
+
+	-- ---- BELLATO WRISTLETS (MECHA) ----
+	-- Parsal Wristlets — Tier 1
+	parsal_wristlets_fire  = { Id="parsal_wristlets_fire",  Name="Parsal Fire Wristlets",  Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MECHA, Level=10, Slots=1, Durability=100, MaxDurability=100, Stats={ Attack=8,  Accuracy=5,  ElementalAttackFire=15 } },
+	parsal_wristlets_aqua  = { Id="parsal_wristlets_aqua",  Name="Parsal Aqua Wristlets",  Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MECHA, Level=10, Slots=1, Durability=100, MaxDurability=100, Stats={ Attack=8,  Accuracy=5,  ElementalAttackAqua=15 } },
+	parsal_wristlets_terra = { Id="parsal_wristlets_terra", Name="Parsal Terra Wristlets", Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MECHA, Level=10, Slots=1, Durability=100, MaxDurability=100, Stats={ Attack=8,  Accuracy=5,  ElementalAttackTerra=15 } },
+	parsal_wristlets_wind  = { Id="parsal_wristlets_wind",  Name="Parsal Wind Wristlets",  Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MECHA, Level=10, Slots=1, Durability=100, MaxDurability=100, Stats={ Attack=8,  Accuracy=5,  ElementalAttackWind=15 } },
+
+	-- Spirit Wristlets — Tier 2
+	spirit_wristlets_fire  = { Id="spirit_wristlets_fire",  Name="Spirit Fire Wristlets",  Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MECHA, Level=20, Slots=1, Durability=100, MaxDurability=100, Stats={ Attack=14, Accuracy=8,  ElementalAttackFire=25 } },
+	spirit_wristlets_aqua  = { Id="spirit_wristlets_aqua",  Name="Spirit Aqua Wristlets",  Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MECHA, Level=20, Slots=1, Durability=100, MaxDurability=100, Stats={ Attack=14, Accuracy=8,  ElementalAttackAqua=25 } },
+	spirit_wristlets_terra = { Id="spirit_wristlets_terra", Name="Spirit Terra Wristlets", Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MECHA, Level=20, Slots=1, Durability=100, MaxDurability=100, Stats={ Attack=14, Accuracy=8,  ElementalAttackTerra=25 } },
+	spirit_wristlets_wind  = { Id="spirit_wristlets_wind",  Name="Spirit Wind Wristlets",  Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MECHA, Level=20, Slots=1, Durability=100, MaxDurability=100, Stats={ Attack=14, Accuracy=8,  ElementalAttackWind=25 } },
+
+	-- Mind Wristlets — Tier 3
+	mind_wristlets_fire    = { Id="mind_wristlets_fire",    Name="Mind Fire Wristlets",    Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MECHA, Level=30, Slots=2, Durability=100, MaxDurability=100, Stats={ Attack=20, ForceAttack=10, Accuracy=12, ElementalAttackFire=35 } },
+	mind_wristlets_aqua    = { Id="mind_wristlets_aqua",    Name="Mind Aqua Wristlets",    Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MECHA, Level=30, Slots=2, Durability=100, MaxDurability=100, Stats={ Attack=20, ForceAttack=10, Accuracy=12, ElementalAttackAqua=35 } },
+	mind_wristlets_terra   = { Id="mind_wristlets_terra",   Name="Mind Terra Wristlets",   Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MECHA, Level=30, Slots=2, Durability=100, MaxDurability=100, Stats={ Attack=20, ForceAttack=10, Accuracy=12, ElementalAttackTerra=35 } },
+	mind_wristlets_wind    = { Id="mind_wristlets_wind",    Name="Mind Wind Wristlets",    Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MECHA, Level=30, Slots=2, Durability=100, MaxDurability=100, Stats={ Attack=20, ForceAttack=10, Accuracy=12, ElementalAttackWind=35 } },
+
+	-- Ell Wristlets — Tier 4
+	ell_wristlets_fire     = { Id="ell_wristlets_fire",     Name="Ell Fire Wristlets",     Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MECHA, Level=40, Slots=2, Durability=100, MaxDurability=100, Stats={ Attack=28, ForceAttack=16, Accuracy=16, ElementalAttackFire=45 } },
+	ell_wristlets_aqua     = { Id="ell_wristlets_aqua",     Name="Ell Aqua Wristlets",     Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MECHA, Level=40, Slots=2, Durability=100, MaxDurability=100, Stats={ Attack=28, ForceAttack=16, Accuracy=16, ElementalAttackAqua=45 } },
+	ell_wristlets_terra    = { Id="ell_wristlets_terra",    Name="Ell Terra Wristlets",    Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MECHA, Level=40, Slots=2, Durability=100, MaxDurability=100, Stats={ Attack=28, ForceAttack=16, Accuracy=16, ElementalAttackTerra=45 } },
+	ell_wristlets_wind     = { Id="ell_wristlets_wind",     Name="Ell Wind Wristlets",     Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MECHA, Level=40, Slots=2, Durability=100, MaxDurability=100, Stats={ Attack=28, ForceAttack=16, Accuracy=16, ElementalAttackWind=45 } },
+
+	-- ---- CORA ARMLETS (MYSTIC) ----
+	-- Stuff Armlets — Tier 1
+	stuff_armlets_fire     = { Id="stuff_armlets_fire",     Name="Stuff Fire Armlets",     Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MYSTIC, Level=10, Slots=1, Durability=100, MaxDurability=100, Stats={ ForceAttack=10, Accuracy=5,  ElementalAttackFire=15 } },
+	stuff_armlets_aqua     = { Id="stuff_armlets_aqua",     Name="Stuff Aqua Armlets",     Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MYSTIC, Level=10, Slots=1, Durability=100, MaxDurability=100, Stats={ ForceAttack=10, Accuracy=5,  ElementalAttackAqua=15 } },
+	stuff_armlets_terra    = { Id="stuff_armlets_terra",    Name="Stuff Terra Armlets",    Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MYSTIC, Level=10, Slots=1, Durability=100, MaxDurability=100, Stats={ ForceAttack=10, Accuracy=5,  ElementalAttackTerra=15 } },
+	stuff_armlets_wind     = { Id="stuff_armlets_wind",     Name="Stuff Wind Armlets",     Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MYSTIC, Level=10, Slots=1, Durability=100, MaxDurability=100, Stats={ ForceAttack=10, Accuracy=5,  ElementalAttackWind=15 } },
+
+	-- Mild Armlets — Tier 2
+	mild_armlets_fire      = { Id="mild_armlets_fire",      Name="Mild Fire Armlets",      Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MYSTIC, Level=20, Slots=1, Durability=100, MaxDurability=100, Stats={ ForceAttack=18, Accuracy=8,  ElementalAttackFire=25 } },
+	mild_armlets_aqua      = { Id="mild_armlets_aqua",      Name="Mild Aqua Armlets",      Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MYSTIC, Level=20, Slots=1, Durability=100, MaxDurability=100, Stats={ ForceAttack=18, Accuracy=8,  ElementalAttackAqua=25 } },
+	mild_armlets_terra     = { Id="mild_armlets_terra",     Name="Mild Terra Armlets",     Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MYSTIC, Level=20, Slots=1, Durability=100, MaxDurability=100, Stats={ ForceAttack=18, Accuracy=8,  ElementalAttackTerra=25 } },
+	mild_armlets_wind      = { Id="mild_armlets_wind",      Name="Mild Wind Armlets",      Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MYSTIC, Level=20, Slots=1, Durability=100, MaxDurability=100, Stats={ ForceAttack=18, Accuracy=8,  ElementalAttackWind=25 } },
+
+	-- Cus Armlets — Tier 3
+	cus_armlets_fire       = { Id="cus_armlets_fire",       Name="Cus Fire Armlets",       Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MYSTIC, Level=30, Slots=2, Durability=100, MaxDurability=100, Stats={ Attack=10, ForceAttack=24, Accuracy=12, ElementalAttackFire=35 } },
+	cus_armlets_aqua       = { Id="cus_armlets_aqua",       Name="Cus Aqua Armlets",       Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MYSTIC, Level=30, Slots=2, Durability=100, MaxDurability=100, Stats={ Attack=10, ForceAttack=24, Accuracy=12, ElementalAttackAqua=35 } },
+	cus_armlets_terra      = { Id="cus_armlets_terra",      Name="Cus Terra Armlets",      Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MYSTIC, Level=30, Slots=2, Durability=100, MaxDurability=100, Stats={ Attack=10, ForceAttack=24, Accuracy=12, ElementalAttackTerra=35 } },
+	cus_armlets_wind       = { Id="cus_armlets_wind",       Name="Cus Wind Armlets",       Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MYSTIC, Level=30, Slots=2, Durability=100, MaxDurability=100, Stats={ Attack=10, ForceAttack=24, Accuracy=12, ElementalAttackWind=35 } },
+
+	-- Glow Armlets — Tier 4
+	glow_armlets_fire      = { Id="glow_armlets_fire",      Name="Glow Fire Armlets",      Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MYSTIC, Level=40, Slots=2, Durability=100, MaxDurability=100, Stats={ Attack=14, ForceAttack=32, Accuracy=16, ElementalAttackFire=45 } },
+	glow_armlets_aqua      = { Id="glow_armlets_aqua",      Name="Glow Aqua Armlets",      Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MYSTIC, Level=40, Slots=2, Durability=100, MaxDurability=100, Stats={ Attack=14, ForceAttack=32, Accuracy=16, ElementalAttackAqua=45 } },
+	glow_armlets_terra     = { Id="glow_armlets_terra",     Name="Glow Terra Armlets",     Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MYSTIC, Level=40, Slots=2, Durability=100, MaxDurability=100, Stats={ Attack=14, ForceAttack=32, Accuracy=16, ElementalAttackTerra=45 } },
+	glow_armlets_wind      = { Id="glow_armlets_wind",      Name="Glow Wind Armlets",      Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MYSTIC, Level=40, Slots=2, Durability=100, MaxDurability=100, Stats={ Attack=14, ForceAttack=32, Accuracy=16, ElementalAttackWind=45 } },
+
+	-- Dan Armlets — Tier 5
+	dan_armlets_fire       = { Id="dan_armlets_fire",       Name="Dan Fire Armlets",       Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MYSTIC, Level=50, Slots=3, Durability=100, MaxDurability=100, Stats={ Attack=18, ForceAttack=42, Accuracy=20, ElementalAttackFire=55 } },
+	dan_armlets_aqua       = { Id="dan_armlets_aqua",       Name="Dan Aqua Armlets",       Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MYSTIC, Level=50, Slots=3, Durability=100, MaxDurability=100, Stats={ Attack=18, ForceAttack=42, Accuracy=20, ElementalAttackAqua=55 } },
+	dan_armlets_terra      = { Id="dan_armlets_terra",      Name="Dan Terra Armlets",      Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MYSTIC, Level=50, Slots=3, Durability=100, MaxDurability=100, Stats={ Attack=18, ForceAttack=42, Accuracy=20, ElementalAttackTerra=55 } },
+	dan_armlets_wind       = { Id="dan_armlets_wind",       Name="Dan Wind Armlets",       Category=GameConfig.ItemCategories.Ring, EquipSlot="Ring", Faction=GameConfig.Factions.MYSTIC, Level=50, Slots=3, Durability=100, MaxDurability=100, Stats={ Attack=18, ForceAttack=42, Accuracy=20, ElementalAttackWind=55 } },
+
+	-- ---- RARE ELEMENTALS — PitBoss Drops (all factions) ----
+	-- Dagnu's Ring
+	dagnus_ring = {
+		Id = "dagnus_ring", Name = "Dagnu's Ring",
+		Category = GameConfig.ItemCategories.Ring, EquipSlot = "Ring",
+		Level = 40, Slots = 3, Durability = 100, MaxDurability = 100,
+		Stats = { Attack = 35, ForceAttack = 35, Accuracy = 20, Dodge = 15, CritChance = 0.05 },
+	},
+
+	-- Dagan's Ring
+	dagans_ring = {
+		Id = "dagans_ring", Name = "Dagan's Ring",
+		Category = GameConfig.ItemCategories.Ring, EquipSlot = "Ring",
+		Level = 45, Slots = 3, Durability = 100, MaxDurability = 100,
+		Stats = { Attack = 42, ForceAttack = 42, Accuracy = 24, Dodge = 18, CritChance = 0.06 },
+	},
+
+	-- Dagon's Leash
+	dagons_leash = {
+		Id = "dagons_leash", Name = "Dagon's Leash",
+		Category = GameConfig.ItemCategories.Amulet, EquipSlot = "Amulet",
+		Level = 40, Slots = 3, Durability = 100, MaxDurability = 100,
+		Stats = { Defense = 30, MaxHP = 200, Accuracy = 18, ElementalResistanceFlat = 20 },
+	},
+
+	-- Blackblood Brother's Leash
+	blackblood_leash = {
+		Id = "blackblood_leash", Name = "Blackblood Brother's Leash",
+		Category = GameConfig.ItemCategories.Amulet, EquipSlot = "Amulet",
+		Level = 45, Slots = 3, Durability = 100, MaxDurability = 100,
+		Stats = { Defense = 38, MaxHP = 280, Accuracy = 22, ElementalResistanceFlat = 28 },
+	},
+
+	-- ============================================================
 	-- TALIC — sesuai RF Online asli
 	--
 	-- AppliesTo   : key dari GameConfig.TalicTargetGroups

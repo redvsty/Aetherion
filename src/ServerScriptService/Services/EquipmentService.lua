@@ -15,10 +15,10 @@ local EQUIPMENT_STAT_SLOTS = {
 	GameConfig.EquipmentSlots.Boots,
 	GameConfig.EquipmentSlots.Shield,
 	GameConfig.EquipmentSlots.Cloak,
-	GameConfig.EquipmentSlots.Accessory1,
-	GameConfig.EquipmentSlots.Accessory2,
-	GameConfig.EquipmentSlots.Accessory3,
-	GameConfig.EquipmentSlots.Accessory4,
+	GameConfig.EquipmentSlots.Ring1,
+	GameConfig.EquipmentSlots.Ring2,
+	GameConfig.EquipmentSlots.Amulet1,
+	GameConfig.EquipmentSlots.Amulet2,
 }
 
 local ELEMENT_RESISTANCE_EFFECTS = {

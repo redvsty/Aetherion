@@ -36,7 +36,9 @@ GameConfig.ItemCategories = {
 	Armor = "Armor",
 	Cloak = "Cloak",
 	Booster = "Booster",
-	Accessory = "Accessory",
+	Accessory = "Accessory", -- alias lama
+	Ring = "Ring",
+	Amulet = "Amulet",
 	Shield = "Shield",
 	Ammo = "Ammo",
 	Unit = "Unit",
@@ -56,10 +58,13 @@ GameConfig.EquipmentSlots = {
 	Armor      = "Upper",    -- alias → Upper
 	Shield     = "Shield",
 	Cloak      = "Cloak",    -- jetpack / booster
-	Accessory1 = "Accessory1",
-	Accessory2 = "Accessory2",
-	Accessory3 = "Accessory3",
-	Accessory4 = "Accessory4",
+	Ring1      = "Ring1",    -- cincin kiri
+	Ring2      = "Ring2",    -- cincin kanan
+	Amulet1    = "Amulet1",  -- kalung / leash 1
+	Amulet2    = "Amulet2",  -- kalung / leash 2
+	-- alias generic agar item dengan EquipSlot = "Ring"/"Amulet" bisa equip ke slot manapun
+	Ring       = "Ring",
+	Amulet     = "Amulet",
 }
 
 -- Slot yang bisa di-upgrade (digunakan UpgradeService untuk validasi server-side)
@@ -72,10 +77,10 @@ GameConfig.UpgradeableSlots = {
 	Boots   = true,
 	Shield  = true,
 	Cloak   = true,
-	Accessory1 = true,
-	Accessory2 = true,
-	Accessory3 = true,
-	Accessory4 = true,
+	Ring1   = true,
+	Ring2   = true,
+	Amulet1 = true,
+	Amulet2 = true,
 }
 
 -- Grup slot target untuk validasi AppliesTo talic.
@@ -114,7 +119,7 @@ GameConfig.TalicTargetGroups = {
 	All = {
 		Weapon = true, Helmet = true, Upper = true, Lower = true,
 		Gloves = true, Boots = true, Shield = true, Cloak = true,
-		Accessory1 = true, Accessory2 = true, Accessory3 = true, Accessory4 = true,
+		Ring1 = true, Ring2 = true, Amulet1 = true, Amulet2 = true,
 	},
 }
 

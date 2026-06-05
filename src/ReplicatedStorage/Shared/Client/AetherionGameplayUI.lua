@@ -83,10 +83,10 @@ local EQUIPMENT_PANEL_SLOTS = {
 	{ Key = "Lower", Label = "Lower", X = 69, Y = 116 },
 	{ Key = "Boots", Label = "Boots", X = 138, Y = 116 },
 	{ Key = "Cloak", Label = "Cloak", X = 69, Y = 174 },
-	{ Key = "Accessory1", Label = "Acc 1", X = 0, Y = 232 },
-	{ Key = "Accessory2", Label = "Acc 2", X = 69, Y = 232 },
-	{ Key = "Accessory3", Label = "Acc 3", X = 138, Y = 232 },
-	{ Key = "Accessory4", Label = "Acc 4", X = 69, Y = 290 },
+	{ Key = "Ring1",   Label = "Ring 1",   X = 0,   Y = 232 },
+	{ Key = "Ring2",   Label = "Ring 2",   X = 138, Y = 232 },
+	{ Key = "Amulet1", Label = "Amulet 1", X = 0,   Y = 290 },
+	{ Key = "Amulet2", Label = "Amulet 2", X = 138, Y = 290 },
 }
 
 local EQUIPMENT_STAT_ROWS = {
@@ -258,10 +258,8 @@ local function talicAppliesToEquipment(talicItem, equipmentItem)
 			Boots = true,
 			Shield = true,
 			Cloak = true,
-			Accessory1 = true,
-			Accessory2 = true,
-			Accessory3 = true,
-			Accessory4 = true,
+			Ring1 = true, Ring2 = true,
+			Amulet1 = true, Amulet2 = true,
 		},
 	}
 
@@ -1014,8 +1012,14 @@ local function slotAcceptsItem(slotKey, item)
 
 	local equipSlot = def.EquipSlot or def.Slot
 
-	if string.sub(slotKey, 1, 9) == "Accessory" then
-		return equipSlot == slotKey or equipSlot == "Accessory"
+	-- Ring1/Ring2: terima item dengan EquipSlot = slotKey spesifik ATAU generic "Ring"
+	if slotKey == "Ring1" or slotKey == "Ring2" then
+		return equipSlot == slotKey or equipSlot == "Ring"
+	end
+
+	-- Amulet1/Amulet2: terima item dengan EquipSlot = slotKey spesifik ATAU generic "Amulet"
+	if slotKey == "Amulet1" or slotKey == "Amulet2" then
+		return equipSlot == slotKey or equipSlot == "Amulet"
 	end
 
 	return equipSlot == slotKey

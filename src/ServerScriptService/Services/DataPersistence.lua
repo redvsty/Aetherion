@@ -11,7 +11,7 @@ local GameConfig = require(game.ReplicatedStorage.Shared.GameConfig)
 local CurrencyDefinitions = require(game.ReplicatedStorage.Shared.Definitions.CurrencyDefinitions)
 
 local DATASTORE_NAME = "AetherionPlayerData_v3"
-local CURRENT_SCHEMA = 4
+local CURRENT_SCHEMA = 5
 local MAX_RETRIES = 3
 local RETRY_DELAY = 2 -- detik antar retry
 local AUTO_SAVE_INTERVAL = 120 -- detik, auto-save tiap 2 menit
@@ -102,6 +102,22 @@ local function migrateData(data)
 		data.Equipment.Boots = data.Equipment.Boots or nil
 
 		version = 4
+	end
+
+	-- v4 → v5: rename Accessory1-4 → Ring1/Ring2/Amulet1/Amulet2
+	if version < 5 then
+		data.Equipment = data.Equipment or {}
+		local eq = data.Equipment
+		-- Migrate dengan preserve item yang sudah ada
+		if eq.Accessory1 ~= nil then eq.Ring1   = eq.Accessory1 end
+		if eq.Accessory2 ~= nil then eq.Ring2   = eq.Accessory2 end
+		if eq.Accessory3 ~= nil then eq.Amulet1 = eq.Accessory3 end
+		if eq.Accessory4 ~= nil then eq.Amulet2 = eq.Accessory4 end
+		eq.Accessory1 = nil
+		eq.Accessory2 = nil
+		eq.Accessory3 = nil
+		eq.Accessory4 = nil
+		version = 5
 	end
 
 	data.SchemaVersion = CURRENT_SCHEMA
