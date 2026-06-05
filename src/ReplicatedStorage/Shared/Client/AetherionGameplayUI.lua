@@ -2003,6 +2003,20 @@ local function setupRuntime()
 		end)
 	)
 
+	-- Refresh HP/FP/SP setiap 1 detik agar bar selalu up-to-date
+	local lastHUDRefresh = 0
+	table.insert(
+		runtimeConnections,
+		RunService.Heartbeat:Connect(function()
+			local now = tick()
+			if now - lastHUDRefresh >= 1 then
+				lastHUDRefresh = now
+				refreshPlayerData()
+				buildHUD()
+			end
+		end)
+	)
+
 	table.insert(
 		runtimeConnections,
 		UserInputService.InputBegan:Connect(function(input, gameProcessed)
@@ -2243,9 +2257,14 @@ function AetherionGameplayUI.Create()
 
 	guiRefs.ScreenGui = screenGui
 
-	-- HUD kiri atas
-	local hudFrame =
-		makeFrame(screenGui, "HUDFrame", UDim2.new(0, 300, 0, 135), UDim2.new(0, 12, 0, 12), Color3.fromRGB(18, 20, 26))
+	-- HUD kiri atas — transparent, hanya bars dan label yang terlihat
+	local hudFrame = Instance.new("Frame")
+	hudFrame.Name = "HUDFrame"
+	hudFrame.Size = UDim2.new(0, 300, 0, 135)
+	hudFrame.Position = UDim2.new(0, 12, 0, 12)
+	hudFrame.BackgroundTransparency = 1
+	hudFrame.BorderSizePixel = 0
+	hudFrame.Parent = screenGui
 	guiRefs.HUDFrame = hudFrame
 
 	local levelLabel = makeLabel(hudFrame, "Lv. 1", UDim2.new(0, 80, 0, 22), UDim2.new(0, 8, 0, 6), 18, true)
