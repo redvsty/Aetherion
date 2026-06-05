@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -12,6 +13,17 @@ local GetClassOptionsRequest = remotes:WaitForChild("GetClassOptionsRequest")
 local EquipItemRequest = remotes:WaitForChild("EquipItemRequest")
 local UpgradeItemRequest = remotes:WaitForChild("UpgradeItemRequest")
 local AttackRequest = remotes:WaitForChild("AttackRequest")
+-- Patch RF-Accuracy: Stamina / Walk-Run
+local ToggleRunWalkRequest = remotes:WaitForChild("ToggleRunWalkRequest")
+local RunWalkStateChanged = remotes:WaitForChild("RunWalkStateChanged")
+-- Patch RF-Accuracy: Macro
+local SetMacroRequest = remotes:WaitForChild("SetMacroRequest")
+local ClearMacroRequest = remotes:WaitForChild("ClearMacroRequest")
+local ExecuteMacroRequest = remotes:WaitForChild("ExecuteMacroRequest")
+local GetMacrosRequest = remotes:WaitForChild("GetMacrosRequest")
+-- Patch RF-Accuracy: Defense Gauge & Buffed Stats
+local GetDefenseGaugeRequest = remotes:WaitForChild("GetDefenseGaugeRequest")
+local GetBuffedStatsRequest = remotes:WaitForChild("GetBuffedStatsRequest")
 
 local function printTable(tbl, indent)
 	indent = indent or 0
@@ -234,5 +246,160 @@ print('_G.Aetherion.CreateCharacter("CYBORG", "Ranger")')
 print('_G.Aetherion.CreateCharacter("MYSTIC", "Spiritualist")')
 print("_G.Aetherion.GetClassOptions(30)")
 print("_G.Aetherion.GetClassOptions(40)")
+-- Patch RF-Accuracy
+print("_G.Aetherion.ToggleRun()  -- Toggle Walk/Run (seperti W di RF)")
+print("_G.Aetherion.DefenseGauge()  -- Cek defense gauge")
+print("_G.Aetherion.BuffedStats()  -- Stats setelah buff aktif")
+print("_G.Aetherion.SetMacro(1, {'slash','wild_rage'})  -- Set macro slot 1")
+print("_G.Aetherion.ExecMacro(1, target)  -- Execute macro slot 1")
 
 printData()
+
+-- ============================================================
+-- Patch RF-Accuracy: Walk/Run Toggle
+-- Di RF Classic: hotkey W / CTRL+W toggle run/walk
+-- Default = Running (mengkonsumsi SP)
+-- ============================================================
+
+-- State lokal untuk UI feedback
+local isRunning = true
+
+RunWalkStateChanged.OnClientEvent:Connect(function(newIsRunning)
+	isRunning = newIsRunning
+	if newIsRunning then
+		print("[Aetherion] Mode: RUNNING (SP akan berkurang)")
+	else
+		print("[Aetherion] Mode: WALKING (SP regen)")
+	end
+end)
+
+-- Hotkey: W = toggle run/walk (mirip RF Classic)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	-- Ctrl+W atau W saja sebagai toggle (RF Classic style)
+	if input.KeyCode == Enum.KeyCode.R then
+		-- Pakai R sebagai toggle karena W sudah dipakai Roblox untuk forward
+		ToggleRunWalkRequest:FireServer()
+	end
+end)
+
+function _G.Aetherion.ToggleRun()
+	ToggleRunWalkRequest:FireServer()
+end
+
+-- ============================================================
+-- Patch RF-Accuracy: Defense Gauge
+-- ============================================================
+
+function _G.Aetherion.DefenseGauge()
+	local success, result = pcall(function()
+		return GetDefenseGaugeRequest:InvokeServer()
+	end)
+	if not success then
+		warn("[Aetherion] DefenseGauge failed:", result)
+		return
+	end
+	if not result then return end
+	local ok, gaugeInfo = result, (select(2, pcall(function() return result end)))
+	print("===== DEFENSE GAUGE =====")
+	if type(result) == "table" then
+		local info = result
+		print("State:", info.State, "(" .. string.format("%.1f", info.Percent or 0) .. "%)")
+		print("Current:", info.Current, "/", info.Max)
+		if info.State == "Stable" then
+			print("→ Talic bonus: FULL (100%)")
+		elseif info.State == "Reduced" then
+			print("→ Talic bonus: REDUCED (50%)")
+		else
+			print("→ Talic bonus: MINIMAL (5%) — DANGER!")
+		end
+	end
+	print("=========================")
+end
+
+-- ============================================================
+-- Patch RF-Accuracy: Buffed Stats
+-- ============================================================
+
+function _G.Aetherion.BuffedStats()
+	local success, ok, stats = pcall(function()
+		return GetBuffedStatsRequest:InvokeServer()
+	end)
+	if not success or not ok then
+		warn("[Aetherion] BuffedStats failed")
+		return
+	end
+	print("===== BUFFED STATS =====")
+	if type(stats) == "table" then
+		for k, v in pairs(stats) do
+			print(" -", k, ":", v)
+		end
+	end
+	print("========================")
+end
+
+-- ============================================================
+-- Patch RF-Accuracy: Macro System
+-- ============================================================
+
+function _G.Aetherion.SetMacro(slotIndex, skillList, label)
+	if not slotIndex or type(skillList) ~= "table" then
+		warn("[Aetherion] Usage: SetMacro(slotIndex, {skillId1, skillId2, ...})")
+		return
+	end
+	local success, ok, result = pcall(function()
+		return SetMacroRequest:InvokeServer(slotIndex, skillList, label)
+	end)
+	if not success then
+		warn("[Aetherion] SetMacro failed:", ok)
+		return
+	end
+	print("[Aetherion] Macro", slotIndex, "set:", ok)
+	if type(result) == "table" then
+		print("  Skills:", table.concat(result.Skills or {}, " → "))
+	end
+end
+
+function _G.Aetherion.ClearMacro(slotIndex)
+	local success, result = pcall(function()
+		return ClearMacroRequest:InvokeServer(slotIndex)
+	end)
+	if not success then
+		warn("[Aetherion] ClearMacro failed:", result)
+		return
+	end
+	print("[Aetherion] Macro", slotIndex, "cleared")
+end
+
+function _G.Aetherion.GetMacros()
+	local success, ok, macros = pcall(function()
+		return GetMacrosRequest:InvokeServer()
+	end)
+	if not success or not ok then
+		warn("[Aetherion] GetMacros failed")
+		return
+	end
+	print("===== MACROS =====")
+	for i, macro in pairs(macros or {}) do
+		if #macro.Skills > 0 then
+			print(string.format("  Slot %d [%s]: %s", i, macro.Label, table.concat(macro.Skills, " → ")))
+		end
+	end
+	print("==================")
+end
+
+function _G.Aetherion.ExecMacro(slotIndex, targetModel)
+	local success, ok, result = pcall(function()
+		return ExecuteMacroRequest:InvokeServer(slotIndex, targetModel)
+	end)
+	if not success then
+		warn("[Aetherion] ExecMacro failed:", ok)
+		return
+	end
+	print("[Aetherion] Macro", slotIndex, "->", ok)
+	if type(result) == "table" then
+		printTable(result, 1)
+	else
+		print(result)
+	end
+end

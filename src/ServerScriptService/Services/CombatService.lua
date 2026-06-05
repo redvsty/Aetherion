@@ -1,11 +1,11 @@
 -- CombatService.lua
 -- Fix 2: PT Exp diberikan ke attacker setelah berhasil hit, sesuai weapon PT type.
--- Fix 5: Server-side validation diperkuat:
---   - Rate limiting per player (cooldown antar attack)
---   - Validasi distance server-side (tidak bergantung client)
---   - Validasi target humanoid masih hidup
---   - Cek attacker character server-side
--- Batch 2: Force Attack system — weapon Magic class pakai ForceAttack + konsumsi FP.
+-- Fix 5: Server-side validation diperkuat.
+-- Batch 2: Force Attack system
+-- Patch RF-Accuracy: Integrasi DefenseGaugeService untuk drain gauge per hit.
+--   Weapon sub-type (Sword/Axe/Knife/Bow/Staff/dll) mempengaruhi laju drain
+--   tergantung armor class defender (warrior/force/launcher).
+--   BuffEffectProcessor.ApplyBuffStats digunakan untuk damage calc dengan buff aktif.
 
 local Players = game:GetService("Players")
 
@@ -15,6 +15,9 @@ local ClassDefinitions = require(game.ReplicatedStorage.Shared.Definitions.Class
 local CombatFormulas = require(game.ReplicatedStorage.Shared.CombatFormulas)
 local EquipmentService = require(script.Parent.EquipmentService)
 local LevelService = require(script.Parent.LevelService)
+-- Patch RF-Accuracy
+local DefenseGaugeService = require(script.Parent.DefenseGaugeService)
+local BuffEffectProcessor = require(game.ReplicatedStorage.Shared.BuffEffectProcessor)
 
 local CombatService = {}
 
@@ -247,15 +250,27 @@ function CombatService.Attack(attackerPlayer, targetModel, profiles)
 
 	-- Hitung damage
 	local attackerStats = EquipmentService.GetTotalStats(attackerData)
+
+	-- Patch RF-Accuracy: apply buff aktif ke attacker stats
+	attackerStats = BuffEffectProcessor.ApplyBuffStats(
+		attackerStats,
+		attackerData.ActiveBuffs or {},
+		attackerData
+	)
+
 	local defenderStats = { Defense = 5 }
 
 	if targetData then
-		defenderStats = EquipmentService.GetTotalStats(targetData)
+		local baseDefStats = EquipmentService.GetTotalStats(targetData)
+		-- Patch RF-Accuracy: apply defender buff stats
+		defenderStats = BuffEffectProcessor.ApplyBuffStats(
+			baseDefStats,
+			targetData.ActiveBuffs or {},
+			targetData
+		)
 	end
 
 	-- Batch 2: Gunakan Force Attack jika weapon support dan FP cukup.
-	-- Magic class (Spiritualist) dengan weapon reaver/staff akan otomatis
-	-- menggunakan force damage dan mengonsumsi FP.
 	local damage, isCrit, isForceAttack
 	local fpConsumed = 0
 
@@ -269,6 +284,31 @@ function CombatService.Attack(attackerPlayer, targetModel, profiles)
 	end
 
 	targetHumanoid:TakeDamage(damage)
+
+	-- Patch RF-Accuracy: Drain defense gauge defender sesuai weapon type
+	if targetData then
+		local weaponItemId = attackerData.Equipment and attackerData.Equipment.Weapon
+		local weaponSubType = "Monster"  -- default
+		if weaponItemId then
+			for _, item in ipairs(attackerData.Inventory or {}) do
+				if item.Uid == weaponItemId then
+					weaponSubType = item.WeaponSubType or item.WeaponType or "Monster"
+					break
+				end
+			end
+		end
+		-- Ambil level weapon
+		local weaponLevel = 1
+		for _, item in ipairs(attackerData.Inventory or {}) do
+			if item.Uid == (attackerData.Equipment and attackerData.Equipment.Weapon) then
+				local def = ItemDefinitions[item.ItemId]
+				weaponLevel = (def and def.Level) or 1
+				break
+			end
+		end
+		local armorLevel = targetData.Level or 1
+		DefenseGaugeService.TakeDrainHit(targetData, weaponSubType, weaponLevel, armorLevel, ClassDefinitions)
+	end
 
 	-- Fix 2: Grant PT exp ke attacker sesuai weapon type
 	local ptType = getAttackerWeaponPTType(attackerData)

@@ -1,14 +1,18 @@
 -- SkillService.lua
 -- Batch 2.5: Handle casting Skill dan Force.
--- Setiap skill/force memiliki FP cost sendiri (bukan FPCostBase global).
--- Level skill naik dari pemakaian (EXP per hit), bukan dari level karakter.
+-- Patch RF-Accuracy: Integrasi BuffEffectProcessor untuk:
+--   - Durasi buff akurat sesuai RF wiki (90/140/210/320/480/720/1080s per level 1-7)
+--   - FP cost dikurangi oleh Conservation/Efficiency buff aktif
+--   - Force cooldown dikurangi oleh Rush/Tempo buff
+--   - Instant Healing HP restore
+--   - Skill Stretch/Focus extend buff duration lain
 -- Tier unlock: Basic (default) → Expert (30 PT Basic) → Elite (50 PT Expert).
 --
 -- Alur cast:
 --   1. Client request CastSkill(skillId, targetModel)
 --   2. SkillService.Cast() validasi: cooldown, FP, tier unlock, target valid
---   3. Hitung damage (jika attack skill) atau apply buff
---   4. Konsumsi FP, beri SkillExp ke skill tersebut
+--   3. Hitung damage (jika attack skill) atau apply buff dengan durasi RF-accurate
+--   4. Konsumsi FP (dikurangi Conservation buff), beri SkillExp
 --   5. Return result ke GameServer → reply ke client
 
 local Players = game:GetService("Players")
@@ -18,6 +22,7 @@ local SkillDefinitions = require(game.ReplicatedStorage.Shared.Definitions.Skill
 local ForceDefinitions = require(game.ReplicatedStorage.Shared.Definitions.ForceDefinitions)
 local CombatFormulas = require(game.ReplicatedStorage.Shared.CombatFormulas)
 local RaceDefinitions = require(game.ReplicatedStorage.Shared.Definitions.RaceDefinitions)
+local BuffEffectProcessor = require(game.ReplicatedStorage.Shared.BuffEffectProcessor)
 
 local SkillService = {}
 
@@ -179,7 +184,8 @@ end
 
 -- Konsumsi FP berdasarkan skill def. Sacrifice force mengkonsumsi HP bukan FP.
 -- Return: consumed (number), error (string|nil)
-local function consumeResources(playerData, skillDef, onFPConsumed, player)
+-- Patch RF-Accuracy: FP cost dikurangi oleh Conservation/Efficiency buff aktif
+local function consumeResources(playerData, skillDef, onFPConsumed, player, attackerStats)
 	local stats = playerData.Stats
 
 	if not stats then
@@ -200,8 +206,10 @@ local function consumeResources(playerData, skillDef, onFPConsumed, player)
 		return skillDef.HPCost, nil
 	end
 
-	-- Normal FP cost
-	local cost = skillDef.FPCost or 0
+	-- Normal FP cost — dikurangi Conservation/Efficiency buff
+	local baseCost = skillDef.FPCost or 0
+	-- Gunakan stats yang sudah dimodifikasi buff (termasuk FPCostReductPct)
+	local cost = BuffEffectProcessor.GetAdjustedFPCost(baseCost, attackerStats)
 
 	if stats.FP < cost then
 		return 0, string.format("Not enough FP (need %d, have %d)", cost, stats.FP)
@@ -305,14 +313,22 @@ function SkillService.Cast(player, skillId, targetModel, attackerStats, defender
 	end
 
 	-- 4. Konsumsi resources (FP atau HP untuk Sacrifice)
-	local consumed, consumeErr = consumeResources(playerData, skillDef, onFPConsumed, player)
+	-- Patch: pass attackerStats agar FP cost reduction dari Conservation buff aktif
+	local consumed, consumeErr = consumeResources(playerData, skillDef, onFPConsumed, player, attackerStats)
 
 	if consumeErr then
 		return false, consumeErr
 	end
 
 	-- 5. Set cooldown
-	setCooldown(player, skillId, skillDef.CastDelay)
+	-- Patch RF-Accuracy: force cooldown dikurangi Rush/Tempo buff
+	local isForce = (ForceDefinitions[skillId] ~= nil)
+	local adjustedCooldown = BuffEffectProcessor.GetAdjustedCooldown(
+		skillDef.CastDelay,
+		attackerStats,
+		isForce
+	)
+	setCooldown(player, skillId, adjustedCooldown)
 
 	-- 6. Apply efek
 	local result = {
@@ -342,29 +358,63 @@ function SkillService.Cast(player, skillId, targetModel, attackerStats, defender
 		result.NewSkillLevel = expResult.NewLevel
 	elseif skillDef.Target == "Self" or skillDef.BuffType == "Buff" or skillDef.BuffType == "Debuff" then
 		-- Buff/Debuff: apply ke playerData.ActiveBuffs
-		-- (implementasi buff effect via ActiveBuffs yang diproses GameServer setiap tick)
 		if not playerData.ActiveBuffs then
 			playerData.ActiveBuffs = {}
 		end
 
-		-- Durasi buff: 10s + 2s per skill level
 		local skillEntry = playerData.Skills and playerData.Skills[skillId]
 		local skillLevel = (skillEntry and skillEntry.Level) or 1
-		local duration = 10 + skillLevel * 2
+		-- Clamp level 1..7 untuk tabel durasi RF (max level skill = 7/GM)
+		local rfLevel = math.max(1, math.min(7, skillLevel))
+
+		-- Patch RF-Accuracy: gunakan durasi resmi RF wiki (90/140/210/320/480/720/1080s)
+		local isDebuff = (skillDef.BuffType == "Debuff")
+		local baseDuration = BuffEffectProcessor.GetBuffDuration(rfLevel, isDebuff)
+
+		-- Extend durasi jika Skill Stretch / Focus / Bless aktif
+		local stretchPct = 0
+		if playerData.ActiveBuffs["skill_stretch"] then
+			local strEntry = playerData.Skills and playerData.Skills["skill_stretch"]
+			local strLv = math.max(1, math.min(7, (strEntry and strEntry.Level) or 1))
+			-- SKILL_STRETCH_PCT table dari BuffEffectProcessor
+			local STRETCH = { 0.20, 0.30, 0.40, 0.50, 0.65, 0.80, 1.00 }
+			stretchPct = math.max(stretchPct, STRETCH[strLv])
+		end
+		if playerData.ActiveBuffs["focus"] then
+			local focEntry = playerData.Skills and playerData.Skills["focus"]
+			local focLv = math.max(1, math.min(7, (focEntry and focEntry.Level) or 1))
+			local BLESS = { 0.20, 0.30, 0.40, 0.50, 0.65, 0.80, 1.00 }
+			stretchPct = math.max(stretchPct, BLESS[focLv])
+		end
+
+		local duration = math.floor(baseDuration * (1 + stretchPct))
+
+		-- Handle Healing khusus: langsung restore HP
+		if skillId == "healing" then
+			local healAmt = BuffEffectProcessor.GetHealingAmount(playerData, rfLevel)
+			local s = playerData.Stats
+			if s then
+				s.HP = math.min(s.MaxHP or s.HP + healAmt, s.HP + healAmt)
+			end
+			result.HealAmount = healAmt
+		end
 
 		playerData.ActiveBuffs[skillId] = {
-			SkillId = skillId,
-			ExpiresAt = os.time() + duration,
-			School = skillDef.School,
-			Tier = skillDef.Tier,
+			SkillId     = skillId,
+			SkillLevel  = rfLevel,
+			ExpiresAt   = os.time() + duration,
+			School      = skillDef.School,
+			Tier        = skillDef.Tier,
+			IsDebuff    = isDebuff,
 		}
 
-		result.BuffApplied = skillId
+		result.BuffApplied  = skillId
 		result.BuffDuration = duration
+		result.BuffLevel    = rfLevel
 
 		-- EXP gain untuk cast buff berhasil
 		local expResult = addSkillExp(playerData, skillId, 5)
-		result.LevelUp = expResult.LevelUp
+		result.LevelUp       = expResult.LevelUp
 		result.NewSkillLevel = expResult.NewLevel
 	end
 

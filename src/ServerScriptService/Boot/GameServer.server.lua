@@ -13,6 +13,11 @@ local InventoryService = require(script.Parent.Parent.Services.InventoryService)
 local PartyService = require(script.Parent.Parent.Services.PartyService)
 local WeaponService = require(script.Parent.Parent.Services.WeaponService)
 local SkillService = require(script.Parent.Parent.Services.SkillService)
+-- Patch RF-Accuracy: sistem baru
+local DefenseGaugeService = require(script.Parent.Parent.Services.DefenseGaugeService)
+local StaminaService = require(script.Parent.Parent.Services.StaminaService)
+local MacroService = require(script.Parent.Parent.Services.MacroService)
+local BuffEffectProcessor = require(game.ReplicatedStorage.Shared.BuffEffectProcessor)
 
 local EquipmentServiceRef = EquipmentService -- alias untuk dipakai di SkillService cast
 
@@ -79,6 +84,18 @@ local PartyInviteResponseRequest = ensureRemoteFunction("PartyInviteResponseRequ
 local PartyLeaveRequest = ensureRemoteFunction("PartyLeaveRequest")
 local PartyToggleLockRequest = ensureRemoteFunction("PartyToggleLockRequest")
 local PartyInviteReceived = ensureRemoteEvent("PartyInviteReceived")
+-- Patch RF-Accuracy: Stamina / Walk-Run remotes
+local ToggleRunWalkRequest = ensureRemoteEvent("ToggleRunWalkRequest")
+local RunWalkStateChanged = ensureRemoteEvent("RunWalkStateChanged")
+-- Patch RF-Accuracy: Macro remotes
+local SetMacroRequest = ensureRemoteFunction("SetMacroRequest")
+local ClearMacroRequest = ensureRemoteFunction("ClearMacroRequest")
+local ExecuteMacroRequest = ensureRemoteFunction("ExecuteMacroRequest")
+local GetMacrosRequest = ensureRemoteFunction("GetMacrosRequest")
+-- Patch RF-Accuracy: Defense Gauge
+local GetDefenseGaugeRequest = ensureRemoteFunction("GetDefenseGaugeRequest")
+-- Patch RF-Accuracy: Buff Stats (stats dengan buff applied)
+local GetBuffedStatsRequest = ensureRemoteFunction("GetBuffedStatsRequest")
 
 local function createInventoryItem(itemId, definition, overrides)
 	overrides = overrides or {}
@@ -133,6 +150,11 @@ Players.PlayerAdded:Connect(function(player)
 	profiles[player] = data
 	isLoadFailed[player] = loadFailed
 
+	-- Patch RF-Accuracy: init defense gauge dan stamina
+	DefenseGaugeService.InitGauge(data)
+	StaminaService.InitPlayer(player, data)
+	MacroService.InitMacros(data)
+
 	player.CharacterAdded:Connect(function(character)
 		local currentData = profiles[player]
 		if not currentData then
@@ -142,6 +164,12 @@ Players.PlayerAdded:Connect(function(player)
 		local humanoid = character:WaitForChild("Humanoid")
 		humanoid.MaxHealth = currentData.Stats.MaxHP
 		humanoid.Health = currentData.Stats.HP
+
+		-- Apply run/walk speed sesuai stamina state
+		local staminaState = StaminaService.GetState(player)
+		if staminaState then
+			StaminaService.ApplySpeedToCharacter(player, staminaState)
+		end
 	end)
 end)
 
@@ -156,6 +184,7 @@ Players.PlayerRemoving:Connect(function(player)
 	CombatService.OnPlayerRemoving(player)
 	PartyService.OnPlayerRemoving(player, profiles)
 	SkillService.OnPlayerRemoving(player)
+	StaminaService.OnPlayerRemoving(player)  -- Patch RF-Accuracy
 	lastFPUseTime[player] = nil
 	profiles[player] = nil
 	isLoadFailed[player] = nil
@@ -367,15 +396,43 @@ task.spawn(function()
 				local stats = data.Stats
 				local maxFP = stats.MaxFP or 100
 
+				-- FP regen
 				if stats.FP < maxFP then
 					local sinceLastUse = now - (lastFPUseTime[player] or 0)
 					local isIdle = sinceLastUse >= regenConfig.RegenDelay
 					local rate = isIdle and regenConfig.IdleRegenRate or regenConfig.CombatRegenRate
-
 					stats.FP = math.min(maxFP, stats.FP + rate)
+				end
+
+				-- Patch RF-Accuracy: Defense Gauge regen
+				DefenseGaugeService.RegenTick(data, FP_TICK)
+
+				-- Patch RF-Accuracy: HellBless drain dan expire expired buffs
+				BuffEffectProcessor.TickDebuffs(data, FP_TICK)
+
+				-- Patch RF-Accuracy: HP regen dari Soul Vitality buff
+				if data.ActiveBuffs then
+					local buffedStats = BuffEffectProcessor.ApplyBuffStats(stats, data.ActiveBuffs, data)
+					if buffedStats.HpFpRegenMult and buffedStats.HpFpRegenMult > 1 then
+						local hpRegenBonus = (buffedStats.HpFpRegenMult - 1) * 2  -- 2 HP/s bonus per mult
+						stats.HP = math.min(stats.MaxHP or stats.HP, stats.HP + hpRegenBonus * FP_TICK)
+					end
 				end
 			end
 		end
+
+		-- Patch RF-Accuracy: Stamina tick (walk/run SP system)
+		StaminaService.Tick(FP_TICK, profiles, function(player)
+			-- Velocity buff speed bonus
+			local data = profiles[player]
+			if not data or not data.ActiveBuffs then return 0 end
+			local buffedStats = BuffEffectProcessor.ApplyBuffStats(
+				EquipmentService.GetTotalStats(data),
+				data.ActiveBuffs,
+				data
+			)
+			return (buffedStats.MoveSpeed or 16) - 16  -- delta dari baseline
+		end)
 	end
 end)
 
@@ -449,4 +506,83 @@ end
 
 AttackRequest.OnServerInvoke = function(player, targetModel)
 	return CombatService.Attack(player, targetModel, profiles)
+end
+
+-- ============================================================
+-- Patch RF-Accuracy: Stamina / Walk-Run handlers
+-- ============================================================
+
+-- Client mengirim event saat player tekan hotkey toggle run/walk
+ToggleRunWalkRequest.OnServerReceived = function(player)
+	local isRunning = StaminaService.ToggleRunWalk(player)
+	-- Kirim state baru kembali ke client
+	RunWalkStateChanged:FireClient(player, isRunning)
+end
+
+-- ============================================================
+-- Patch RF-Accuracy: Macro handlers
+-- ============================================================
+
+SetMacroRequest.OnServerInvoke = function(player, slotIndex, skillList, label)
+	local data = profiles[player]
+	if not data then return false, "No player data" end
+	return MacroService.SetMacro(data, slotIndex, skillList, label)
+end
+
+ClearMacroRequest.OnServerInvoke = function(player, slotIndex)
+	local data = profiles[player]
+	if not data then return false, "No player data" end
+	return MacroService.ClearMacro(data, slotIndex)
+end
+
+ExecuteMacroRequest.OnServerInvoke = function(player, slotIndex, targetModel)
+	local data = profiles[player]
+	if not data then return false, "No player data" end
+	if not data.FactionId then return false, "No faction" end
+
+	return MacroService.ExecuteMacro(
+		player,
+		slotIndex,
+		targetModel,
+		profiles,
+		SkillService,
+		EquipmentService,
+		onFPConsumed
+	)
+end
+
+GetMacrosRequest.OnServerInvoke = function(player)
+	local data = profiles[player]
+	if not data then return false, "No player data" end
+	return true, MacroService.GetMacros(data)
+end
+
+-- ============================================================
+-- Patch RF-Accuracy: Defense Gauge handler
+-- ============================================================
+
+GetDefenseGaugeRequest.OnServerInvoke = function(player)
+	local data = profiles[player]
+	if not data then return false, "No player data" end
+	DefenseGaugeService.InitGauge(data)
+	return true, DefenseGaugeService.GetGaugeInfo(data)
+end
+
+-- ============================================================
+-- Patch RF-Accuracy: Buffed Stats handler
+-- Mengembalikan stats player setelah semua buff aktif di-apply.
+-- Digunakan client UI untuk menampilkan stats yang benar.
+-- ============================================================
+
+GetBuffedStatsRequest.OnServerInvoke = function(player)
+	local data = profiles[player]
+	if not data then return false, "No player data" end
+
+	local baseStats = EquipmentService.GetTotalStats(data)
+	local buffedStats = BuffEffectProcessor.ApplyBuffStats(
+		baseStats,
+		data.ActiveBuffs or {},
+		data
+	)
+	return true, buffedStats
 end
