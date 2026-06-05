@@ -116,8 +116,22 @@ function StaminaService.Tick(deltaTime, profiles, getBuffedSpeed)
 			local playerData = profiles and profiles[player]
 			local stats = playerData and playerData.Stats
 
+			-- Deteksi movement langsung dari server via velocity HumanoidRootPart
+			-- Lebih reliable dan anti-exploit dibanding menunggu event dari client
+			local isActuallyMoving = false
+			local character = player.Character
+			if character then
+				local hrp = character:FindFirstChild("HumanoidRootPart")
+				if hrp then
+					local vel = hrp.AssemblyLinearVelocity
+					-- Threshold 1 stud/s agar micro-vibration tidak dihitung
+					isActuallyMoving = Vector3.new(vel.X, 0, vel.Z).Magnitude > 1
+				end
+			end
+			state.IsMoving = isActuallyMoving
+
 			-- Hitung SP perubahan
-			if state.IsRunning and state.IsMoving and not state.ForcedWalk then
+			if state.IsRunning and isActuallyMoving and not state.ForcedWalk then
 				-- Drain SP
 				state.SP = math.max(0, state.SP - SP_CONFIG.RunCostPerSec * deltaTime)
 
@@ -128,8 +142,8 @@ function StaminaService.Tick(deltaTime, profiles, getBuffedSpeed)
 					StaminaService.ApplySpeedToCharacter(player, state)
 				end
 			else
-				-- Regen SP
-				local regenRate = state.IsMoving
+				-- Regen SP: lebih cepat saat idle, lebih lambat saat walking
+				local regenRate = isActuallyMoving
 					and SP_CONFIG.WalkRegenPerSec
 					or  SP_CONFIG.IdleRegenPerSec
 				state.SP = math.min(state.MaxSP, state.SP + regenRate * deltaTime)
@@ -137,7 +151,6 @@ function StaminaService.Tick(deltaTime, profiles, getBuffedSpeed)
 				-- Clear forced walk saat SP cukup
 				if state.ForcedWalk and state.SP >= SP_CONFIG.RunResumeThreshold then
 					state.ForcedWalk = false
-					-- Jangan otomatis run — tunggu player toggle sendiri
 				end
 			end
 
