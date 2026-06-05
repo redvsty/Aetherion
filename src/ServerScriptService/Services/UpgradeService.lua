@@ -44,18 +44,71 @@ local function getUpgradeSlotLimit(item)
     return math.max(0, tonumber(item.Slots or def.SlotMax or 4) or 4)
 end
 
+local GameConfig = require(game.ReplicatedStorage.Shared.GameConfig)
+
+local RANGED_WEAPON_TYPES = {
+	[GameConfig.PTTypes.Ranged]   = true,
+	[GameConfig.PTTypes.Launcher] = true,
+}
+
+local MELEE_WEAPON_TYPES = {
+	[GameConfig.PTTypes.Melee]  = true,
+	[GameConfig.PTTypes.Magic]  = true,  -- reaver/staff dianggap melee range
+}
+
 local function appliesToItem(talicItem, equipmentItem)
-    local talicDef = getItemDef(talicItem)
-    local equipmentDef = getItemDef(equipmentItem)
-    if not talicDef or not equipmentDef then
-        return false
-    end
+	local talicDef     = getItemDef(talicItem)
+	local equipmentDef = getItemDef(equipmentItem)
 
-    if not talicDef.AppliesTo then
-        return true
-    end
+	if not talicDef or not equipmentDef then
+		return false
+	end
 
-    return talicDef.AppliesTo == equipmentDef.Category
+	-- Restoration Talic berlaku untuk semua item
+	if talicDef.UpgradeRole == "Restoration" then
+		return true
+	end
+
+	-- Catalyst berlaku untuk semua item
+	if talicDef.UpgradeRole == "Catalyst" then
+		return true
+	end
+
+	-- Tidak ada AppliesTo = berlaku untuk semua (backward compat)
+	if not talicDef.AppliesTo then
+		return true
+	end
+
+	local groupKey = talicDef.AppliesTo
+	local group    = GameConfig.TalicTargetGroups[groupKey]
+
+	-- Jika key tidak dikenal, fallback ke exact match kategori
+	if not group then
+		return talicDef.AppliesTo == equipmentDef.Category
+	end
+
+	-- Cek slot item ada di group
+	local itemSlot = equipmentDef.Slot or equipmentDef.EquipSlot
+	if not group[itemSlot] then
+		return false
+	end
+
+	-- Subset weapon: RangedWeapon hanya untuk Ranged/Launcher
+	if groupKey == "RangedWeapon" then
+		return RANGED_WEAPON_TYPES[equipmentDef.WeaponType] == true
+	end
+
+	-- Subset weapon: MeleeWeapon hanya untuk Melee/Magic
+	if groupKey == "MeleeWeapon" then
+		return MELEE_WEAPON_TYPES[equipmentDef.WeaponType] == true
+	end
+
+	-- Subset UpperLowerShieldJetpackMelee: jika slot Weapon, harus melee
+	if groupKey == "UpperLowerShieldJetpackMelee" and itemSlot == "Weapon" then
+		return MELEE_WEAPON_TYPES[equipmentDef.WeaponType] == true
+	end
+
+	return true
 end
 
 local function removeIfEquipped(playerData, uid)
@@ -184,19 +237,54 @@ function UpgradeService.TryUpgrade(playerData, itemUid, talicUids, catalystUid)
         catalystBonus = getMaterialBonus(catalyst)
     end
 
-    for _, talic in ipairs(uniqueTalics) do
-        local ok, err = consumeItem(playerData, talic.Uid)
-        if not ok then
-            return false, err
-        end
-    end
+	-- Cek apakah salah satu talic adalah Restoration Talic (kasus khusus)
+	-- Restoration menghapus talic terakhir dari item, tidak ada upgrade roll
+	for _, talic in ipairs(uniqueTalics) do
+		local tDef = getItemDef(talic)
+		if tDef and tDef.UpgradeRole == "Restoration" then
+			if #uniqueTalics > 1 then
+				return false, "Restoration Talic harus digunakan sendiri (tanpa talic lain)"
+			end
 
-    if catalyst then
-        local ok, err = consumeItem(playerData, catalyst.Uid)
-        if not ok then
-            return false, err
-        end
-    end
+			-- Ambil dan hapus talic terakhir dari InstalledTalics
+			local installed = item.InstalledTalics
+			if not installed or #installed == 0 then
+				return false, "Tidak ada talic yang bisa dihapus dari item ini"
+			end
+
+			-- Konsumsi Restoration Talic
+			local ok, err = consumeItem(playerData, talic.Uid)
+			if not ok then return false, err end
+
+			local removed = table.remove(installed)  -- hapus yang terakhir
+
+			return true, {
+				Result         = "RESTORATION",
+				RemovedEffect  = removed,
+				UpgradeLevel   = item.UpgradeLevel,
+			}
+		end
+	end
+
+	-- Pasang talic ke InstalledTalics pada item (tracking efek per slot)
+	if not item.InstalledTalics then
+		item.InstalledTalics = {}
+	end
+
+	-- Konsumsi semua talic yang dipakai
+	for _, talic in ipairs(uniqueTalics) do
+		local ok, err = consumeItem(playerData, talic.Uid)
+		if not ok then
+			return false, err
+		end
+	end
+
+	if catalyst then
+		local ok, err = consumeItem(playerData, catalyst.Uid)
+		if not ok then
+			return false, err
+		end
+	end
 
     local bonus = legacyCatalystBonus + catalystBonus
     for _, talic in ipairs(uniqueTalics) do
@@ -208,9 +296,22 @@ function UpgradeService.TryUpgrade(playerData, itemUid, talicUids, catalystUid)
 
     if roll <= successChance then
         item.UpgradeLevel = nextLevel
+
+		-- Catat efek talic yang berhasil dipasang ke item
+		for _, talic in ipairs(uniqueTalics) do
+			local tDef = getItemDef(talic)
+			if tDef and tDef.UpgradeEffect then
+				table.insert(item.InstalledTalics, {
+					TalicId = tDef.Id,
+					Effect  = tDef.UpgradeEffect,
+				})
+			end
+		end
+
         return true, {
             Result = "SUCCESS",
             UpgradeLevel = item.UpgradeLevel,
+			InstalledTalics = item.InstalledTalics,
         }
     end
 

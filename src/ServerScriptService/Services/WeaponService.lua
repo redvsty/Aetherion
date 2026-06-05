@@ -270,4 +270,15 @@ function WeaponService.ToDebugRows(weapons, limit)
 	return result
 end
 
+-- Alias yang dipanggil GameServer (mengembalikan debug rows langsung)
+function WeaponService.GetByLevel(level, limit)
+	local weapons = WeaponService.ListByLevel(level)
+	return WeaponService.ToDebugRows(weapons, limit or 50)
+end
+
+function WeaponService.GetByGrade(grade, limit)
+	local weapons = WeaponService.ListByGrade(grade)
+	return WeaponService.ToDebugRows(weapons, limit or 50)
+end
+
 return WeaponService

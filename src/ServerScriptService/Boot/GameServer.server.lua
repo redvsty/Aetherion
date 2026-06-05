@@ -10,6 +10,7 @@ local UpgradeService = require(script.Parent.Parent.Services.UpgradeService)
 local CombatService = require(script.Parent.Parent.Services.CombatService)
 local InventoryService = require(script.Parent.Parent.Services.InventoryService)
 local PartyService = require(script.Parent.Parent.Services.PartyService)
+local WeaponService = require(script.Parent.Parent.Services.WeaponService)
 
 local ItemDefinitions = require(game.ReplicatedStorage.Shared.Definitions.ItemDefinitions)
 local Weapons = require(game.ReplicatedStorage.Shared.Database.Weapons.Weapons)
@@ -60,6 +61,10 @@ local UpgradeItemRequest = ensureRemoteFunction("UpgradeItemRequest")
 local AttackRequest = ensureRemoteFunction("AttackRequest")
 local GiveWeaponRequest = ensureRemoteFunction("GiveWeaponRequest")
 local GiveItemRequest = ensureRemoteFunction("GiveItemRequest")
+-- Weapon query remotes (dipanggil dari AetherionDebug)
+local GetWeaponSummaryRequest  = ensureRemoteFunction("GetWeaponSummaryRequest")
+local GetWeaponsByLevelRequest = ensureRemoteFunction("GetWeaponsByLevelRequest")
+local GetWeaponsByGradeRequest = ensureRemoteFunction("GetWeaponsByGradeRequest")
 local GetPartyDataRequest = ensureRemoteFunction("GetPartyDataRequest")
 local PartyInviteRequest = ensureRemoteFunction("PartyInviteRequest")
 local PartyInviteResponseRequest = ensureRemoteFunction("PartyInviteResponseRequest")
@@ -302,6 +307,24 @@ end
 
 PartyToggleLockRequest.OnServerInvoke = function(player)
 	return PartyService.ToggleLock(player, profiles)
+end
+
+GetWeaponSummaryRequest.OnServerInvoke = function(_player)
+	return WeaponService.GetSummary()
+end
+
+GetWeaponsByLevelRequest.OnServerInvoke = function(_player, level, limit)
+	if type(level) ~= "number" then
+		return false, "Level harus berupa angka"
+	end
+	return WeaponService.GetByLevel(math.floor(level), limit or 50)
+end
+
+GetWeaponsByGradeRequest.OnServerInvoke = function(_player, grade, limit)
+	if type(grade) ~= "string" then
+		return false, "Grade harus berupa string"
+	end
+	return WeaponService.GetByGrade(grade, limit or 50)
 end
 
 AttackRequest.OnServerInvoke = function(player, targetModel)
