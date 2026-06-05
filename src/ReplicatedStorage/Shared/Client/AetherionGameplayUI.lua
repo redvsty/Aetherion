@@ -2641,29 +2641,38 @@ function AetherionGameplayUI.Create()
 	guiRefs.MacroRows = {}
 	for i = 1, 9 do
 		local rowY = 46 + (i - 1) * 33
-		local row = makeFrame(macroFrame, "MacroRow" .. i,
-			UDim2.new(1, -16, 0, 28), UDim2.new(0, 8, 0, rowY),
-			RF_THEME.Panel, 0.25)
+		local row = Instance.new("Frame")
+		row.Name = "MacroRow" .. i
+		row.Size = UDim2.new(1, -16, 0, 28)
+		row.Position = UDim2.new(0, 8, 0, rowY)
+		row.BackgroundColor3 = RF_THEME.Panel
+		row.BackgroundTransparency = 0.2
+		row.BorderSizePixel = 0
+		row.Parent = macroFrame
+		createCorner(row, 2)
 
-		local fLabel = makeLabel(row, "F" .. i,
-			UDim2.new(0, 28, 1, 0), UDim2.new(0, 4, 0, 0), 11, true)
+		local fLabel = makeLabel(row, (i < 9 and "F" .. i or "F9*"),
+			UDim2.new(0, 32, 1, 0), UDim2.new(0, 4, 0, 0), 12, true)
 		fLabel.TextColor3 = RF_THEME.Gold
+		fLabel.TextStrokeTransparency = 0.5
 
 		local nameLabel = makeLabel(row, "(empty)",
-			UDim2.new(1, -120, 1, 0), UDim2.new(0, 36, 0, 0), 10, false)
-		nameLabel.TextColor3 = RF_THEME.TextDim
+			UDim2.new(1, -120, 1, 0), UDim2.new(0, 38, 0, 0), 12, false)
+		nameLabel.TextColor3 = RF_THEME.Text
 		nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+		nameLabel.TextStrokeTransparency = 0.5
+		nameLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
 
-		local execBtn = makeButton(row, "▶ RUN", UDim2.new(0, 50, 0, 20), UDim2.new(1, -90, 0, 4))
-		execBtn.TextSize = 9
+		local execBtn = makeButton(row, "▶", UDim2.new(0, 28, 0, 20), UDim2.new(1, -68, 0, 4))
+		execBtn.TextSize = 12
 		execBtn.TextColor3 = Color3.fromRGB(100, 220, 100)
 		local capturedI = i
 		execBtn.MouseButton1Click:Connect(function()
 			executeMacro(capturedI)
 		end)
 
-		local clearBtn = makeButton(row, "CLR", UDim2.new(0, 32, 0, 20), UDim2.new(1, -36, 0, 4))
-		clearBtn.TextSize = 9
+		local clearBtn = makeButton(row, "CLR", UDim2.new(0, 34, 0, 20), UDim2.new(1, -36, 0, 4))
+		clearBtn.TextSize = 10
 		clearBtn.MouseButton1Click:Connect(function()
 			invokeRemote(ClearMacroRequest, capturedI)
 			refreshMacroWindow()
@@ -2695,40 +2704,54 @@ function AetherionGameplayUI.Create()
 	end)
 
 	local charName = makeLabel(charFrame, player.Name,
-		UDim2.new(1, -16, 0, 22), UDim2.new(0, 8, 0, 32), 14, true)
-	charName.TextColor3 = RF_THEME.Text
+		UDim2.new(1, -16, 0, 24), UDim2.new(0, 8, 0, 30), 16, true)
+	charName.TextColor3 = RF_THEME.Gold
 	charName.TextXAlignment = Enum.TextXAlignment.Center
+	charName.TextStrokeTransparency = 0.5
 	guiRefs.CharNameLabel = charName
 
-	local charSub = makeLabel(charFrame, "Lv.1  ?/?",
-		UDim2.new(1, -16, 0, 16), UDim2.new(0, 8, 0, 54), 10, false)
-	charSub.TextColor3 = RF_THEME.TextDim
+	local charSub = makeLabel(charFrame, "Lv.1  ?  /  ?",
+		UDim2.new(1, -16, 0, 18), UDim2.new(0, 8, 0, 54), 12, false)
+	charSub.TextColor3 = RF_THEME.Text
 	charSub.TextXAlignment = Enum.TextXAlignment.Center
+	charSub.TextStrokeTransparency = 0.6
 	guiRefs.CharSubLabel = charSub
 
 	-- divider
 	local charDiv = Instance.new("Frame")
 	charDiv.Size = UDim2.new(1, -16, 0, 1)
-	charDiv.Position = UDim2.new(0, 8, 0, 74)
-	charDiv.BackgroundColor3 = RF_THEME.Border
+	charDiv.Position = UDim2.new(0, 8, 0, 76)
+	charDiv.BackgroundColor3 = RF_THEME.BorderBright
+	charDiv.BackgroundTransparency = 0.5
 	charDiv.BorderSizePixel = 0
 	charDiv.Parent = charFrame
 
 	guiRefs.CharStatLabels = {}
 	for i, row in ipairs(CHAR_STAT_ROWS) do
-		local rowY = 80 + (i - 1) * 26
-		local rowFrame = makeFrame(charFrame, "CharStat" .. i,
-			UDim2.new(1, -16, 0, 22), UDim2.new(0, 8, 0, rowY),
-			RF_THEME.Panel, 0.5)
+		local rowY = 82 + (i - 1) * 26
+		-- Plain row frame (bukan makeFrame agar tidak ada gradient/stroke yg mengaburkan)
+		local rowFrame = Instance.new("Frame")
+		rowFrame.Name = "CharStat" .. i
+		rowFrame.Size = UDim2.new(1, -16, 0, 22)
+		rowFrame.Position = UDim2.new(0, 8, 0, rowY)
+		rowFrame.BackgroundColor3 = Color3.fromRGB(30, 38, 50)
+		rowFrame.BackgroundTransparency = 0.3
+		rowFrame.BorderSizePixel = 0
+		rowFrame.Parent = charFrame
+		createCorner(rowFrame, 2)
 
 		local keyLbl = makeLabel(rowFrame, row.Label,
-			UDim2.new(0, 80, 1, 0), UDim2.new(0, 6, 0, 0), 10, false)
+			UDim2.new(0, 90, 1, 0), UDim2.new(0, 6, 0, 0), 12, false)
 		keyLbl.TextColor3 = RF_THEME.TextDim
+		keyLbl.TextStrokeTransparency = 0.5
+		keyLbl.TextStrokeColor3 = Color3.new(0, 0, 0)
 
 		local valLbl = makeLabel(rowFrame, "0",
-			UDim2.new(0, 90, 1, 0), UDim2.new(1, -96, 0, 0), 10, true)
-		valLbl.TextColor3 = RF_THEME.Text
+			UDim2.new(0, 100, 1, 0), UDim2.new(1, -106, 0, 0), 12, true)
+		valLbl.TextColor3 = Color3.fromRGB(240, 240, 240)
 		valLbl.TextXAlignment = Enum.TextXAlignment.Right
+		valLbl.TextStrokeTransparency = 0.4
+		valLbl.TextStrokeColor3 = Color3.new(0, 0, 0)
 		guiRefs.CharStatLabels[i] = valLbl
 	end
 

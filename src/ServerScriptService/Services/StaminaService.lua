@@ -117,44 +117,20 @@ function StaminaService.Tick(deltaTime, profiles, getBuffedSpeed)
 			local playerData = profiles and profiles[player]
 			local stats = playerData and playerData.Stats
 
-			-- Deteksi movement via delta posisi antar tick (paling reliable server-side).
-			-- Posisi HumanoidRootPart selalu ter-replicate dari client ke server.
-			-- Run speed 16 stud/s → delta ~16 per tick. Threshold 0.5 cukup ketat.
-			local isActuallyMoving = false
-			local character = player.Character
-			if character then
-				local hrp = character:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					local cur = hrp.Position
-					if state.LastPosition then
-						local dx = cur.X - state.LastPosition.X
-						local dz = cur.Z - state.LastPosition.Z
-						isActuallyMoving = (dx * dx + dz * dz) > 0.25 -- sqrt > 0.5 stud
-					end
-					state.LastPosition = cur
-				end
-			end
-			state.IsMoving = isActuallyMoving
-
-			-- Hitung SP perubahan
-			if state.IsRunning and isActuallyMoving and not state.ForcedWalk then
-				-- Drain SP
+			-- SP drain/regen sederhana dan reliable:
+			-- Run mode  → drain terus (konsisten dengan "run stance" RF)
+			-- Walk/idle → regen
+			if state.IsRunning and not state.ForcedWalk then
 				state.SP = math.max(0, state.SP - SP_CONFIG.RunCostPerSec * deltaTime)
 
-				-- Force walk saat SP habis
 				if state.SP <= SP_CONFIG.ForcedWalkThreshold then
 					state.ForcedWalk = true
 					state.IsRunning  = false
 					StaminaService.ApplySpeedToCharacter(player, state)
 				end
 			else
-				-- Regen SP: lebih cepat saat idle, lebih lambat saat walking
-				local regenRate = isActuallyMoving
-					and SP_CONFIG.WalkRegenPerSec
-					or  SP_CONFIG.IdleRegenPerSec
-				state.SP = math.min(state.MaxSP, state.SP + regenRate * deltaTime)
+				state.SP = math.min(state.MaxSP, state.SP + SP_CONFIG.IdleRegenPerSec * deltaTime)
 
-				-- Clear forced walk saat SP cukup
 				if state.ForcedWalk and state.SP >= SP_CONFIG.RunResumeThreshold then
 					state.ForcedWalk = false
 				end
