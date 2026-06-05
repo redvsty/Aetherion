@@ -61,6 +61,15 @@ local PartyInviteResponseRequest = waitRemoteFunction("PartyInviteResponseReques
 local PartyLeaveRequest = waitRemoteFunction("PartyLeaveRequest")
 local PartyToggleLockRequest = waitRemoteFunction("PartyToggleLockRequest")
 local PartyInviteReceived = waitRemoteEvent("PartyInviteReceived")
+local ToggleRunWalkRequest = waitRemoteEvent("ToggleRunWalkRequest")
+local RunWalkStateChanged = waitRemoteEvent("RunWalkStateChanged")
+local GetMacrosRequest = waitRemoteFunction("GetMacrosRequest")
+local ExecuteMacroRequest = waitRemoteFunction("ExecuteMacroRequest")
+local CastSkillRequest = waitRemoteFunction("CastSkillRequest")
+local ClearMacroRequest = waitRemoteFunction("ClearMacroRequest")
+local UseItemRequest = waitRemoteFunction("UseItemRequest")
+local PartyChatReceived = waitRemoteEvent("PartyChatReceived")
+local BattleModeNotify = waitRemoteEvent("BattleModeNotify")
 
 local BAG_COUNT = 5
 local BAG_SIZE = 20
@@ -96,13 +105,21 @@ local uiState = {
 	InventoryOpen = false,
 	UpgradeOpen = false,
 	PartyOpen = false,
+	MacroOpen = false,
+	CharacterOpen = false,
+	BattleMode = false,
+	LastBattleTick = 0,
 
 	PlayerData = nil,
 	PlayerStats = nil,
 	SelectedPartyTarget = nil,
 	PendingPartyInvite = nil,
+	MacroData = nil,
 
-	HotbarAssignments = {},
+	-- Item belt: 5 set × 10 slot (RF style)
+	BeltSet = 1,
+	BeltAssignments = { {}, {}, {}, {}, {} },
+
 	UpgradeSlots = {
 		Equipment = nil,
 		Talic1 = nil,
@@ -140,6 +157,11 @@ local guiRefs = {}
 local slotRegistry = {}
 local runtimeConnections = {}
 local lastInventoryToggleAt = 0
+local walkRunIsRunning = true
+
+local function currentBelt()
+	return uiState.BeltAssignments[uiState.BeltSet]
+end
 local INVENTORY_ACTION_PRIORITY = 10000
 local PARTY_ACTION_PRIORITY = INVENTORY_ACTION_PRIORITY + 1
 local activeDragWindow = nil
@@ -956,7 +978,7 @@ local function registerSlot(button, meta)
 			uiState.UpgradeSlots[meta.SlotKey] = nil
 			AetherionGameplayUI.Render()
 		elseif meta.Kind == "Hotbar" then
-			uiState.HotbarAssignments[meta.Index] = nil
+			currentBelt()[meta.Index] = nil
 			AetherionGameplayUI.Render()
 		end
 	end)
@@ -1071,11 +1093,11 @@ local function handleDrop(sourceMeta, targetMeta)
 	end
 
 	if targetMeta.Kind == "Hotbar" then
-		uiState.HotbarAssignments[targetMeta.Index] = {
+		currentBelt()[targetMeta.Index] = {
 			Uid = item.Uid,
 			ItemId = item.ItemId,
 		}
-		setStatus("Assigned to hotbar slot " .. tostring(targetMeta.Index))
+		setStatus("Belt " .. uiState.BeltSet .. " slot " .. tostring(targetMeta.Index) .. " assigned")
 		AetherionGameplayUI.Render()
 		return
 	end
@@ -1199,6 +1221,21 @@ local function buildHUD()
 
 	local currencies = data.Currencies or {}
 	guiRefs.MoneyLabel.Text = "CP " .. tostring(currencies.CP or 0) .. "   Gold " .. tostring(currencies.Gold or 0)
+
+	-- Battle Mode: aktif jika terakhir diserang/menyerang < 15 detik
+	if guiRefs.BattleModeLabel then
+		local now = tick()
+		local inBattle = (now - uiState.LastBattleTick) < 15
+		uiState.BattleMode = inBattle
+		if inBattle then
+			guiRefs.BattleModeLabel.Text = "COMBAT"
+			guiRefs.BattleModeLabel.TextColor3 = Color3.fromRGB(220, 60, 60)
+		else
+			guiRefs.BattleModeLabel.Text = "PEACE"
+			guiRefs.BattleModeLabel.TextColor3 = Color3.fromRGB(100, 200, 100)
+		end
+	end
+
 end
 
 local function getPartyMembers()
@@ -1517,6 +1554,11 @@ local function buildHotbar()
 	clearChildren(guiRefs.HotbarSlots)
 	slotRegistry = slotRegistry or {}
 
+	-- Update belt set indicator
+	if guiRefs.BeltSetLabel then
+		guiRefs.BeltSetLabel.Text = uiState.BeltSet .. "/5"
+	end
+
 	for index = 1, HOTBAR_SIZE do
 		local slotButton = createSlot(
 			guiRefs.HotbarSlots,
@@ -1536,14 +1578,14 @@ local function buildHotbar()
 			stroke.Transparency = 0.86
 		end
 
-		local assigned = uiState.HotbarAssignments[index]
+		local assigned = currentBelt()[index]
 		renderSlotVisual(slotButton, assigned, tostring(index % 10))
 
 		registerSlot(slotButton, {
 			Kind = "Hotbar",
 			Index = index,
 			GetItem = function()
-				return uiState.HotbarAssignments[index]
+				return currentBelt()[index]
 			end,
 		})
 	end
@@ -1642,6 +1684,147 @@ local function toggleParty()
 	refreshPartyData()
 	setStatus("Party " .. (uiState.PartyOpen and "opened" or "closed"))
 	AetherionGameplayUI.Render()
+end
+
+-- ============================================================
+-- Belt helpers
+-- ============================================================
+
+local function cycleBeltSet()
+	uiState.BeltSet = (uiState.BeltSet % 5) + 1
+	setStatus("Belt Set " .. uiState.BeltSet .. " / 5")
+	AetherionGameplayUI.Render()
+end
+
+local function executeBeltSlot(index)
+	local belt = currentBelt()
+	local assigned = belt[index]
+
+	if not assigned then
+		setStatus("Belt slot " .. index .. " is empty")
+		return
+	end
+
+	if assigned.SkillId then
+		local ok, result = invokeRemote(CastSkillRequest, assigned.SkillId, nil)
+		if ok then
+			setStatus("Skill: " .. tostring(assigned.SkillId))
+		else
+			setStatus("Cast failed: " .. tostring(result))
+		end
+	elseif assigned.ItemId then
+		local ok, success, msg = invokeRemote(UseItemRequest, assigned.Uid)
+		if ok and success then
+			setStatus("Used: " .. tostring(assigned.ItemId))
+			refreshPlayerData()
+			AetherionGameplayUI.Render()
+		else
+			setStatus(tostring(msg) or "Cannot use item")
+		end
+	end
+end
+
+-- ============================================================
+-- Macro helpers
+-- ============================================================
+
+local function fetchMacros()
+	local ok, success, data = invokeRemote(GetMacrosRequest)
+	if ok and success and data then
+		uiState.MacroData = data
+	end
+end
+
+local function refreshMacroWindow()
+	if not guiRefs.MacroRows then return end
+	fetchMacros()
+	local data = uiState.MacroData
+	if not data then return end
+
+	for i = 1, 9 do
+		local macro = data[i]
+		local row = guiRefs.MacroRows[i]
+		if row and macro then
+			local skills = macro.Skills or {}
+			local preview = table.concat(skills, " → ")
+			if preview == "" then preview = "(empty)" end
+			row.NameLabel.Text = preview
+			row.NameLabel.TextColor3 = #skills > 0 and RF_THEME.Text or RF_THEME.TextDim
+		end
+	end
+end
+
+local function executeMacro(slotIndex)
+	local ok, success, result = invokeRemote(ExecuteMacroRequest, slotIndex, nil)
+	if ok and success and result then
+		setStatus("Macro F" .. slotIndex .. ": " .. tostring(result.MacroSkillId or "?"))
+	elseif ok and not success then
+		setStatus("Macro F" .. slotIndex .. ": " .. tostring(result or "empty"))
+	end
+end
+
+local function toggleMacroWindow()
+	uiState.MacroOpen = not uiState.MacroOpen
+	if guiRefs.MacroFrame then
+		guiRefs.MacroFrame.Visible = uiState.MacroOpen
+		if uiState.MacroOpen then
+			refreshMacroWindow()
+		end
+	end
+	setStatus("Macro " .. (uiState.MacroOpen and "opened" or "closed"))
+end
+
+-- ============================================================
+-- Character window helpers
+-- ============================================================
+
+local CHAR_STAT_ROWS = {
+	{ Key = "Attack",      Label = "ATK" },
+	{ Key = "ForceAttack", Label = "FORCE" },
+	{ Key = "Defense",     Label = "DEF" },
+	{ Key = "Accuracy",    Label = "ACC" },
+	{ Key = "Dodge",       Label = "DODGE" },
+	{ Key = "CritChance",  Label = "CRIT",  Pct = true },
+	{ Key = "MaxHP",       Label = "MAX HP" },
+	{ Key = "MaxFP",       Label = "MAX FP" },
+}
+
+local function refreshCharacterWindow()
+	if not guiRefs.CharacterFrame or not uiState.CharacterOpen then return end
+	local data  = uiState.PlayerData
+	local stats = uiState.PlayerStats
+
+	if guiRefs.CharNameLabel then
+		local name = player.Name
+		local race  = data and data.RaceId   or "?"
+		local class = data and data.ClassId  or "?"
+		local level = data and data.Level    or 1
+		guiRefs.CharNameLabel.Text = name
+		guiRefs.CharSubLabel.Text  = "Lv." .. level .. "  " .. race .. " / " .. class
+	end
+
+	if guiRefs.CharStatLabels and stats then
+		for i, row in ipairs(CHAR_STAT_ROWS) do
+			local lbl = guiRefs.CharStatLabels[i]
+			if lbl then
+				local v = stats[row.Key] or 0
+				lbl.Text = row.Pct and string.format("%.1f%%", v * 100) or tostring(math.floor(v))
+			end
+		end
+	end
+end
+
+local function toggleCharacterWindow()
+	uiState.CharacterOpen = not uiState.CharacterOpen
+	if guiRefs.CharacterFrame then
+		guiRefs.CharacterFrame.Visible = uiState.CharacterOpen
+		if uiState.CharacterOpen then
+			refreshPlayerData()
+			refreshPlayerStats()
+			refreshCharacterWindow()
+		end
+	end
+	setStatus("Character " .. (uiState.CharacterOpen and "opened" or "closed"))
 end
 
 local function setInvitePromptVisible(visible)
@@ -1848,26 +2031,124 @@ local function setupRuntime()
 				return
 			end
 
-			if input.KeyCode == Enum.KeyCode.One then
-				setStatus("Use hotbar slot 1")
-			elseif input.KeyCode == Enum.KeyCode.Two then
-				setStatus("Use hotbar slot 2")
-			elseif input.KeyCode == Enum.KeyCode.Three then
-				setStatus("Use hotbar slot 3")
-			elseif input.KeyCode == Enum.KeyCode.Four then
-				setStatus("Use hotbar slot 4")
-			elseif input.KeyCode == Enum.KeyCode.Five then
-				setStatus("Use hotbar slot 5")
-			elseif input.KeyCode == Enum.KeyCode.Six then
-				setStatus("Use hotbar slot 6")
-			elseif input.KeyCode == Enum.KeyCode.Seven then
-				setStatus("Use hotbar slot 7")
-			elseif input.KeyCode == Enum.KeyCode.Eight then
-				setStatus("Use hotbar slot 8")
-			elseif input.KeyCode == Enum.KeyCode.Nine then
-				setStatus("Use hotbar slot 9")
-			elseif input.KeyCode == Enum.KeyCode.Zero then
-				setStatus("Use hotbar slot 10")
+			-- Belt 1-10 direct execute
+			local beltKeyMap = {
+				[Enum.KeyCode.One]   = 1,  [Enum.KeyCode.Two]   = 2,
+				[Enum.KeyCode.Three] = 3,  [Enum.KeyCode.Four]  = 4,
+				[Enum.KeyCode.Five]  = 5,  [Enum.KeyCode.Six]   = 6,
+				[Enum.KeyCode.Seven] = 7,  [Enum.KeyCode.Eight] = 8,
+				[Enum.KeyCode.Nine]  = 9,  [Enum.KeyCode.Zero]  = 10,
+			}
+			if beltKeyMap[input.KeyCode] then
+				executeBeltSlot(beltKeyMap[input.KeyCode])
+				return
+			end
+
+			-- TAB: cycle belt set
+			if input.KeyCode == Enum.KeyCode.Tab then
+				cycleBeltSet()
+				return
+			end
+
+			-- F1-F9: execute macro
+			local macroKeyMap = {
+				[Enum.KeyCode.F1] = 1, [Enum.KeyCode.F2] = 2, [Enum.KeyCode.F3] = 3,
+				[Enum.KeyCode.F4] = 4, [Enum.KeyCode.F5] = 5, [Enum.KeyCode.F6] = 6,
+				[Enum.KeyCode.F7] = 7, [Enum.KeyCode.F8] = 8, [Enum.KeyCode.F9] = 9,
+			}
+			if macroKeyMap[input.KeyCode] then
+				executeMacro(macroKeyMap[input.KeyCode])
+				return
+			end
+
+			-- ; : Toggle Battle/Peace mode manual
+			if input.KeyCode == Enum.KeyCode.Semicolon then
+				if uiState.BattleMode then
+					uiState.LastBattleTick = 0
+					setStatus("Peace Mode")
+				else
+					uiState.LastBattleTick = tick()
+					setStatus("Battle Mode")
+				end
+				AetherionGameplayUI.Render()
+				return
+			end
+
+			-- N: Walk / Run toggle
+			if input.KeyCode == Enum.KeyCode.N then
+				ToggleRunWalkRequest:FireServer()
+				return
+			end
+
+			-- Z: Auto Attack (toggle, stub)
+			if input.KeyCode == Enum.KeyCode.Z then
+				setStatus("Auto Attack — coming soon")
+				return
+			end
+
+			-- X: Pick-up item
+			if input.KeyCode == Enum.KeyCode.X then
+				setStatus("Pick-up — klik item di tanah atau dekati lalu tekan X")
+				return
+			end
+
+			-- C: Character / Status
+			if input.KeyCode == Enum.KeyCode.C then
+				toggleCharacterWindow()
+				return
+			end
+
+			-- Y: Macro window
+			if input.KeyCode == Enum.KeyCode.Y then
+				toggleMacroWindow()
+				return
+			end
+
+			-- B: Daftar Teman / Guild (stub)
+			if input.KeyCode == Enum.KeyCode.B then
+				setStatus("Daftar Teman / Guild — coming soon")
+				return
+			end
+
+			-- J: Journal / Quest (stub)
+			if input.KeyCode == Enum.KeyCode.J then
+				setStatus("Journal / Quest — coming soon")
+				return
+			end
+
+			-- T: Window Chat
+			if input.KeyCode == Enum.KeyCode.T then
+				setStatus("Chat — ketik Enter atau / untuk membuka chat Roblox")
+				return
+			end
+
+			-- M: Map (stub)
+			if input.KeyCode == Enum.KeyCode.M then
+				setStatus("Map — coming soon")
+				return
+			end
+
+			-- R: Radar (stub)
+			if input.KeyCode == Enum.KeyCode.R then
+				setStatus("Radar — coming soon")
+				return
+			end
+
+			-- O: Option Menu (stub)
+			if input.KeyCode == Enum.KeyCode.O then
+				setStatus("Option Menu — coming soon")
+				return
+			end
+
+			-- U: Window Summon (khusus Cora/MYSTIC)
+			if input.KeyCode == Enum.KeyCode.U then
+				local data = uiState.PlayerData
+				if data and data.RaceId == "MYSTIC" then
+					setStatus("Summon Window — coming soon")
+				else
+					setStatus("Summon hanya tersedia untuk ras Cora (MYSTIC)")
+				end
+				return
 			end
 		end)
 	)
@@ -1904,6 +2185,21 @@ local function setupRuntime()
 			showPartyInvite(invite)
 		end)
 	)
+
+	table.insert(
+		runtimeConnections,
+		PartyChatReceived.OnClientEvent:Connect(function(senderName, msg, channel)
+			local prefix = channel == "Party" and "[Party]" or channel == "Guild" and "[Guild]" or "[Whisper]"
+			setStatus(prefix .. " " .. senderName .. ": " .. msg)
+		end)
+	)
+
+	table.insert(
+		runtimeConnections,
+		BattleModeNotify.OnClientEvent:Connect(function()
+			uiState.LastBattleTick = tick()
+		end)
+	)
 end
 
 function AetherionGameplayUI.Create()
@@ -1932,6 +2228,12 @@ function AetherionGameplayUI.Create()
 
 	local levelLabel = makeLabel(hudFrame, "Lv. 1", UDim2.new(0, 80, 0, 22), UDim2.new(0, 8, 0, 6), 18, true)
 	guiRefs.LevelLabel = levelLabel
+
+	-- Battle Mode indicator (kanan level label)
+	local battleLabel = makeLabel(hudFrame, "PEACE", UDim2.new(0, 62, 0, 18), UDim2.new(1, -70, 0, 10), 10, true)
+	battleLabel.TextColor3 = Color3.fromRGB(100, 200, 100)
+	battleLabel.TextXAlignment = Enum.TextXAlignment.Center
+	guiRefs.BattleModeLabel = battleLabel
 
 	guiRefs.HPBar = createBar(hudFrame, "HP", UDim2.new(0, 8, 0, 28), Color3.fromRGB(195, 50, 50))
 	guiRefs.FPBar = createBar(hudFrame, "FP", UDim2.new(0, 8, 0, 56), Color3.fromRGB(80, 120, 255))
@@ -2140,6 +2442,202 @@ function AetherionGameplayUI.Create()
 	hotbarSlots.Position = UDim2.new(0.5, -208, 0, 8)
 	hotbarSlots.Parent = hotbarFrame
 	guiRefs.HotbarSlots = hotbarSlots
+
+	-- Belt set indicator (kiri hotbar)
+	local beltSetFrame = makeFrame(screenGui, "BeltSetFrame",
+		UDim2.new(0, 46, 0, 46), UDim2.new(0.5, -279, 1, -71),
+		Color3.fromRGB(10, 13, 18), 0.32)
+	local beltSetLabel = makeLabel(beltSetFrame, "1/5",
+		UDim2.new(1, 0, 0, 20), UDim2.new(0, 0, 0, 4), 14, true)
+	beltSetLabel.TextColor3 = RF_THEME.Gold
+	beltSetLabel.TextXAlignment = Enum.TextXAlignment.Center
+	local beltHint = makeLabel(beltSetFrame, "TAB",
+		UDim2.new(1, 0, 0, 14), UDim2.new(0, 0, 0, 24), 9, false)
+	beltHint.TextColor3 = RF_THEME.TextDim
+	beltHint.TextXAlignment = Enum.TextXAlignment.Center
+	guiRefs.BeltSetLabel = beltSetLabel
+
+	-- ============================================================
+	-- Macro Window (Y key) — F1-F9 slots
+	-- ============================================================
+	local macroFrame = makeFrame(screenGui, "MacroFrame",
+		UDim2.new(0, 380, 0, 352), UDim2.new(0.5, -190, 0.5, -176),
+		RF_THEME.Window, 0.12)
+	macroFrame.Visible = false
+	macroFrame.ZIndex = 25
+	guiRefs.MacroFrame = macroFrame
+	createDragHandle(macroFrame, "MacroDragHandle", 28)
+
+	local macroTitle = makeLabel(macroFrame, "MACRO SYSTEM", UDim2.new(1, -48, 0, 24),
+		UDim2.new(0, 8, 0, 6), 13, true)
+	macroTitle.TextColor3 = RF_THEME.Gold
+	macroTitle.TextXAlignment = Enum.TextXAlignment.Center
+
+	local macroHint = makeLabel(macroFrame, "Press F1-F9 to execute  |  Drag skills from skill bar",
+		UDim2.new(1, -16, 0, 16), UDim2.new(0, 8, 0, 28), 9, false)
+	macroHint.TextColor3 = RF_THEME.TextDim
+	macroHint.TextXAlignment = Enum.TextXAlignment.Center
+
+	local macroClose = makeButton(macroFrame, "X", UDim2.new(0, 22, 0, 20), UDim2.new(1, -28, 0, 6))
+	macroClose.MouseButton1Click:Connect(function()
+		uiState.MacroOpen = false
+		macroFrame.Visible = false
+	end)
+
+	guiRefs.MacroRows = {}
+	for i = 1, 9 do
+		local rowY = 46 + (i - 1) * 33
+		local row = makeFrame(macroFrame, "MacroRow" .. i,
+			UDim2.new(1, -16, 0, 28), UDim2.new(0, 8, 0, rowY),
+			RF_THEME.Panel, 0.25)
+
+		local fLabel = makeLabel(row, "F" .. i,
+			UDim2.new(0, 28, 1, 0), UDim2.new(0, 4, 0, 0), 11, true)
+		fLabel.TextColor3 = RF_THEME.Gold
+
+		local nameLabel = makeLabel(row, "(empty)",
+			UDim2.new(1, -120, 1, 0), UDim2.new(0, 36, 0, 0), 10, false)
+		nameLabel.TextColor3 = RF_THEME.TextDim
+		nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+		local execBtn = makeButton(row, "▶ RUN", UDim2.new(0, 50, 0, 20), UDim2.new(1, -90, 0, 4))
+		execBtn.TextSize = 9
+		execBtn.TextColor3 = Color3.fromRGB(100, 220, 100)
+		local capturedI = i
+		execBtn.MouseButton1Click:Connect(function()
+			executeMacro(capturedI)
+		end)
+
+		local clearBtn = makeButton(row, "CLR", UDim2.new(0, 32, 0, 20), UDim2.new(1, -36, 0, 4))
+		clearBtn.TextSize = 9
+		clearBtn.MouseButton1Click:Connect(function()
+			invokeRemote(ClearMacroRequest, capturedI)
+			refreshMacroWindow()
+		end)
+
+		guiRefs.MacroRows[i] = { Row = row, NameLabel = nameLabel }
+	end
+
+	-- ============================================================
+	-- Character Window (C key)
+	-- ============================================================
+	local charFrame = makeFrame(screenGui, "CharacterFrame",
+		UDim2.new(0, 240, 0, 300), UDim2.new(0.5, -120, 0.5, -150),
+		RF_THEME.Window, 0.12)
+	charFrame.Visible = false
+	charFrame.ZIndex = 24
+	guiRefs.CharacterFrame = charFrame
+	createDragHandle(charFrame, "CharDragHandle", 28)
+
+	local charTitle = makeLabel(charFrame, "CHARACTER", UDim2.new(1, -48, 0, 24),
+		UDim2.new(0, 8, 0, 6), 13, true)
+	charTitle.TextColor3 = RF_THEME.Gold
+	charTitle.TextXAlignment = Enum.TextXAlignment.Center
+
+	local charClose = makeButton(charFrame, "X", UDim2.new(0, 22, 0, 20), UDim2.new(1, -28, 0, 6))
+	charClose.MouseButton1Click:Connect(function()
+		uiState.CharacterOpen = false
+		charFrame.Visible = false
+	end)
+
+	local charName = makeLabel(charFrame, player.Name,
+		UDim2.new(1, -16, 0, 22), UDim2.new(0, 8, 0, 32), 14, true)
+	charName.TextColor3 = RF_THEME.Text
+	charName.TextXAlignment = Enum.TextXAlignment.Center
+	guiRefs.CharNameLabel = charName
+
+	local charSub = makeLabel(charFrame, "Lv.1  ?/?",
+		UDim2.new(1, -16, 0, 16), UDim2.new(0, 8, 0, 54), 10, false)
+	charSub.TextColor3 = RF_THEME.TextDim
+	charSub.TextXAlignment = Enum.TextXAlignment.Center
+	guiRefs.CharSubLabel = charSub
+
+	-- divider
+	local charDiv = Instance.new("Frame")
+	charDiv.Size = UDim2.new(1, -16, 0, 1)
+	charDiv.Position = UDim2.new(0, 8, 0, 74)
+	charDiv.BackgroundColor3 = RF_THEME.Border
+	charDiv.BorderSizePixel = 0
+	charDiv.Parent = charFrame
+
+	guiRefs.CharStatLabels = {}
+	for i, row in ipairs(CHAR_STAT_ROWS) do
+		local rowY = 80 + (i - 1) * 26
+		local rowFrame = makeFrame(charFrame, "CharStat" .. i,
+			UDim2.new(1, -16, 0, 22), UDim2.new(0, 8, 0, rowY),
+			RF_THEME.Panel, 0.5)
+
+		local keyLbl = makeLabel(rowFrame, row.Label,
+			UDim2.new(0, 80, 1, 0), UDim2.new(0, 6, 0, 0), 10, false)
+		keyLbl.TextColor3 = RF_THEME.TextDim
+
+		local valLbl = makeLabel(rowFrame, "0",
+			UDim2.new(0, 90, 1, 0), UDim2.new(1, -96, 0, 0), 10, true)
+		valLbl.TextColor3 = RF_THEME.Text
+		valLbl.TextXAlignment = Enum.TextXAlignment.Right
+		guiRefs.CharStatLabels[i] = valLbl
+	end
+
+	-- Walk/Run toggle button, di kanan hotbar
+	local walkRunBtn = Instance.new("TextButton")
+	walkRunBtn.Name = "WalkRunToggle"
+	walkRunBtn.Size = UDim2.new(0, 52, 0, 46)
+	walkRunBtn.Position = UDim2.new(0.5, 232, 1, -71)
+	walkRunBtn.Text = "RUN"
+	walkRunBtn.TextSize = 11
+	walkRunBtn.Font = Enum.Font.GothamBold
+	walkRunBtn.BackgroundColor3 = Color3.fromRGB(30, 50, 30)
+	walkRunBtn.TextColor3 = Color3.fromRGB(110, 210, 110)
+	walkRunBtn.BorderSizePixel = 0
+	walkRunBtn.AutoButtonColor = false
+	walkRunBtn.Parent = screenGui
+	createCorner(walkRunBtn, 3)
+	createStroke(walkRunBtn, RF_THEME.Border, 1)
+
+	local walkRunLabel = Instance.new("TextLabel")
+	walkRunLabel.Size = UDim2.new(1, 0, 0, 14)
+	walkRunLabel.Position = UDim2.new(0, 0, 1, -16)
+	walkRunLabel.BackgroundTransparency = 1
+	walkRunLabel.Text = "SPEED"
+	walkRunLabel.TextSize = 9
+	walkRunLabel.Font = Enum.Font.Gotham
+	walkRunLabel.TextColor3 = RF_THEME.TextDim
+	walkRunLabel.Parent = walkRunBtn
+
+	local function updateWalkRunButton(isRunning)
+		if isRunning then
+			walkRunBtn.Text = "RUN"
+			walkRunBtn.TextColor3 = Color3.fromRGB(110, 210, 110)
+			walkRunBtn.BackgroundColor3 = Color3.fromRGB(24, 46, 24)
+			local s = walkRunBtn:FindFirstChildOfClass("UIStroke")
+			if s then s.Color = Color3.fromRGB(80, 160, 80) end
+		else
+			walkRunBtn.Text = "WALK"
+			walkRunBtn.TextColor3 = Color3.fromRGB(120, 170, 230)
+			walkRunBtn.BackgroundColor3 = Color3.fromRGB(20, 30, 50)
+			local s = walkRunBtn:FindFirstChildOfClass("UIStroke")
+			if s then s.Color = Color3.fromRGB(70, 110, 170) end
+		end
+	end
+
+	walkRunBtn.MouseButton1Click:Connect(function()
+		ToggleRunWalkRequest:FireServer()
+	end)
+
+	walkRunBtn.MouseEnter:Connect(function()
+		walkRunBtn.BackgroundTransparency = 0.25
+	end)
+	walkRunBtn.MouseLeave:Connect(function()
+		walkRunBtn.BackgroundTransparency = 0
+	end)
+
+	RunWalkStateChanged.OnClientEvent:Connect(function(newIsRunning)
+		walkRunIsRunning = newIsRunning
+		updateWalkRunButton(newIsRunning)
+	end)
+
+	updateWalkRunButton(walkRunIsRunning)
+	guiRefs.WalkRunButton = walkRunBtn
 
 	-- Status bawah
 	local statusFrame = makeFrame(

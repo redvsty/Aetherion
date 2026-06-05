@@ -256,12 +256,9 @@ print("_G.Aetherion.ExecMacro(1, target)  -- Execute macro slot 1")
 printData()
 
 -- ============================================================
--- Patch RF-Accuracy: Walk/Run Toggle
--- Di RF Classic: hotkey W / CTRL+W toggle run/walk
--- Default = Running (mengkonsumsi SP)
+-- Walk/Run Toggle — hotkey N, atau klik tombol UI di hotbar
 -- ============================================================
 
--- State lokal untuk UI feedback
 local isRunning = true
 
 RunWalkStateChanged.OnClientEvent:Connect(function(newIsRunning)
@@ -270,16 +267,6 @@ RunWalkStateChanged.OnClientEvent:Connect(function(newIsRunning)
 		print("[Aetherion] Mode: RUNNING (SP akan berkurang)")
 	else
 		print("[Aetherion] Mode: WALKING (SP regen)")
-	end
-end)
-
--- Hotkey: W = toggle run/walk (mirip RF Classic)
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-	if gameProcessed then return end
-	-- Ctrl+W atau W saja sebagai toggle (RF Classic style)
-	if input.KeyCode == Enum.KeyCode.R then
-		-- Pakai R sebagai toggle karena W sudah dipakai Roblox untuk forward
-		ToggleRunWalkRequest:FireServer()
 	end
 end)
 

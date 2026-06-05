@@ -504,8 +504,19 @@ GetSkillCooldownsRequest.OnServerInvoke = function(player)
 	return true, SkillService.GetCooldowns(player)
 end
 
+local BattleModeNotify = ensureRemoteEvent("BattleModeNotify")
+
 AttackRequest.OnServerInvoke = function(player, targetModel)
-	return CombatService.Attack(player, targetModel, profiles)
+	local ok, result = CombatService.Attack(player, targetModel, profiles)
+	if ok and result and result.Damage then
+		BattleModeNotify:FireClient(player)
+		-- Notify defender too (if player)
+		local targetPlayer = game:GetService("Players"):GetPlayerFromCharacter(targetModel)
+		if targetPlayer then
+			BattleModeNotify:FireClient(targetPlayer)
+		end
+	end
+	return ok, result
 end
 
 -- ============================================================
@@ -556,6 +567,107 @@ GetMacrosRequest.OnServerInvoke = function(player)
 	if not data then return false, "No player data" end
 	return true, MacroService.GetMacros(data)
 end
+
+-- ============================================================
+-- UseItemRequest — konsumsi item dari inventory (belt execution)
+-- ============================================================
+
+local UseItemRequest = ensureRemoteFunction("UseItemRequest")
+
+UseItemRequest.OnServerInvoke = function(player, itemUid)
+	local data = profiles[player]
+	if not data then return false, "No player data" end
+
+	local found, foundIdx = nil, nil
+	for i, item in ipairs(data.Inventory or {}) do
+		if item.Uid == itemUid then
+			found, foundIdx = item, i
+			break
+		end
+	end
+
+	if not found then return false, "Item not found" end
+
+	local ItemDefinitions = require(game.ReplicatedStorage.Shared.Definitions.ItemDefinitions)
+	local def = ItemDefinitions[found.ItemId]
+
+	if not def or def.Category ~= "Consumable" then
+		return false, "Item is not usable"
+	end
+
+	-- Kurangi quantity atau hapus jika qty = 1
+	if found.Quantity and found.Quantity > 1 then
+		data.Inventory[foundIdx].Quantity = found.Quantity - 1
+	else
+		table.remove(data.Inventory, foundIdx)
+	end
+
+	-- Apply efek (HP/FP/SP restore)
+	if def.RestoreHP then
+		data.Stats.HP = math.min((data.Stats.HP or 0) + def.RestoreHP, data.Stats.MaxHP or 150)
+	end
+	if def.RestoreFP then
+		data.Stats.FP = math.min((data.Stats.FP or 0) + def.RestoreFP, data.Stats.MaxFP or 100)
+	end
+	if def.RestoreSP then
+		data.Stats.SP = math.min((data.Stats.SP or 0) + def.RestoreSP, data.Stats.MaxSP or 100)
+	end
+
+	return true, { ItemId = found.ItemId }
+end
+
+-- ============================================================
+-- Chat commands: /party, /guild, /whisper
+-- ============================================================
+
+local PartyChatReceived = ensureRemoteEvent("PartyChatReceived")
+
+game:GetService("Players").PlayerAdded:Connect(function(player)
+	player.Chatted:Connect(function(msg)
+		local data = profiles[player]
+		if not data then return end
+
+		-- /party <message>
+		local partyMsg = msg:match("^/party%s+(.+)$") or msg:match("^/p%s+(.+)$")
+		if partyMsg then
+			local partyData = data.Party
+			if partyData and type(partyData.Members) == "table" then
+				for _, member in ipairs(partyData.Members) do
+					local target = game:GetService("Players"):FindFirstChild(member.Name or "")
+					if target and target ~= player then
+						PartyChatReceived:FireClient(target, player.Name, partyMsg, "Party")
+					end
+				end
+			end
+			PartyChatReceived:FireClient(player, player.Name, partyMsg, "Party")
+			return
+		end
+
+		-- /guild <message>
+		local guildMsg = msg:match("^/guild%s+(.+)$") or msg:match("^/g%s+(.+)$")
+		if guildMsg then
+			-- guild system belum ada, echo ke diri sendiri
+			PartyChatReceived:FireClient(player, player.Name, guildMsg, "Guild")
+			return
+		end
+
+		-- /whisper <name> <message>  atau  /w <name> <message>
+		local wTarget, wMsg = msg:match("^/w[whisper]*%s+(%S+)%s+(.+)$")
+		if not wTarget then
+			wTarget, wMsg = msg:match("^/whisper%s+(%S+)%s+(.+)$")
+		end
+		if wTarget and wMsg then
+			local targetPlayer = game:GetService("Players"):FindFirstChild(wTarget)
+			if targetPlayer then
+				PartyChatReceived:FireClient(targetPlayer, player.Name, wMsg, "Whisper")
+				PartyChatReceived:FireClient(player, player.Name .. "→" .. wTarget, wMsg, "Whisper")
+			else
+				PartyChatReceived:FireClient(player, "System", "Player '" .. wTarget .. "' not found", "Whisper")
+			end
+			return
+		end
+	end)
+end)
 
 -- ============================================================
 -- Patch RF-Accuracy: Defense Gauge handler

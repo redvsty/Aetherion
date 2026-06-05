@@ -86,7 +86,7 @@ local function loadUI()
 			return
 		end
 
-		print("[Aetherion] SkillPanelUI initialized (press K to open)")
+		print("[Aetherion] SkillPanelUI initialized — L=Melee/Range, F=Force")
 	end)
 
 	print("[Aetherion] Gameplay UI created from StarterGui loader")

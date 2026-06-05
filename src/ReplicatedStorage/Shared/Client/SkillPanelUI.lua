@@ -895,16 +895,32 @@ local function setupKeybinds()
 	UserInputService.InputBegan:Connect(function(input, gpe)
 		if gpe then return end
 
-		if input.KeyCode == Enum.KeyCode.K then
+		-- L: toggle Melee/Range skill panel
+		if input.KeyCode == Enum.KeyCode.L or input.KeyCode == Enum.KeyCode.K then
 			state.IsOpen = not state.IsOpen
 			refs.SkillPanel.Visible = state.IsOpen
-
 			if state.IsOpen then
+				-- Pastikan tab Melee/Ranged aktif saat L ditekan
+				if input.KeyCode == Enum.KeyCode.L then
+					state.ActiveTab = "Melee"
+					updateTabHighlight()
+				end
 				fetchSkillData()
 				fetchPlayerData()
 				populateSkillList()
 				updateTabHighlight()
 			end
+		end
+
+		-- F: buka Force/Magic skill tab langsung
+		if input.KeyCode == Enum.KeyCode.F then
+			state.IsOpen = true
+			refs.SkillPanel.Visible = true
+			state.ActiveTab = "Force"
+			fetchSkillData()
+			fetchPlayerData()
+			populateSkillList()
+			updateTabHighlight()
 		end
 
 		-- S1-S8 untuk cast dari hotbar
@@ -994,6 +1010,35 @@ function SkillPanelUI.RefreshSkillData()
 
 	for i = 1, HOTBAR_SLOTS do
 		refreshHotbarSlot(i)
+	end
+end
+
+function SkillPanelUI.SetOpen(open)
+	state.IsOpen = open
+	if refs.SkillPanel then
+		refs.SkillPanel.Visible = open
+		if open then
+			fetchSkillData()
+			fetchPlayerData()
+			populateSkillList()
+			updateTabHighlight()
+		end
+	end
+end
+
+function SkillPanelUI.Toggle()
+	SkillPanelUI.SetOpen(not state.IsOpen)
+end
+
+function SkillPanelUI.OpenForceTab()
+	state.IsOpen = true
+	state.ActiveTab = "Force"
+	if refs.SkillPanel then
+		refs.SkillPanel.Visible = true
+		fetchSkillData()
+		fetchPlayerData()
+		populateSkillList()
+		updateTabHighlight()
 	end
 end
 
