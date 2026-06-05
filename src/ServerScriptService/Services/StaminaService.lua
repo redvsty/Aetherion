@@ -117,9 +117,10 @@ function StaminaService.Tick(deltaTime, profiles, getBuffedSpeed)
 			local playerData = profiles and profiles[player]
 			local stats = playerData and playerData.Stats
 
-			-- SP drain/regen sederhana dan reliable:
-			-- Run mode  → drain terus (konsisten dengan "run stance" RF)
-			-- Walk/idle → regen
+			-- Debug: konfirmasi tick berjalan
+			print(string.format("[Stamina] %s SP=%.1f IsRunning=%s ForcedWalk=%s",
+				player.Name, state.SP, tostring(state.IsRunning), tostring(state.ForcedWalk)))
+
 			if state.IsRunning and not state.ForcedWalk then
 				state.SP = math.max(0, state.SP - SP_CONFIG.RunCostPerSec * deltaTime)
 

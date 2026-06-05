@@ -2642,12 +2642,18 @@ function AetherionGameplayUI.Create()
 	-- ============================================================
 	-- Macro Window (Y key) — 9 slots, F1-F8 via keyboard (F9 = dev console)
 	-- ============================================================
-	local macroFrame = makeFrame(screenGui, "MacroFrame",
-		UDim2.new(0, 400, 0, 360), UDim2.new(0.5, -200, 0.5, -180),
-		Color3.fromRGB(20, 26, 36), 0.06)
-	do local g = macroFrame:FindFirstChildOfClass("UIGradient") if g then g:Destroy() end end
+	local macroFrame = Instance.new("Frame")
+	macroFrame.Name = "MacroFrame"
+	macroFrame.Size = UDim2.new(0, 400, 0, 360)
+	macroFrame.Position = UDim2.new(0.5, -200, 0.5, -180)
+	macroFrame.BackgroundColor3 = Color3.fromRGB(28, 38, 52)
+	macroFrame.BackgroundTransparency = 0
+	macroFrame.BorderSizePixel = 0
 	macroFrame.Visible = false
 	macroFrame.ZIndex = 25
+	macroFrame.Parent = screenGui
+	createCorner(macroFrame, 4)
+	createStroke(macroFrame, RF_THEME.BorderBright, 1)
 	guiRefs.MacroFrame = macroFrame
 	createDragHandle(macroFrame, "MacroDragHandle", 28)
 
@@ -2674,8 +2680,8 @@ function AetherionGameplayUI.Create()
 		row.Name = "MacroRow" .. i
 		row.Size = UDim2.new(1, -16, 0, 30)
 		row.Position = UDim2.new(0, 8, 0, rowY)
-		row.BackgroundColor3 = Color3.fromRGB(40, 52, 68)  -- lebih terang
-		row.BackgroundTransparency = 0.1
+		row.BackgroundColor3 = Color3.fromRGB(45, 60, 80)
+		row.BackgroundTransparency = 0
 		row.BorderSizePixel = 0
 		row.Parent = macroFrame
 		createCorner(row, 3)
@@ -2687,10 +2693,10 @@ function AetherionGameplayUI.Create()
 		fLabel.Text = i < 9 and "F" .. i or "F9*"
 		fLabel.Font = Enum.Font.GothamBold
 		fLabel.TextSize = 13
-		fLabel.TextColor3 = Color3.fromRGB(255, 210, 80)
+		fLabel.TextColor3 = Color3.fromRGB(255, 220, 80)
 		fLabel.TextXAlignment = Enum.TextXAlignment.Left
 		fLabel.TextYAlignment = Enum.TextYAlignment.Center
-		fLabel.TextStrokeTransparency = 0.5
+		fLabel.TextStrokeTransparency = 1
 		fLabel.Parent = row
 
 		local nameLabel = Instance.new("TextLabel")
@@ -2700,11 +2706,10 @@ function AetherionGameplayUI.Create()
 		nameLabel.Text = "(empty)"
 		nameLabel.Font = Enum.Font.Gotham
 		nameLabel.TextSize = 12
-		nameLabel.TextColor3 = Color3.fromRGB(200, 210, 225)
+		nameLabel.TextColor3 = Color3.new(1, 1, 1)
 		nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 		nameLabel.TextYAlignment = Enum.TextYAlignment.Center
-		nameLabel.TextStrokeTransparency = 0.4
-		nameLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+		nameLabel.TextStrokeTransparency = 1
 		nameLabel.Parent = row
 
 		local execBtn = makeButton(row, "▶", UDim2.new(0, 28, 0, 22), UDim2.new(1, -66, 0, 4))
@@ -2726,12 +2731,18 @@ function AetherionGameplayUI.Create()
 	-- ============================================================
 	-- Character Window (C key)
 	-- ============================================================
-	local charFrame = makeFrame(screenGui, "CharacterFrame",
-		UDim2.new(0, 270, 0, 320), UDim2.new(0.5, -135, 0.5, -160),
-		Color3.fromRGB(20, 26, 36), 0.06)
-	do local g = charFrame:FindFirstChildOfClass("UIGradient") if g then g:Destroy() end end
+	local charFrame = Instance.new("Frame")
+	charFrame.Name = "CharacterFrame"
+	charFrame.Size = UDim2.new(0, 270, 0, 320)
+	charFrame.Position = UDim2.new(0.5, -135, 0.5, -160)
+	charFrame.BackgroundColor3 = Color3.fromRGB(28, 38, 52)
+	charFrame.BackgroundTransparency = 0
+	charFrame.BorderSizePixel = 0
 	charFrame.Visible = false
 	charFrame.ZIndex = 24
+	charFrame.Parent = screenGui
+	createCorner(charFrame, 4)
+	createStroke(charFrame, RF_THEME.BorderBright, 1)
 	guiRefs.CharacterFrame = charFrame
 	createDragHandle(charFrame, "CharDragHandle", 28)
 
@@ -2776,8 +2787,8 @@ function AetherionGameplayUI.Create()
 		rowFrame.Name = "CharStat" .. i
 		rowFrame.Size = UDim2.new(1, -16, 0, 24)
 		rowFrame.Position = UDim2.new(0, 8, 0, rowY)
-		rowFrame.BackgroundColor3 = Color3.fromRGB(40, 52, 68)  -- lebih terang
-		rowFrame.BackgroundTransparency = 0.1
+		rowFrame.BackgroundColor3 = Color3.fromRGB(45, 60, 80)
+		rowFrame.BackgroundTransparency = 0
 		rowFrame.BorderSizePixel = 0
 		rowFrame.Parent = charFrame
 		createCorner(rowFrame, 3)
@@ -2789,11 +2800,10 @@ function AetherionGameplayUI.Create()
 		keyLbl.Text = row.Label
 		keyLbl.Font = Enum.Font.Gotham
 		keyLbl.TextSize = 12
-		keyLbl.TextColor3 = Color3.fromRGB(180, 195, 215)
+		keyLbl.TextColor3 = Color3.new(1, 1, 1)
 		keyLbl.TextXAlignment = Enum.TextXAlignment.Left
 		keyLbl.TextYAlignment = Enum.TextYAlignment.Center
-		keyLbl.TextStrokeTransparency = 0.5
-		keyLbl.TextStrokeColor3 = Color3.new(0, 0, 0)
+		keyLbl.TextStrokeTransparency = 1
 		keyLbl.Parent = rowFrame
 
 		local valLbl = Instance.new("TextLabel")
@@ -2803,11 +2813,10 @@ function AetherionGameplayUI.Create()
 		valLbl.Text = "0"
 		valLbl.Font = Enum.Font.GothamBold
 		valLbl.TextSize = 13
-		valLbl.TextColor3 = Color3.fromRGB(245, 245, 255)
+		valLbl.TextColor3 = Color3.fromRGB(255, 220, 80)
 		valLbl.TextXAlignment = Enum.TextXAlignment.Right
 		valLbl.TextYAlignment = Enum.TextYAlignment.Center
-		valLbl.TextStrokeTransparency = 0.4
-		valLbl.TextStrokeColor3 = Color3.new(0, 0, 0)
+		valLbl.TextStrokeTransparency = 1
 		valLbl.Parent = rowFrame
 		guiRefs.CharStatLabels[i] = valLbl
 	end

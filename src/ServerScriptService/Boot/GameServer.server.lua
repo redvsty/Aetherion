@@ -18,6 +18,7 @@ local DefenseGaugeService = require(script.Parent.Parent.Services.DefenseGaugeSe
 local StaminaService = require(script.Parent.Parent.Services.StaminaService)
 local MacroService = require(script.Parent.Parent.Services.MacroService)
 local BuffEffectProcessor = require(game.ReplicatedStorage.Shared.BuffEffectProcessor)
+local GameConfig = require(game.ReplicatedStorage.Shared.GameConfig)
 
 local EquipmentServiceRef = EquipmentService -- alias untuk dipakai di SkillService cast
 
