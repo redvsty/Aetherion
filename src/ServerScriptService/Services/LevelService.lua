@@ -99,4 +99,23 @@ function LevelService.AddExp(playerData, amount, player, staminaService)
 	return levelsGained, playerData.Level
 end
 
+-- RF Classic Death Penalty:
+--   PvE (mati karena monster): kehilangan 2% dari EXP yang sudah terkumpul di level ini
+--   PvP (dibunuh player lain): kehilangan CP (Contribution Points), besarnya proporsional level
+-- Tidak ada level loss — EXP tidak bisa di bawah 0.
+function LevelService.ApplyDeathPenalty(playerData, killedByPlayer)
+	if not playerData then return end
+	if playerData.Level >= GameConfig.MaxLevel then return end -- max level: no penalty
+
+	if killedByPlayer then
+		-- PvP death: kurangi CP
+		local cpLoss = math.max(10, math.floor((playerData.Level or 1) * 2.5))
+		playerData.ContributionPoints = math.max(0, (playerData.ContributionPoints or 0) - cpLoss)
+	else
+		-- PvE death: 2% EXP loss dari EXP yang sudah terkumpul di level ini
+		local expLoss = math.max(0, math.floor((playerData.Exp or 0) * 0.02))
+		playerData.Exp = math.max(0, (playerData.Exp or 0) - expLoss)
+	end
+end
+
 return LevelService

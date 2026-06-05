@@ -19,6 +19,9 @@ local StaminaService = require(script.Parent.Parent.Services.StaminaService)
 local MacroService = require(script.Parent.Parent.Services.MacroService)
 local BuffEffectProcessor = require(game.ReplicatedStorage.Shared.BuffEffectProcessor)
 local GameConfig = require(game.ReplicatedStorage.Shared.GameConfig)
+-- Batch 4: Monster + PvE
+local MonsterService = require(script.Parent.Parent.Services.MonsterService)
+local LevelService   = require(script.Parent.Parent.Services.LevelService)
 
 local EquipmentServiceRef = EquipmentService -- alias untuk dipakai di SkillService cast
 
@@ -59,6 +62,11 @@ local function ensureRemoteEvent(name)
 	end
 	return remote
 end
+
+-- Batch 4: Monster remotes
+local AttackMonsterRequest = ensureRemoteFunction("AttackMonsterRequest")
+local DamageNumberEvent    = ensureRemoteEvent("DamageNumberEvent")
+local LootGoldEvent        = ensureRemoteEvent("LootGoldEvent")
 
 local GetPlayerDataRequest = ensureRemoteFunction("GetPlayerDataRequest")
 local GetPlayerStatsRequest = ensureRemoteFunction("GetPlayerStatsRequest")
@@ -172,6 +180,15 @@ Players.PlayerAdded:Connect(function(player)
 		if staminaState then
 			StaminaService.ApplySpeedToCharacter(player, staminaState)
 		end
+
+		-- Batch 4: Death penalty (RF Classic)
+		humanoid.Died:Connect(function()
+			local data = profiles[player]
+			if not data then return end
+			-- Cek apakah dibunuh player (tag di Tag "KilledByPlayer" di character)
+			local killedByPlayer = character:FindFirstChild("KilledByPlayer") ~= nil
+			LevelService.ApplyDeathPenalty(data, killedByPlayer)
+		end)
 	end)
 end)
 
@@ -514,19 +531,7 @@ GetSkillCooldownsRequest.OnServerInvoke = function(player)
 end
 
 local BattleModeNotify = ensureRemoteEvent("BattleModeNotify")
-
-AttackRequest.OnServerInvoke = function(player, targetModel)
-	local ok, result = CombatService.Attack(player, targetModel, profiles)
-	if ok and result and result.Damage then
-		BattleModeNotify:FireClient(player)
-		-- Notify defender too (if player)
-		local targetPlayer = game:GetService("Players"):GetPlayerFromCharacter(targetModel)
-		if targetPlayer then
-			BattleModeNotify:FireClient(targetPlayer)
-		end
-	end
-	return ok, result
-end
+-- AttackRequest handler sekarang di blok "Batch 4: Monster System" agar bisa route ke MonsterService
 
 -- ============================================================
 -- Patch RF-Accuracy: Stamina / Walk-Run handlers
@@ -623,6 +628,124 @@ UseItemRequest.OnServerInvoke = function(player, itemUid)
 
 	return true, { ItemId = found.ItemId }
 end
+
+-- ============================================================
+-- Batch 4: Monster System
+-- ============================================================
+
+-- Callback: monster mati → beri EXP + gold ke killer
+local function onMonsterKilled(killerPlayer, _monsterUid, def)
+	local data = profiles[killerPlayer]
+	if not data then return end
+
+	-- EXP reward
+	local levelsGained = 0
+	if def.ExpReward and def.ExpReward > 0 then
+		levelsGained = LevelService.AddExp(data, def.ExpReward, killerPlayer, StaminaService)
+	end
+
+	-- Notif level up ke client (reuse GetPlayerDataRequest — client akan poll)
+	if levelsGained > 0 then
+		print(string.format("[MonsterKilled] %s naik %d level(s)! Level sekarang: %d",
+			killerPlayer.Name, levelsGained, data.Level))
+	end
+end
+
+-- Callback: damage ke player dari monster → update Stats.HP + kirim floating number
+local function onMonsterDamage(targetCharacter, damage, isCrit, _attacker)
+	local targetPlayer = Players:GetPlayerFromCharacter(targetCharacter)
+	local data = targetPlayer and profiles[targetPlayer]
+
+	-- Update HP di playerData
+	if data and data.Stats then
+		data.Stats.HP = math.max(0, (data.Stats.HP or 0) - damage)
+	end
+
+	-- Kirim damage number ke client (broadcast ke semua yang dekat untuk efisiensi, client filter sendiri)
+	local hrp = targetCharacter:FindFirstChild("HumanoidRootPart")
+	if hrp then
+		DamageNumberEvent:FireAllClients(hrp.Position, damage, isCrit, false)
+	end
+end
+
+-- Callback: player ambil loot bag → deliver gold
+local function onLootDelivered(player, bag)
+	local data = profiles[player]
+	if not data then return end
+
+	local gold = bag.gold or 0
+	if gold > 0 then
+		data.Currencies = data.Currencies or {}
+		data.Currencies.Gold = (data.Currencies.Gold or 0) + gold
+		LootGoldEvent:FireClient(player, gold)
+	end
+end
+
+-- Set callbacks dan init spawners
+MonsterService.SetCallbacks(onMonsterKilled, onMonsterDamage, onLootDelivered)
+
+-- AttackMonsterRequest: client target monster model, server resolve damage
+AttackMonsterRequest.OnServerInvoke = function(player, targetModel)
+	local data = profiles[player]
+	if not data then return false, "No player data" end
+	if not data.FactionId then return false, "No faction" end
+
+	if not MonsterService.IsMonster(targetModel) then
+		return false, "Target bukan monster"
+	end
+
+	local attackerStats = EquipmentService.GetTotalStats(data)
+	local ok, result = MonsterService.AttackMonster(player, targetModel, attackerStats)
+
+	if ok and result then
+		-- Kirim damage number ke client
+		local hrp = targetModel:FindFirstChild("HumanoidRootPart")
+		if hrp then
+			DamageNumberEvent:FireAllClients(hrp.Position, result.Damage, result.IsCrit, true)
+		end
+		BattleModeNotify:FireClient(player)
+	end
+
+	return ok, result
+end
+
+-- AttackRequest: route ke MonsterService jika target monster, PvP ke CombatService
+AttackRequest.OnServerInvoke = function(player, targetModel)
+	if MonsterService.IsMonster(targetModel) then
+		local data = profiles[player]
+		if not data then return false, "No player data" end
+		if not data.FactionId then return false, "No faction" end
+
+		local attackerStats = EquipmentService.GetTotalStats(data)
+		local ok, result = MonsterService.AttackMonster(player, targetModel, attackerStats)
+
+		if ok and result then
+			local hrp = targetModel:FindFirstChild("HumanoidRootPart")
+			if hrp then
+				DamageNumberEvent:FireAllClients(hrp.Position, result.Damage, result.IsCrit, true)
+			end
+			BattleModeNotify:FireClient(player)
+		end
+		return ok, result
+	end
+
+	-- Default: PvP via CombatService
+	local ok, result = CombatService.Attack(player, targetModel, profiles)
+	if ok and result and result.Damage then
+		BattleModeNotify:FireClient(player)
+		local targetPlayer = Players:GetPlayerFromCharacter(targetModel)
+		if targetPlayer then
+			BattleModeNotify:FireClient(targetPlayer)
+		end
+	end
+	return ok, result
+end
+
+-- Init monster spawners (cari Part di workspace dengan attribute MonsterDefId)
+task.spawn(function()
+	task.wait(2) -- tunggu workspace fully loaded
+	MonsterService.InitSpawners()
+end)
 
 -- ============================================================
 -- Chat commands: /party, /guild, /whisper
