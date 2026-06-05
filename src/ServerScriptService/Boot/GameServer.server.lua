@@ -62,7 +62,7 @@ local AttackRequest = ensureRemoteFunction("AttackRequest")
 local GiveWeaponRequest = ensureRemoteFunction("GiveWeaponRequest")
 local GiveItemRequest = ensureRemoteFunction("GiveItemRequest")
 -- Weapon query remotes (dipanggil dari AetherionDebug)
-local GetWeaponSummaryRequest  = ensureRemoteFunction("GetWeaponSummaryRequest")
+local GetWeaponSummaryRequest = ensureRemoteFunction("GetWeaponSummaryRequest")
 local GetWeaponsByLevelRequest = ensureRemoteFunction("GetWeaponsByLevelRequest")
 local GetWeaponsByGradeRequest = ensureRemoteFunction("GetWeaponsByGradeRequest")
 local GetPartyDataRequest = ensureRemoteFunction("GetPartyDataRequest")
@@ -166,7 +166,7 @@ GetPlayerStatsRequest.OnServerInvoke = function(player)
 		return false, "No player data"
 	end
 
-	return true, data.Stats
+	return true, EquipmentService.GetTotalStats(data)
 end
 
 SelectRaceAndClassRequest.OnServerInvoke = function(player, factionId, startingClassId)

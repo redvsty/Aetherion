@@ -65,6 +65,31 @@ local PartyInviteReceived = waitRemoteEvent("PartyInviteReceived")
 local BAG_COUNT = 5
 local BAG_SIZE = 20
 local HOTBAR_SIZE = 10
+local EQUIPMENT_PANEL_SLOTS = {
+	{ Key = "Helmet", Label = "Head", X = 69, Y = 0 },
+	{ Key = "Weapon", Label = "Weapon", X = 0, Y = 58 },
+	{ Key = "Shield", Label = "Shield", X = 138, Y = 58 },
+	{ Key = "Upper", Label = "Upper", X = 69, Y = 58 },
+	{ Key = "Gloves", Label = "Gloves", X = 0, Y = 116 },
+	{ Key = "Lower", Label = "Lower", X = 69, Y = 116 },
+	{ Key = "Boots", Label = "Boots", X = 138, Y = 116 },
+	{ Key = "Cloak", Label = "Cloak", X = 69, Y = 174 },
+	{ Key = "Accessory1", Label = "Acc 1", X = 0, Y = 232 },
+	{ Key = "Accessory2", Label = "Acc 2", X = 69, Y = 232 },
+	{ Key = "Accessory3", Label = "Acc 3", X = 138, Y = 232 },
+	{ Key = "Accessory4", Label = "Acc 4", X = 69, Y = 290 },
+}
+
+local EQUIPMENT_STAT_ROWS = {
+	{ Key = "Attack", Label = "ATK", Format = "number" },
+	{ Key = "ForceAttack", Label = "FORCE", Format = "number" },
+	{ Key = "Defense", Label = "DEF", Format = "number" },
+	{ Key = "Accuracy", Label = "ACC", Format = "number" },
+	{ Key = "Dodge", Label = "DODGE", Format = "number" },
+	{ Key = "CritChance", Label = "CRIT", Format = "percent" },
+	{ Key = "BlockChance", Label = "BLOCK", Format = "percent" },
+	{ Key = "LifeStealPercent", Label = "DRAIN", Format = "percent" },
+}
 
 local uiState = {
 	CurrentBag = 1,
@@ -180,7 +205,51 @@ local function talicAppliesToEquipment(talicItem, equipmentItem)
 		return true
 	end
 
-	return talicDef.AppliesTo == equipmentDef.Category
+	local targetGroup = talicDef.AppliesTo
+	local groups = {
+		Weapon = { Weapon = true },
+		Helmet = { Helmet = true },
+		Upper = { Upper = true },
+		Lower = { Lower = true },
+		Gloves = { Gloves = true },
+		Boots = { Boots = true },
+		Shield = { Shield = true },
+		Cloak = { Cloak = true },
+		WeaponOrCloak = { Weapon = true, Cloak = true },
+		UpperLowerShieldJetpackMelee = { Upper = true, Lower = true, Shield = true, Cloak = true, Weapon = true },
+		AllArmor = {
+			Helmet = true,
+			Upper = true,
+			Lower = true,
+			Gloves = true,
+			Boots = true,
+			Shield = true,
+			Cloak = true,
+		},
+		All = {
+			Weapon = true,
+			Helmet = true,
+			Upper = true,
+			Lower = true,
+			Gloves = true,
+			Boots = true,
+			Shield = true,
+			Cloak = true,
+			Accessory1 = true,
+			Accessory2 = true,
+			Accessory3 = true,
+			Accessory4 = true,
+		},
+	}
+
+	local equipSlot = equipmentDef.EquipSlot or equipmentDef.Slot
+	local group = groups[targetGroup]
+
+	if group and group[equipSlot] then
+		return true
+	end
+
+	return targetGroup == equipmentDef.Category
 end
 
 local function getUpgradeSlotLimit(item)
@@ -281,6 +350,10 @@ local function getEquippedItem(slotKey)
 	end
 
 	local uid = uiState.PlayerData.Equipment[slotKey]
+	if not uid and slotKey == "Upper" then
+		uid = uiState.PlayerData.Equipment.Armor
+	end
+
 	if not uid then
 		return nil
 	end
@@ -580,6 +653,14 @@ local function getTooltipText(item)
 		table.insert(lines, "Current Upgrade: +" .. tostring(item.UpgradeLevel))
 	end
 
+	if item.InstalledTalics and #item.InstalledTalics > 0 then
+		table.insert(lines, "Installed Talics:")
+
+		for _, installed in ipairs(item.InstalledTalics) do
+			table.insert(lines, "- " .. tostring(installed.TalicId or "Talic"))
+		end
+	end
+
 	return table.concat(lines, "\n")
 end
 
@@ -821,8 +902,8 @@ local function slotAcceptsItem(slotKey, item)
 
 	local equipSlot = def.EquipSlot or def.Slot
 
-	if slotKey == "Ring1" or slotKey == "Ring2" then
-		return equipSlot == "Ring" or equipSlot == "Accessory"
+	if string.sub(slotKey, 1, 9) == "Accessory" then
+		return equipSlot == slotKey or equipSlot == "Accessory"
 	end
 
 	return equipSlot == slotKey
@@ -994,10 +1075,12 @@ local function buildHUD()
 
 	guiRefs.LevelLabel.Text = "Lv. " .. tostring(data.Level or 1)
 
-	local currentHP = (data.Stats and data.Stats.HP) or stats.MaxHP or 150
-	local maxHP = stats.MaxHP or currentHP or 150
-	local currentFP = (data.Stats and data.Stats.FP) or stats.MaxFP or 100
-	local maxFP = stats.MaxFP or currentFP or 100
+	local baseMaxHP = (data.Stats and data.Stats.MaxHP) or 150
+	local baseMaxFP = (data.Stats and data.Stats.MaxFP) or 100
+	local maxHP = baseMaxHP + (stats.MaxHP or 0)
+	local maxFP = baseMaxFP + (stats.MaxFP or 0)
+	local currentHP = math.min((data.Stats and data.Stats.HP) or maxHP, maxHP)
+	local currentFP = math.min((data.Stats and data.Stats.FP) or maxFP, maxFP)
 	local currentSP = (data.Stats and data.Stats.SP) or 100
 	local maxSP = (data.Stats and data.Stats.MaxSP) or 100
 
@@ -1158,6 +1241,59 @@ local function buildPartyUI()
 	end
 end
 
+local function formatEquipmentStat(value, formatKind)
+	value = tonumber(value or 0) or 0
+
+	if formatKind == "percent" then
+		return tostring(math.floor(value * 100 + 0.5)) .. "%"
+	end
+
+	return tostring(math.floor(value))
+end
+
+local function buildEquipmentStats(parent)
+	local stats = uiState.PlayerStats or {}
+
+	local statFrame = Instance.new("Frame")
+	statFrame.Name = "EquipmentStats"
+	statFrame.Size = UDim2.new(0, 202, 0, 82)
+	statFrame.Position = UDim2.new(0, 0, 0, 352)
+	statFrame.BackgroundColor3 = Color3.fromRGB(11, 15, 20)
+	statFrame.BorderSizePixel = 0
+	statFrame.Parent = parent
+	createCorner(statFrame, 2)
+	createStroke(statFrame, Color3.fromRGB(68, 82, 96), 1)
+
+	local title = makeLabel(statFrame, "COMBAT", UDim2.new(1, -12, 0, 16), UDim2.new(0, 6, 0, 4), 10, true)
+	title.TextColor3 = RF_THEME.Gold
+	title.TextXAlignment = Enum.TextXAlignment.Center
+
+	for index, rowInfo in ipairs(EQUIPMENT_STAT_ROWS) do
+		local column = (index - 1) % 2
+		local row = math.floor((index - 1) / 2)
+		local rowFrame = Instance.new("Frame")
+		rowFrame.Name = rowInfo.Key .. "Row"
+		rowFrame.Size = UDim2.new(0, 92, 0, 13)
+		rowFrame.Position = UDim2.new(0, 7 + (column * 96), 0, 23 + (row * 14))
+		rowFrame.BackgroundTransparency = 1
+		rowFrame.Parent = statFrame
+
+		local label = makeLabel(rowFrame, rowInfo.Label, UDim2.new(0, 42, 1, 0), UDim2.new(0, 0, 0, 0), 9, false)
+		label.TextColor3 = RF_THEME.TextDim
+
+		local valueLabel = makeLabel(
+			rowFrame,
+			formatEquipmentStat(stats[rowInfo.Key], rowInfo.Format),
+			UDim2.new(0, 46, 1, 0),
+			UDim2.new(1, -46, 0, 0),
+			9,
+			true
+		)
+		valueLabel.TextXAlignment = Enum.TextXAlignment.Right
+		valueLabel.TextColor3 = RF_THEME.Text
+	end
+end
+
 local function buildInventory()
 	local inventoryFrame = guiRefs.InventoryFrame
 	inventoryFrame.Visible = uiState.InventoryOpen
@@ -1194,20 +1330,26 @@ local function buildInventory()
 		})
 	end
 
-	local equipmentSlots = {
-		{ Key = "Helmet", Label = "Head", X = 0, Y = 0 },
-		{ Key = "Weapon", Label = "Weapon", X = 0, Y = 58 },
-		{ Key = "Shield", Label = "Shield", X = 58, Y = 58 },
-		{ Key = "Armor", Label = "Armor", X = 0, Y = 116 },
-		{ Key = "Gloves", Label = "Gloves", X = 58, Y = 116 },
-		{ Key = "Boots", Label = "Boots", X = 0, Y = 174 },
-		{ Key = "Cloak", Label = "Cloak", X = 58, Y = 174 },
-		{ Key = "Amulet", Label = "Amulet", X = 0, Y = 232 },
-		{ Key = "Ring1", Label = "Ring 1", X = 58, Y = 232 },
-		{ Key = "Ring2", Label = "Ring 2", X = 0, Y = 290 },
-	}
+	local avatarFrame = Instance.new("Frame")
+	avatarFrame.Name = "EquipmentSilhouette"
+	avatarFrame.Size = UDim2.new(0, 64, 0, 108)
+	avatarFrame.Position = UDim2.new(0, 69, 0, 184)
+	avatarFrame.BackgroundColor3 = Color3.fromRGB(14, 18, 24)
+	avatarFrame.BorderSizePixel = 0
+	avatarFrame.Parent = guiRefs.EquipmentGrid
+	createCorner(avatarFrame, 2)
+	createStroke(avatarFrame, Color3.fromRGB(58, 70, 82), 1)
 
-	for _, slotInfo in ipairs(equipmentSlots) do
+	local avatarName = makeLabel(avatarFrame, "GEAR", UDim2.new(1, -8, 0, 18), UDim2.new(0, 4, 0, 8), 10, true)
+	avatarName.TextColor3 = Color3.fromRGB(122, 153, 188)
+	avatarName.TextXAlignment = Enum.TextXAlignment.Center
+
+	local factionText = tostring((uiState.PlayerData and uiState.PlayerData.FactionId) or "-")
+	local factionLabel = makeLabel(avatarFrame, factionText, UDim2.new(1, -8, 0, 18), UDim2.new(0, 4, 0, 36), 9, false)
+	factionLabel.TextColor3 = RF_THEME.TextDim
+	factionLabel.TextXAlignment = Enum.TextXAlignment.Center
+
+	for _, slotInfo in ipairs(EQUIPMENT_PANEL_SLOTS) do
 		local slotButton = createSlot(
 			guiRefs.EquipmentGrid,
 			slotInfo.Key,
@@ -1226,6 +1368,8 @@ local function buildInventory()
 			end,
 		})
 	end
+
+	buildEquipmentStats(guiRefs.EquipmentGrid)
 
 	for index, button in ipairs(guiRefs.BagButtons) do
 		if index == uiState.CurrentBag then
@@ -1679,7 +1823,7 @@ function AetherionGameplayUI.Create()
 
 	-- Inventory kanan atas
 	local inventoryFrame =
-		makeFrame(screenGui, "InventoryFrame", UDim2.new(0, 355, 0, 455), UDim2.new(1, -370, 0, 42), RF_THEME.Window)
+		makeFrame(screenGui, "InventoryFrame", UDim2.new(0, 520, 0, 500), UDim2.new(1, -535, 0, 42), RF_THEME.Window)
 	guiRefs.InventoryFrame = inventoryFrame
 	inventoryFrame.Visible = uiState.InventoryOpen
 
@@ -1687,20 +1831,20 @@ function AetherionGameplayUI.Create()
 	invTitle.TextColor3 = RF_THEME.Gold
 	invTitle.TextXAlignment = Enum.TextXAlignment.Center
 	guiRefs.MoneyLabel =
-		makeLabel(inventoryFrame, "CP 0   Gold 0", UDim2.new(0, 180, 0, 20), UDim2.new(0, 180, 0, 10), 12, false)
+		makeLabel(inventoryFrame, "CP 0   Gold 0", UDim2.new(0, 190, 0, 20), UDim2.new(1, -224, 0, 10), 12, false)
 	guiRefs.MoneyLabel.TextXAlignment = Enum.TextXAlignment.Right
 
 	local equipmentGrid = Instance.new("Frame")
 	equipmentGrid.BackgroundTransparency = 1
-	equipmentGrid.Size = UDim2.new(0, 120, 0, 350)
-	equipmentGrid.Position = UDim2.new(0, 10, 0, 42)
+	equipmentGrid.Size = UDim2.new(0, 202, 0, 434)
+	equipmentGrid.Position = UDim2.new(0, 14, 0, 42)
 	equipmentGrid.Parent = inventoryFrame
 	guiRefs.EquipmentGrid = equipmentGrid
 
 	local inventoryGrid = Instance.new("Frame")
 	inventoryGrid.BackgroundTransparency = 1
 	inventoryGrid.Size = UDim2.new(0, 232, 0, 290)
-	inventoryGrid.Position = UDim2.new(0, 138, 0, 42)
+	inventoryGrid.Position = UDim2.new(0, 238, 0, 42)
 	inventoryGrid.Parent = inventoryFrame
 	guiRefs.InventoryGrid = inventoryGrid
 
@@ -1710,7 +1854,7 @@ function AetherionGameplayUI.Create()
 			inventoryFrame,
 			"Tas " .. tostring(bagIndex),
 			UDim2.new(0, 42, 0, 24),
-			UDim2.new(0, 138 + ((bagIndex - 1) * 45), 0, 338)
+			UDim2.new(0, 238 + ((bagIndex - 1) * 45), 0, 338)
 		)
 
 		bagButton.MouseButton1Click:Connect(function()
