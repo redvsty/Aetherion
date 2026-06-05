@@ -116,16 +116,14 @@ function StaminaService.Tick(deltaTime, profiles, getBuffedSpeed)
 			local playerData = profiles and profiles[player]
 			local stats = playerData and playerData.Stats
 
-			-- Deteksi movement langsung dari server via velocity HumanoidRootPart
-			-- Lebih reliable dan anti-exploit dibanding menunggu event dari client
+			-- Deteksi movement dari Humanoid.MoveDirection (server-side, reliable)
+			-- MoveDirection > 0 = player sedang menekan tombol gerak
 			local isActuallyMoving = false
 			local character = player.Character
 			if character then
-				local hrp = character:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					local vel = hrp.AssemblyLinearVelocity
-					-- Threshold 1 stud/s agar micro-vibration tidak dihitung
-					isActuallyMoving = Vector3.new(vel.X, 0, vel.Z).Magnitude > 1
+				local humanoid = character:FindFirstChildOfClass("Humanoid")
+				if humanoid then
+					isActuallyMoving = humanoid.MoveDirection.Magnitude > 0
 				end
 			end
 			state.IsMoving = isActuallyMoving

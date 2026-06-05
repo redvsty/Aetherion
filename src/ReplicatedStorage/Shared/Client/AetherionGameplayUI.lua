@@ -1191,7 +1191,7 @@ local function buildHUD()
 	local data = uiState.PlayerData or {}
 	local stats = uiState.PlayerStats or {}
 
-	guiRefs.LevelLabel.Text = "Lv. " .. tostring(data.Level or 1)
+	guiRefs.LevelLabel.Text = tostring(data.Level or 1)
 
 	local baseMaxHP = (data.Stats and data.Stats.MaxHP) or 150
 	local baseMaxFP = (data.Stats and data.Stats.MaxFP) or 100
@@ -2257,37 +2257,142 @@ function AetherionGameplayUI.Create()
 
 	guiRefs.ScreenGui = screenGui
 
-	-- HUD kiri atas — transparent, hanya bars dan label yang terlihat
+	-- ============================================================
+	-- HUD — RF Classic Style: lingkaran level + bar H/F/S kompak
+	-- ============================================================
 	local hudFrame = Instance.new("Frame")
 	hudFrame.Name = "HUDFrame"
-	hudFrame.Size = UDim2.new(0, 300, 0, 135)
-	hudFrame.Position = UDim2.new(0, 12, 0, 12)
+	hudFrame.Size = UDim2.new(0, 310, 0, 110)
+	hudFrame.Position = UDim2.new(0, 10, 0, 10)
 	hudFrame.BackgroundTransparency = 1
 	hudFrame.BorderSizePixel = 0
 	hudFrame.Parent = screenGui
 	guiRefs.HUDFrame = hudFrame
 
-	local levelLabel = makeLabel(hudFrame, "Lv. 1", UDim2.new(0, 80, 0, 22), UDim2.new(0, 8, 0, 6), 18, true)
-	guiRefs.LevelLabel = levelLabel
+	-- Lingkaran level (kiri)
+	local circle = Instance.new("Frame")
+	circle.Name = "LevelCircle"
+	circle.Size = UDim2.new(0, 84, 0, 84)
+	circle.Position = UDim2.new(0, 0, 0, 0)
+	circle.BackgroundColor3 = Color3.fromRGB(8, 10, 16)
+	circle.BackgroundTransparency = 0.25
+	circle.BorderSizePixel = 0
+	circle.Parent = hudFrame
+	local circleCorner = Instance.new("UICorner")
+	circleCorner.CornerRadius = UDim.new(1, 0)
+	circleCorner.Parent = circle
+	local circleStroke = Instance.new("UIStroke")
+	circleStroke.Color = Color3.fromRGB(160, 185, 210)
+	circleStroke.Thickness = 2
+	circleStroke.Parent = circle
 
-	-- Battle Mode indicator (kanan level label)
-	local battleLabel = makeLabel(hudFrame, "PEACE", UDim2.new(0, 62, 0, 18), UDim2.new(1, -70, 0, 10), 10, true)
-	battleLabel.TextColor3 = Color3.fromRGB(100, 200, 100)
+	-- Level number di tengah circle
+	local levelNum = makeLabel(circle, "1", UDim2.new(1, 0, 0, 36), UDim2.new(0, 0, 0, 20), 28, true)
+	levelNum.TextColor3 = Color3.fromRGB(240, 240, 255)
+	levelNum.TextXAlignment = Enum.TextXAlignment.Center
+	guiRefs.LevelLabel = levelNum
+
+	-- "Lv." kecil di atas angka
+	local lvText = makeLabel(circle, "Lv.", UDim2.new(1, 0, 0, 14), UDim2.new(0, 0, 0, 8), 9, false)
+	lvText.TextColor3 = RF_THEME.TextDim
+	lvText.TextXAlignment = Enum.TextXAlignment.Center
+
+	-- PEACE / COMBAT label di bawah angka
+	local battleLabel = makeLabel(circle, "PEACE", UDim2.new(1, 0, 0, 14), UDim2.new(0, 0, 0, 58), 8, true)
+	battleLabel.TextColor3 = Color3.fromRGB(100, 210, 100)
 	battleLabel.TextXAlignment = Enum.TextXAlignment.Center
 	guiRefs.BattleModeLabel = battleLabel
 
-	guiRefs.HPBar = createBar(hudFrame, "HP", UDim2.new(0, 8, 0, 28), Color3.fromRGB(195, 50, 50))
-	guiRefs.FPBar = createBar(hudFrame, "FP", UDim2.new(0, 8, 0, 56), Color3.fromRGB(80, 120, 255))
-	guiRefs.SPBar = createBar(hudFrame, "SP", UDim2.new(0, 8, 0, 84), Color3.fromRGB(240, 210, 70))
+	-- Helper buat bar RF-style (letter + track + fill + nilai)
+	local function createRFBar(parent, letter, yPos, barColor)
+		local row = Instance.new("Frame")
+		row.Name = letter .. "Row"
+		row.Size = UDim2.new(0, 218, 0, 22)
+		row.Position = UDim2.new(0, 92, 0, yPos)
+		row.BackgroundTransparency = 1
+		row.BorderSizePixel = 0
+		row.Parent = parent
 
-	guiRefs.KillLabel = makeLabel(hudFrame, "Kill 0", UDim2.new(0, 130, 0, 18), UDim2.new(0, 8, 0, 112), 12, true)
-	guiRefs.DeathLabel = makeLabel(hudFrame, "Death 0", UDim2.new(0, 130, 0, 18), UDim2.new(0, 78, 0, 112), 12, true)
-	guiRefs.TempPvpLabel =
-		makeLabel(hudFrame, "PvP Sementara 0", UDim2.new(0, 160, 0, 18), UDim2.new(0, 8, 0, 128), 12, false)
-	guiRefs.CertainPvpLabel =
-		makeLabel(hudFrame, "Point Tertentu 0", UDim2.new(0, 160, 0, 18), UDim2.new(0, 8, 0, 144), 12, false)
-	guiRefs.GoldPointLabel =
-		makeLabel(hudFrame, "Point Emas 0", UDim2.new(0, 160, 0, 18), UDim2.new(0, 8, 0, 160), 12, false)
+		-- Huruf H / F / S
+		local lbl = Instance.new("TextLabel")
+		lbl.Size = UDim2.new(0, 16, 1, 0)
+		lbl.Position = UDim2.new(0, 0, 0, 0)
+		lbl.BackgroundTransparency = 1
+		lbl.Text = letter
+		lbl.Font = Enum.Font.GothamBold
+		lbl.TextSize = 13
+		lbl.TextColor3 = barColor
+		lbl.TextXAlignment = Enum.TextXAlignment.Left
+		lbl.TextYAlignment = Enum.TextYAlignment.Center
+		lbl.Parent = row
+
+		-- Track (bar background)
+		local track = Instance.new("Frame")
+		track.Size = UDim2.new(0, 148, 0, 12)
+		track.Position = UDim2.new(0, 20, 0.5, -6)
+		track.BackgroundColor3 = Color3.fromRGB(4, 6, 10)
+		track.BackgroundTransparency = 0.3
+		track.BorderSizePixel = 0
+		track.Parent = row
+		local trackCorner = Instance.new("UICorner")
+		trackCorner.CornerRadius = UDim.new(0, 2)
+		trackCorner.Parent = track
+		local trackStroke = Instance.new("UIStroke")
+		trackStroke.Color = Color3.fromRGB(60, 70, 80)
+		trackStroke.Thickness = 1
+		trackStroke.Parent = track
+
+		-- Fill
+		local fill = Instance.new("Frame")
+		fill.Size = UDim2.new(1, 0, 1, 0)
+		fill.BackgroundColor3 = barColor
+		fill.BorderSizePixel = 0
+		fill.Parent = track
+		local fillCorner = Instance.new("UICorner")
+		fillCorner.CornerRadius = UDim.new(0, 2)
+		fillCorner.Parent = fill
+		local fillGrad = Instance.new("UIGradient")
+		fillGrad.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+			ColorSequenceKeypoint.new(1, barColor),
+		})
+		fillGrad.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.5),
+			NumberSequenceKeypoint.new(1, 0),
+		})
+		fillGrad.Rotation = 90
+		fillGrad.Parent = fill
+
+		-- Nilai "150 / 150"
+		local valLbl = Instance.new("TextLabel")
+		valLbl.Size = UDim2.new(0, 48, 1, 0)
+		valLbl.Position = UDim2.new(0, 172, 0, 0)
+		valLbl.BackgroundTransparency = 1
+		valLbl.Text = "0 / 0"
+		valLbl.Font = Enum.Font.Gotham
+		valLbl.TextSize = 10
+		valLbl.TextColor3 = RF_THEME.Text
+		valLbl.TextXAlignment = Enum.TextXAlignment.Right
+		valLbl.TextYAlignment = Enum.TextYAlignment.Center
+		valLbl.Parent = row
+
+		return { Fill = fill, Value = valLbl }
+	end
+
+	guiRefs.HPBar = createRFBar(hudFrame, "H", 4,  Color3.fromRGB(210, 45, 45))
+	guiRefs.FPBar = createRFBar(hudFrame, "F", 30, Color3.fromRGB(65, 115, 230))
+	guiRefs.SPBar = createRFBar(hudFrame, "S", 56, Color3.fromRGB(220, 195, 50))
+
+	-- Kill / Death baris bawah
+	guiRefs.KillLabel  = makeLabel(hudFrame, "Kill 0",  UDim2.new(0, 90, 0, 16), UDim2.new(0, 92, 0, 82), 11, true)
+	guiRefs.DeathLabel = makeLabel(hudFrame, "Death 0", UDim2.new(0, 90, 0, 16), UDim2.new(0, 182, 0, 82), 11, true)
+	guiRefs.KillLabel.TextColor3  = Color3.fromRGB(200, 200, 200)
+	guiRefs.DeathLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+
+	-- PvP labels (disembunyikan jika 0, tetap ada untuk buildHUD)
+	guiRefs.TempPvpLabel    = makeLabel(hudFrame, "", UDim2.new(0, 1, 0, 1), UDim2.new(0, 0, 2, 0), 1, false)
+	guiRefs.CertainPvpLabel = makeLabel(hudFrame, "", UDim2.new(0, 1, 0, 1), UDim2.new(0, 0, 2, 0), 1, false)
+	guiRefs.GoldPointLabel  = makeLabel(hudFrame, "", UDim2.new(0, 1, 0, 1), UDim2.new(0, 0, 2, 0), 1, false)
 
 	-- Inventory kanan atas
 	local viewport = getViewportSize()
