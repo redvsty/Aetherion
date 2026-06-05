@@ -2290,6 +2290,8 @@ function AetherionGameplayUI.Create()
 	local levelNum = makeLabel(circle, "1", UDim2.new(1, 0, 0, 36), UDim2.new(0, 0, 0, 20), 28, true)
 	levelNum.TextColor3 = Color3.fromRGB(240, 240, 255)
 	levelNum.TextXAlignment = Enum.TextXAlignment.Center
+	levelNum.TextStrokeTransparency = 0.5
+	levelNum.TextStrokeColor3 = Color3.new(0, 0, 0)
 	guiRefs.LevelLabel = levelNum
 
 	-- "Lv." kecil di atas angka
@@ -2369,11 +2371,13 @@ function AetherionGameplayUI.Create()
 		valLbl.Position = UDim2.new(0, 172, 0, 0)
 		valLbl.BackgroundTransparency = 1
 		valLbl.Text = "0 / 0"
-		valLbl.Font = Enum.Font.Gotham
+		valLbl.Font = Enum.Font.GothamBold
 		valLbl.TextSize = 10
-		valLbl.TextColor3 = RF_THEME.Text
+		valLbl.TextColor3 = Color3.fromRGB(240, 240, 240)
 		valLbl.TextXAlignment = Enum.TextXAlignment.Right
 		valLbl.TextYAlignment = Enum.TextYAlignment.Center
+		valLbl.TextStrokeTransparency = 0.4
+		valLbl.TextStrokeColor3 = Color3.new(0, 0, 0)
 		valLbl.Parent = row
 
 		return { Fill = fill, Value = valLbl }
@@ -2386,8 +2390,12 @@ function AetherionGameplayUI.Create()
 	-- Kill / Death baris bawah
 	guiRefs.KillLabel  = makeLabel(hudFrame, "Kill 0",  UDim2.new(0, 90, 0, 16), UDim2.new(0, 92, 0, 82), 11, true)
 	guiRefs.DeathLabel = makeLabel(hudFrame, "Death 0", UDim2.new(0, 90, 0, 16), UDim2.new(0, 182, 0, 82), 11, true)
-	guiRefs.KillLabel.TextColor3  = Color3.fromRGB(200, 200, 200)
-	guiRefs.DeathLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+	guiRefs.KillLabel.TextColor3  = Color3.fromRGB(240, 240, 240)
+	guiRefs.DeathLabel.TextColor3 = Color3.fromRGB(240, 240, 240)
+	guiRefs.KillLabel.TextStrokeTransparency  = 0.3
+	guiRefs.DeathLabel.TextStrokeTransparency = 0.3
+	guiRefs.KillLabel.TextStrokeColor3  = Color3.new(0, 0, 0)
+	guiRefs.DeathLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
 
 	-- PvP labels (disembunyikan jika 0, tetap ada untuk buildHUD)
 	guiRefs.TempPvpLabel    = makeLabel(hudFrame, "", UDim2.new(0, 1, 0, 1), UDim2.new(0, 0, 2, 0), 1, false)

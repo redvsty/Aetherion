@@ -40,12 +40,13 @@ local playerStates = {}
 function StaminaService.InitPlayer(player, playerData)
 	local maxSP = (playerData and playerData.Stats and playerData.Stats.MaxSP) or SP_CONFIG.MaxSP
 	playerStates[player] = {
-		IsRunning   = true,   -- RF default = running
-		SP          = maxSP,
-		MaxSP       = maxSP,
-		ForcedWalk  = false,
+		IsRunning    = true,
+		SP           = maxSP,
+		MaxSP        = maxSP,
+		ForcedWalk   = false,
 		LastMoveTick = tick(),
-		IsMoving    = false,
+		IsMoving     = false,
+		LastPosition = nil,
 	}
 
 	-- Sync MaxSP ke playerData.Stats
@@ -116,14 +117,21 @@ function StaminaService.Tick(deltaTime, profiles, getBuffedSpeed)
 			local playerData = profiles and profiles[player]
 			local stats = playerData and playerData.Stats
 
-			-- Deteksi movement dari Humanoid.MoveDirection (server-side, reliable)
-			-- MoveDirection > 0 = player sedang menekan tombol gerak
+			-- Deteksi movement via delta posisi antar tick (paling reliable server-side).
+			-- Posisi HumanoidRootPart selalu ter-replicate dari client ke server.
+			-- Run speed 16 stud/s → delta ~16 per tick. Threshold 0.5 cukup ketat.
 			local isActuallyMoving = false
 			local character = player.Character
 			if character then
-				local humanoid = character:FindFirstChildOfClass("Humanoid")
-				if humanoid then
-					isActuallyMoving = humanoid.MoveDirection.Magnitude > 0
+				local hrp = character:FindFirstChild("HumanoidRootPart")
+				if hrp then
+					local cur = hrp.Position
+					if state.LastPosition then
+						local dx = cur.X - state.LastPosition.X
+						local dz = cur.Z - state.LastPosition.Z
+						isActuallyMoving = (dx * dx + dz * dz) > 0.25 -- sqrt > 0.5 stud
+					end
+					state.LastPosition = cur
 				end
 			end
 			state.IsMoving = isActuallyMoving
