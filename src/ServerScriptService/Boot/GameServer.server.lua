@@ -173,7 +173,10 @@ Players.PlayerAdded:Connect(function(player)
 
 		local humanoid = character:WaitForChild("Humanoid")
 		humanoid.MaxHealth = currentData.Stats.MaxHP
-		humanoid.Health = currentData.Stats.HP
+
+		-- RF Classic: respawn = HP penuh. Stats.HP juga di-restore agar HUD sync.
+		currentData.Stats.HP = currentData.Stats.MaxHP
+		humanoid.Health = currentData.Stats.MaxHP
 
 		-- Apply run/walk speed sesuai stamina state
 		local staminaState = StaminaService.GetState(player)
@@ -181,11 +184,21 @@ Players.PlayerAdded:Connect(function(player)
 			StaminaService.ApplySpeedToCharacter(player, staminaState)
 		end
 
+		-- Sync Humanoid.Health → data.Stats.HP setiap kali berubah.
+		-- Ini adalah single source of truth: apapun yang mengubah Humanoid.Health
+		-- (TakeDamage PvP, PvE monster, status effect) langsung tercermin di HUD.
+		humanoid.HealthChanged:Connect(function(health)
+			local data = profiles[player]
+			if data and data.Stats then
+				data.Stats.HP = math.floor(math.max(0, health))
+			end
+		end)
+
 		-- Batch 4: Death penalty (RF Classic)
 		humanoid.Died:Connect(function()
 			local data = profiles[player]
 			if not data then return end
-			-- Cek apakah dibunuh player (tag di Tag "KilledByPlayer" di character)
+			-- Cek apakah dibunuh player (tag "KilledByPlayer" di character, di-set CombatService)
 			local killedByPlayer = character:FindFirstChild("KilledByPlayer") ~= nil
 			LevelService.ApplyDeathPenalty(data, killedByPlayer)
 		end)
@@ -651,17 +664,10 @@ local function onMonsterKilled(killerPlayer, _monsterUid, def)
 	end
 end
 
--- Callback: damage ke player dari monster → update Stats.HP + kirim floating number
+-- Callback: damage ke player dari monster → kirim floating number ke client.
+-- Stats.HP tidak perlu diupdate manual di sini — sudah dihandle oleh
+-- humanoid.HealthChanged listener di CharacterAdded (sync otomatis).
 local function onMonsterDamage(targetCharacter, damage, isCrit, _attacker)
-	local targetPlayer = Players:GetPlayerFromCharacter(targetCharacter)
-	local data = targetPlayer and profiles[targetPlayer]
-
-	-- Update HP di playerData
-	if data and data.Stats then
-		data.Stats.HP = math.max(0, (data.Stats.HP or 0) - damage)
-	end
-
-	-- Kirim damage number ke client (broadcast ke semua yang dekat untuk efisiensi, client filter sendiri)
 	local hrp = targetCharacter:FindFirstChild("HumanoidRootPart")
 	if hrp then
 		DamageNumberEvent:FireAllClients(hrp.Position, damage, isCrit, false)
