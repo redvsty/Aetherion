@@ -16,7 +16,9 @@ local MAX_RETRIES = 3
 local RETRY_DELAY = 2 -- detik antar retry
 local AUTO_SAVE_INTERVAL = 120 -- detik, auto-save tiap 2 menit
 
-local playerStore = DataStoreService:GetDataStore(DATASTORE_NAME)
+-- Di Studio tanpa API access, DataStore gagal. Gunakan in-memory saja.
+local IS_STUDIO = RunService:IsStudio()
+local playerStore = not IS_STUDIO and DataStoreService:GetDataStore(DATASTORE_NAME) or nil
 
 local DataPersistence = {}
 
@@ -151,6 +153,12 @@ end
 function DataPersistence.Load(player)
 	local key = tostring(player.UserId)
 
+	-- Studio mode: skip DataStore, langsung pakai default data
+	if IS_STUDIO or not playerStore then
+		log(string.format("Studio mode: player %s mendapat data default (DataStore dilewati).", player.Name))
+		return buildDefaultData(player), false
+	end
+
 	local ok, data = retryOperation(function()
 		return playerStore:GetAsync(key)
 	end, "Load " .. key)
@@ -204,6 +212,12 @@ function DataPersistence.Save(player, data)
 	local key = tostring(player.UserId)
 	local transientParty = data.Party
 	data.Party = nil
+
+	-- Studio mode: skip DataStore save
+	if IS_STUDIO or not playerStore then
+		data.Party = transientParty
+		return true
+	end
 
 	local ok, _ = retryOperation(function()
 		playerStore:SetAsync(key, data)

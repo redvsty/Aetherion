@@ -8,12 +8,23 @@
 
 local MapDefinitions = require(game.ReplicatedStorage.Shared.Definitions.MapDefinitions)
 
+print("[MapGen] Starting map generation...")
+
 if workspace:FindFirstChild("_MapGenerated") then
 	print("[MapGen] Map already generated, skipping.")
 	return
 end
 
-local Terrain    = workspace:FindFirstChild("Terrain") or workspace.Terrain
+-- Hapus Baseplate default Roblox yang menutupi terrain
+for _, name in ipairs({"Baseplate", "Base", "BasePlate"}) do
+	local bp = workspace:FindFirstChild(name)
+	if bp and bp:IsA("BasePart") then
+		bp:Destroy()
+		print("[MapGen] Removed default Baseplate:", name)
+	end
+end
+
+local Terrain = workspace.Terrain
 local Zones      = MapDefinitions.Zones
 local GROUND_Y   = MapDefinitions.GROUND_Y
 local DEPTH      = MapDefinitions.TERRAIN_DEPTH   -- 30
@@ -117,7 +128,7 @@ task.wait()
 -- Zona Z -6000 sampai -7400, lebar 3000
 fill(0, -6700, 3000, 2800, Enum.Material.Rock, GROUND_Y, DEPTH)
 task.wait()
--- Lava pools di Cauldron (neon orange strips — efek lava)
+-- Lava pools di Cauldron (CrackedLava = material terrain lava)
 for _, lv in ipairs({
 	{-500, -6600, 200, 400}, {300, -6900, 300, 200}, {-200, -7100, 400, 200},
 	{600, -6700, 200, 300}, {-600, -7000, 200, 200},
@@ -125,7 +136,7 @@ for _, lv in ipairs({
 	Terrain:FillBlock(
 		CFrame.new(lv[1], GROUND_Y - 2, lv[2]),
 		Vector3.new(lv[3], 4, lv[4]),
-		Enum.Material.Neon
+		Enum.Material.CrackedLava
 	)
 end
 task.wait()
@@ -143,8 +154,8 @@ task.wait()
 fill(4200, 0, 5000, 5000, Enum.Material.Sand, GROUND_Y, DEPTH)
 task.wait()
 
--- Cora territory (selatan): rawa/hijau lebih gelap
-fill(0, 4400, 3000, 3000, Enum.Material.LeafyGrass, GROUND_Y, DEPTH)
+-- Cora territory (selatan): rawa/hijau
+fill(0, 4400, 3000, 3000, Enum.Material.Grass, GROUND_Y, DEPTH)
 task.wait()
 
 -- Bellato territory (barat): padang rumput + sedikit berbatu
@@ -167,12 +178,12 @@ task.wait()
 fill(0, -1000, 5000, 2600, Enum.Material.Mud, GROUND_Y, DEPTH)
 task.wait()
 
--- Platform Ether: base platform di udara
+-- Platform Ether: base platform di udara (Marble = material terrain untuk platform)
 local ETHER_Y = 400
 Terrain:FillBlock(
 	CFrame.new(0, ETHER_Y - 15, -4200),
 	Vector3.new(2400, 30, 1800),
-	Enum.Material.SmoothPlastic
+	Enum.Material.Marble
 )
 task.wait()
 
