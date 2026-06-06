@@ -202,7 +202,9 @@ Players.PlayerAdded:Connect(function(player)
 		end
 
 		-- RF Classic: respawn di HQ sesuai ras (spread acak agar tidak stack)
-		local race = currentData.Race or "Bellato"
+		-- FactionId (MECHA/CYBORG/MYSTIC) → race name untuk RaceSpawn lookup
+		local FACTION_TO_RACE = { MECHA = "Bellato", CYBORG = "Accretia", MYSTIC = "Cora" }
+		local race = currentData.Race or FACTION_TO_RACE[currentData.FactionId] or "Bellato"
 		local baseSpawn = MapDefinitions.RaceSpawn[race] or MapDefinitions.RaceSpawn["Bellato"]
 		local hrp = character:FindFirstChild("HumanoidRootPart")
 		if hrp then
