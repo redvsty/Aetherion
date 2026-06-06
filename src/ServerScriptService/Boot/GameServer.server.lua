@@ -171,11 +171,11 @@ Players.PlayerAdded:Connect(function(player)
 			return
 		end
 
-		local humanoid = character:WaitForChild("Humanoid")
-
-		-- Tunggu sebentar agar Roblox selesai initialize character sepenuhnya
-		-- sebelum kita override Health/MaxHealth (cegah race condition dengan engine)
-		task.wait(0.1)
+		-- Tunggu HumanoidRootPart: penanda bahwa character benar-benar sudah fully loaded
+		-- (lebih reliable dari task.wait karena tunggu instance konkret, bukan waktu)
+		character:WaitForChild("HumanoidRootPart", 10)
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		if not humanoid then return end  -- karakter tidak valid, skip
 
 		-- Pastikan data stats valid (fallback ke nilai RF Classic default)
 		local stats = currentData.Stats or {}
@@ -191,13 +191,21 @@ Players.PlayerAdded:Connect(function(player)
 		humanoid.MaxHealth = maxHP
 		humanoid.Health    = maxHP
 
-		-- Reset StaminaService internal state agar SP penuh dan WalkSpeed normal
-		StaminaService.InitPlayer(player, currentData)
-
-		-- Apply run/walk speed sesuai stamina state yang sudah di-reset
+		-- Reset SP di StaminaService state yang ada (JANGAN InitPlayer ulang —
+		-- InitPlayer reset LastPosition ke nil sehingga movement tracking rusak)
 		local staminaState = StaminaService.GetState(player)
 		if staminaState then
+			staminaState.SP         = staminaState.MaxSP
+			staminaState.ForcedWalk = false
+			staminaState.IsRunning  = true
 			StaminaService.ApplySpeedToCharacter(player, staminaState)
+		else
+			-- State belum ada (join pertama setelah data load terlambat)
+			StaminaService.InitPlayer(player, currentData)
+			local newState = StaminaService.GetState(player)
+			if newState then
+				StaminaService.ApplySpeedToCharacter(player, newState)
+			end
 		end
 
 		-- Sync Humanoid.Health → data.Stats.HP setiap kali berubah.

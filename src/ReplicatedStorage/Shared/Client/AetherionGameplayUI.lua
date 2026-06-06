@@ -2946,6 +2946,22 @@ function AetherionGameplayUI.Create()
 	refreshPlayerStats()
 	AetherionGameplayUI.Render()
 	setupRuntime()
+
+	-- Setiap kali character respawn: release TextBox focus (cegah hotkey terblokir)
+	-- dan refresh HUD segera agar data langsung benar.
+	player.CharacterAdded:Connect(function(character)
+		-- Roblox kadang biarkan TextBox terfokus setelah respawn → blokir semua hotkey
+		local focused = UserInputService:GetFocusedTextBox()
+		if focused then
+			focused:ReleaseFocus()
+		end
+
+		-- Tunggu server restore HP/FP/SP sebelum refresh HUD
+		task.wait(0.3)
+		refreshPlayerData()
+		buildHUD()
+	end)
+
 	setStatus("UI loaded. I = Inventory, P = Party, right-click upgrader = Upgrade")
 end
 
