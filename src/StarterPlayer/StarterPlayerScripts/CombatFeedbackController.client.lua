@@ -14,8 +14,31 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService      = game:GetService("TweenService")
 local StarterGui        = game:GetService("StarterGui")
 
--- Sembunyikan health bar bawaan Roblox — pakai HUD custom Aetherion saja
-StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, false)
+-- Sembunyikan semua health display bawaan Roblox — pakai HUD custom Aetherion saja.
+-- Ada dua sumber: CoreGui Health (chat area) dan HealthGui ScreenGui di PlayerGui.
+local function hideRobloxHealthBar()
+	-- CoreGui health display
+	pcall(function()
+		StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, false)
+	end)
+
+	-- HealthGui ScreenGui di PlayerGui (bar kanan atas default Roblox)
+	local playerGui = LocalPlayer:WaitForChild("PlayerGui", 10)
+	if playerGui then
+		local healthGui = playerGui:FindFirstChild("HealthGui")
+		if healthGui then
+			healthGui.Enabled = false
+		end
+		-- Listener: HealthGui bisa respawn setiap character respawn
+		playerGui.ChildAdded:Connect(function(child)
+			if child.Name == "HealthGui" then
+				child.Enabled = false
+			end
+		end)
+	end
+end
+
+hideRobloxHealthBar()
 
 local LocalPlayer = Players.LocalPlayer
 local Camera      = workspace.CurrentCamera

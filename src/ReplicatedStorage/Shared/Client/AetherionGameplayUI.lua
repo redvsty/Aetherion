@@ -2356,16 +2356,17 @@ function AetherionGameplayUI.Create()
 		lbl.TextYAlignment = Enum.TextYAlignment.Center
 		lbl.Parent = row
 
-		-- Track (bar background)
+		-- Track (bar background) — lebih tinggi agar teks angka muat di dalam
 		local track = Instance.new("Frame")
-		track.Size = UDim2.new(0, 148, 0, 12)
-		track.Position = UDim2.new(0, 20, 0.5, -6)
+		track.Size = UDim2.new(0, 180, 0, 18)
+		track.Position = UDim2.new(0, 20, 0.5, -9)
 		track.BackgroundColor3 = Color3.fromRGB(4, 6, 10)
 		track.BackgroundTransparency = 0.3
 		track.BorderSizePixel = 0
+		track.ClipsDescendants = true
 		track.Parent = row
 		local trackCorner = Instance.new("UICorner")
-		trackCorner.CornerRadius = UDim.new(0, 2)
+		trackCorner.CornerRadius = UDim.new(0, 3)
 		trackCorner.Parent = track
 		local trackStroke = Instance.new("UIStroke")
 		trackStroke.Color = Color3.fromRGB(60, 70, 80)
@@ -2379,7 +2380,7 @@ function AetherionGameplayUI.Create()
 		fill.BorderSizePixel = 0
 		fill.Parent = track
 		local fillCorner = Instance.new("UICorner")
-		fillCorner.CornerRadius = UDim.new(0, 2)
+		fillCorner.CornerRadius = UDim.new(0, 3)
 		fillCorner.Parent = fill
 		local fillGrad = Instance.new("UIGradient")
 		fillGrad.Color = ColorSequence.new({
@@ -2393,20 +2394,21 @@ function AetherionGameplayUI.Create()
 		fillGrad.Rotation = 90
 		fillGrad.Parent = fill
 
-		-- Nilai "150 / 150"
+		-- Nilai "150 / 150" di DALAM bar, di atas fill
 		local valLbl = Instance.new("TextLabel")
-		valLbl.Size = UDim2.new(0, 48, 1, 0)
-		valLbl.Position = UDim2.new(0, 172, 0, 0)
+		valLbl.Size = UDim2.new(1, -4, 1, 0)
+		valLbl.Position = UDim2.new(0, 2, 0, 0)
 		valLbl.BackgroundTransparency = 1
 		valLbl.Text = "0 / 0"
 		valLbl.Font = Enum.Font.GothamBold
-		valLbl.TextSize = 10
-		valLbl.TextColor3 = Color3.fromRGB(240, 240, 240)
-		valLbl.TextXAlignment = Enum.TextXAlignment.Right
+		valLbl.TextSize = 11
+		valLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+		valLbl.TextXAlignment = Enum.TextXAlignment.Center
 		valLbl.TextYAlignment = Enum.TextYAlignment.Center
-		valLbl.TextStrokeTransparency = 0.4
+		valLbl.TextStrokeTransparency = 0.2
 		valLbl.TextStrokeColor3 = Color3.new(0, 0, 0)
-		valLbl.Parent = row
+		valLbl.ZIndex = 3
+		valLbl.Parent = track
 
 		return { Fill = fill, Value = valLbl }
 	end
