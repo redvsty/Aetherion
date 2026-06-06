@@ -1198,7 +1198,14 @@ local function buildHUD()
 	local baseMaxFP = (data.Stats and data.Stats.MaxFP) or 100
 	local maxHP = baseMaxHP + (stats.MaxHP or 0)
 	local maxFP = baseMaxFP + (stats.MaxFP or 0)
-	local currentHP = math.min((data.Stats and data.Stats.HP) or maxHP, maxHP)
+
+	-- Baca HP langsung dari Humanoid (client-side, instant) agar bar selalu akurat
+	-- tanpa menunggu server poll. MaxHP dari server karena termasuk equipment bonus.
+	local char = player.Character
+	local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+	local currentHP = humanoid and math.floor(humanoid.Health) or math.min((data.Stats and data.Stats.HP) or maxHP, maxHP)
+	maxHP = humanoid and math.floor(humanoid.MaxHealth) or maxHP
+
 	local currentFP = math.min((data.Stats and data.Stats.FP) or maxFP, maxFP)
 	local currentSP = (data.Stats and data.Stats.SP) or 100
 	local maxSP = (data.Stats and data.Stats.MaxSP) or 100
