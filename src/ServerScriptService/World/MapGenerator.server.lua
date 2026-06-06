@@ -139,6 +139,22 @@ for _, h in ipairs({
 end
 task.wait()
 
+-- Accretia territory (timur): lebih gersang / pasir
+fill(4200, 0, 5000, 5000, Enum.Material.Sand, GROUND_Y, DEPTH)
+task.wait()
+
+-- Cora territory (selatan): rawa/hijau lebih gelap
+fill(0, 4400, 3000, 3000, Enum.Material.LeafyGrass, GROUND_Y, DEPTH)
+task.wait()
+
+-- Bellato territory (barat): padang rumput + sedikit berbatu
+fill(-4200, 800, 3600, 4000, Enum.Material.Grass, GROUND_Y, DEPTH)
+task.wait()
+
+-- Neutral stockade area (tengah): batu gelap/dirt
+fill(0, -800, 6000, 3000, Enum.Material.Slate, GROUND_Y, DEPTH)
+task.wait()
+
 -- Crag Mine — batu
 fill(0, -3500, 2000, 1800, Enum.Material.Rock, GROUND_Y, DEPTH)
 task.wait()
@@ -547,6 +563,104 @@ local function buildSetteRuins()
 	neonLight(m,Vector3.new(cx,cy+30,cz),Color3.fromRGB(120,80,40),80,1)
 end
 buildSetteRuins(); task.wait()
+
+-- ================================================================
+-- Haram Stockade (CS1 — Cora side neutral, L31-35)
+-- ================================================================
+local function buildHaramStockade()
+	local m = Instance.new("Model"); m.Name="HaramStockade"; m.Parent=worldFolder
+	local cx,cy,cz = -1800, GROUND_Y, -800
+	local stone = "Medium stone grey"
+	local dark  = "Dark stone grey"
+
+	part(m,"Base",    Vector3.new(640,4,520),   CFrame.new(cx,cy+2,cz),         "Warm greige",Enum.Material.Cobblestone)
+	part(m,"WallN",   Vector3.new(640,22,12),   CFrame.new(cx,cy+13,cz-260),    stone,Enum.Material.SmoothPlastic)
+	part(m,"WallS",   Vector3.new(640,22,12),   CFrame.new(cx,cy+13,cz+260),    stone,Enum.Material.SmoothPlastic)
+	part(m,"WallE",   Vector3.new(12,22,520),   CFrame.new(cx+320,cy+13,cz),    stone,Enum.Material.SmoothPlastic)
+	part(m,"WallW",   Vector3.new(12,22,520),   CFrame.new(cx-320,cy+13,cz),    stone,Enum.Material.SmoothPlastic)
+	for _,c in ipairs({{-320,-260},{320,-260},{-320,260},{320,260}}) do
+		part(m,"Tower",Vector3.new(30,38,30),CFrame.new(cx+c[1],cy+21,cz+c[2]),dark,Enum.Material.SmoothPlastic)
+	end
+	part(m,"GateL",   Vector3.new(12,30,12),    CFrame.new(cx-55,cy+17,cz+260), stone,Enum.Material.SmoothPlastic)
+	part(m,"GateR",   Vector3.new(12,30,12),    CFrame.new(cx+55,cy+17,cz+260), stone,Enum.Material.SmoothPlastic)
+	part(m,"GateArch",Vector3.new(110,8,12),    CFrame.new(cx,cy+34,cz+260),    dark, Enum.Material.SmoothPlastic)
+	part(m,"Hall",    Vector3.new(200,40,150),  CFrame.new(cx,cy+22,cz-20),     stone,Enum.Material.SmoothPlastic)
+	part(m,"HallTop", Vector3.new(160,16,110),  CFrame.new(cx,cy+52,cz-20),     dark, Enum.Material.SmoothPlastic)
+	-- Bendera penanda
+	part(m,"FlagPole",Vector3.new(3,50,3),      CFrame.new(cx,cy+27,cz-140),    "Light grey",Enum.Material.Metal)
+	part(m,"Flag",    Vector3.new(26,16,2),     CFrame.new(cx+14,cy+53,cz-140), "Medium stone grey",Enum.Material.SmoothPlastic)
+end
+buildHaramStockade(); task.wait()
+
+-- ================================================================
+-- Numerus Stockade (CS2 — Accretia side neutral, L31-35)
+-- ================================================================
+local function buildNumerusStockade()
+	local m = Instance.new("Model"); m.Name="NumerusStockade"; m.Parent=worldFolder
+	local cx,cy,cz = 1800, GROUND_Y, -800
+	local stone = "Medium stone grey"
+	local dark  = "Dark stone grey"
+
+	part(m,"Base",    Vector3.new(640,4,520),   CFrame.new(cx,cy+2,cz),         "Warm greige",Enum.Material.Cobblestone)
+	part(m,"WallN",   Vector3.new(640,22,12),   CFrame.new(cx,cy+13,cz-260),    stone,Enum.Material.SmoothPlastic)
+	part(m,"WallS",   Vector3.new(640,22,12),   CFrame.new(cx,cy+13,cz+260),    stone,Enum.Material.SmoothPlastic)
+	part(m,"WallE",   Vector3.new(12,22,520),   CFrame.new(cx+320,cy+13,cz),    stone,Enum.Material.SmoothPlastic)
+	part(m,"WallW",   Vector3.new(12,22,520),   CFrame.new(cx-320,cy+13,cz),    stone,Enum.Material.SmoothPlastic)
+	for _,c in ipairs({{-320,-260},{320,-260},{-320,260},{320,260}}) do
+		part(m,"Tower",Vector3.new(30,38,30),CFrame.new(cx+c[1],cy+21,cz+c[2]),dark,Enum.Material.SmoothPlastic)
+	end
+	part(m,"GateL",   Vector3.new(12,30,12),    CFrame.new(cx-55,cy+17,cz+260), stone,Enum.Material.SmoothPlastic)
+	part(m,"GateR",   Vector3.new(12,30,12),    CFrame.new(cx+55,cy+17,cz+260), stone,Enum.Material.SmoothPlastic)
+	part(m,"GateArch",Vector3.new(110,8,12),    CFrame.new(cx,cy+34,cz+260),    dark, Enum.Material.SmoothPlastic)
+	part(m,"Hall",    Vector3.new(200,40,150),  CFrame.new(cx,cy+22,cz-20),     stone,Enum.Material.SmoothPlastic)
+	part(m,"HallTop", Vector3.new(160,16,110),  CFrame.new(cx,cy+52,cz-20),     dark, Enum.Material.SmoothPlastic)
+	part(m,"FlagPole",Vector3.new(3,50,3),      CFrame.new(cx,cy+27,cz-140),    "Light grey",Enum.Material.Metal)
+	part(m,"Flag",    Vector3.new(26,16,2),     CFrame.new(cx+14,cy+53,cz-140), "Medium stone grey",Enum.Material.SmoothPlastic)
+end
+buildNumerusStockade(); task.wait()
+
+-- ================================================================
+-- Anacaade Settlement (Bellato neutral village, L31-38)
+-- ================================================================
+local function buildAnacaadeSettlement()
+	local m = Instance.new("Model"); m.Name="AnacaadeSettlement"; m.Parent=worldFolder
+	local cx,cy,cz = -600, GROUND_Y, -1200
+	local stone = "Medium stone grey"
+	local brown = "Reddish brown"
+
+	part(m,"Ground",  Vector3.new(520,3,420),   CFrame.new(cx,cy+1.5,cz),       "Sand green",Enum.Material.Cobblestone)
+	for _,b in ipairs({{-160,-100},{160,-100},{-160,100},{160,100},{0,-150}}) do
+		part(m,"House",Vector3.new(110,34,90),CFrame.new(cx+b[1],cy+19,cz+b[2]),stone,Enum.Material.SmoothPlastic)
+		wedge(m,"Roof",Vector3.new(90,20,56),CFrame.new(cx+b[1],cy+46,cz+b[2])*CFrame.Angles(0,math.pi/2,0),brown)
+	end
+	part(m,"Well",    Vector3.new(22,16,22),    CFrame.new(cx,cy+10,cz+60),     stone,Enum.Material.SmoothPlastic)
+	part(m,"WellTop", Vector3.new(26,4,26),     CFrame.new(cx,cy+19,cz+60),     brown,Enum.Material.SmoothPlastic)
+	part(m,"FlagPole",Vector3.new(3,48,3),      CFrame.new(cx,cy+26,cz-160),    "Light grey",Enum.Material.Metal)
+	part(m,"Flag",    Vector3.new(24,14,2),     CFrame.new(cx+13,cy+50,cz-160), "Bright blue",Enum.Material.SmoothPlastic)
+end
+buildAnacaadeSettlement(); task.wait()
+
+-- ================================================================
+-- Solus Settlement (Accretia neutral village, L31-38)
+-- ================================================================
+local function buildSolusSettlement()
+	local m = Instance.new("Model"); m.Name="SolusSettlement"; m.Parent=worldFolder
+	local cx,cy,cz = 600, GROUND_Y, -1200
+	local metal  = "Dark stone grey"
+	local orange = "Bright orange"
+
+	part(m,"Ground",  Vector3.new(520,3,420),   CFrame.new(cx,cy+1.5,cz),       "Sand green",Enum.Material.Cobblestone)
+	for _,b in ipairs({{-160,-100},{160,-100},{-160,100},{160,100},{0,-150}}) do
+		part(m,"House",Vector3.new(110,34,90), CFrame.new(cx+b[1],cy+19,cz+b[2]),metal,Enum.Material.Metal)
+		part(m,"HTop", Vector3.new(100,14,80), CFrame.new(cx+b[1],cy+48,cz+b[2]),orange,Enum.Material.Neon)
+	end
+	part(m,"Tower",   Vector3.new(26,54,26),    CFrame.new(cx,cy+29,cz+60),     metal,Enum.Material.Metal)
+	part(m,"TowerTop",Vector3.new(34,12,34),    CFrame.new(cx,cy+61,cz+60),     orange,Enum.Material.Neon)
+	neonLight(m,Vector3.new(cx,cy+75,cz+60),Color3.fromRGB(255,120,0),80,1.2)
+	part(m,"FlagPole",Vector3.new(3,48,3),      CFrame.new(cx,cy+26,cz-160),    "Light grey",Enum.Material.Metal)
+	part(m,"Flag",    Vector3.new(24,14,2),     CFrame.new(cx+13,cy+50,cz-160), "Bright red",Enum.Material.SmoothPlastic)
+end
+buildSolusSettlement(); task.wait()
 
 -- ================================================================
 -- Roads Cauldron Volcanic — dari Sette Highland ke Abadon Passage

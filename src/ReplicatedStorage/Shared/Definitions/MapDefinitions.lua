@@ -639,7 +639,7 @@ MapDefinitions.SpawnConfig = {
 	ACCRETIA_HQ = { {DefId="young_flem",Count=6,Spread=300}, {DefId="wing",Count=4,Spread=260}, {DefId="deserklan",Count=3,Spread=220} },
 
 	-- Bellato early
-	REAR_GARDEN_B  = { {DefId="flem",Count=5,Spread=300}, {DefId="stinkbug",Count=4,Spread=280}, {DefId="flem_guard",Count=3,Spread=260} },
+	REAR_GARDEN_B  = { {DefId="flem",Count=5,Spread=300}, {DefId="stinkbug",Count=4,Spread=280}, {DefId="heavy_wing",Count=3,Spread=260}, {DefId="flem_guard",Count=3,Spread=240} },
 	WIND_CLIFF     = { {DefId="vafer_nipper",Count=5,Spread=360}, {DefId="block_lunker",Count=4,Spread=320}, {DefId="bulky_lunker",Count=3,Spread=280} },
 	SKY_CAVE_B     = { {DefId="ratmoth",Count=5,Spread=300}, {DefId="klan",Count=4,Spread=280}, {DefId="lunker",Count=4,Spread=260}, {DefId="warbeast",Count=3,Spread=240} },
 	BELLATO_CANYON = { {DefId="crawler_bunch",Count=6,Spread=360}, {DefId="grumble",Count=5,Spread=320}, {DefId="big_ratmoth",Count=3,Spread=280} },
@@ -651,7 +651,7 @@ MapDefinitions.SpawnConfig = {
 
 	-- Accretia early
 	ARID_CAVE      = { {DefId="young_flem",Count=5,Spread=260}, {DefId="wing",Count=4,Spread=240}, {DefId="deserklan",Count=3,Spread=220} },
-	CRATER_DESERT  = { {DefId="mahr",Count=5,Spread=360}, {DefId="adult_stinkbug",Count=5,Spread=320}, {DefId="klan",Count=3,Spread=280} },
+	CRATER_DESERT  = { {DefId="mahr",Count=5,Spread=360}, {DefId="adult_stinkbug",Count=5,Spread=320}, {DefId="demolis",Count=3,Spread=280}, {DefId="klan",Count=3,Spread=240} },
 	RAMBLER_LAND   = { {DefId="boklan",Count=5,Spread=360}, {DefId="block_lunker",Count=4,Spread=320}, {DefId="snatcher_cheat",Count=3,Spread=280}, {DefId="neowarbeast",Count=3,Spread=260} },
 	ANCIENT_PEOPLES_ALTAR={ {DefId="big_ratmoth",Count=4,Spread=360}, {DefId="arghol",Count=4,Spread=320}, {DefId="cannibal",Count=3,Spread=280}, {DefId="gaff_tail",Count=3,Spread=260} },
 	CRATER_VALLEY  = { {DefId="lapis",Count=5,Spread=340}, {DefId="gaff",Count=4,Spread=300}, {DefId="lizard",Count=4,Spread=280} },
@@ -732,9 +732,10 @@ MapDefinitions.SpawnConfig = {
 	THIRST_CAVE    = { {DefId="turncoat_gunner",Count=4,Spread=300}, {DefId="turncoat_scouter",Count=3,Spread=280}, {DefId="turncoat_destroyer",Count=3,Spread=260}, {DefId="turncoat_gladius",Count=2,Spread=240} },
 
 	-- Platform Ether
-	BELLATO_WHARF  = { {DefId="hobo_sword",Count=4,Spread=220}, {DefId="hobo_mite",Count=3,Spread=200} },
-	ACCRETIA_WHARF = { {DefId="hobo_sword",Count=4,Spread=220}, {DefId="hobo_mite",Count=3,Spread=200} },
-	CORA_WHARF     = { {DefId="hobo_sword",Count=4,Spread=220}, {DefId="hobo_mite",Count=3,Spread=200} },
+	PLATFORM_ETHER = { {DefId="hobo_cutter",Count=5,Spread=600}, {DefId="hobo_turnpike",Count=4,Spread=550}, {DefId="passer",Count=3,Spread=500}, {DefId="hobo_robber",Count=3,Spread=450} },
+	BELLATO_WHARF  = { {DefId="hobo_sword",Count=4,Spread=220}, {DefId="hobo_mite",Count=3,Spread=200}, {DefId="hobo_cutter",Count=3,Spread=180}, {DefId="hobo_turnpike",Count=2,Spread=160} },
+	ACCRETIA_WHARF = { {DefId="hobo_sword",Count=4,Spread=220}, {DefId="hobo_mite",Count=3,Spread=200}, {DefId="hobo_cutter",Count=3,Spread=180}, {DefId="hobo_turnpike",Count=2,Spread=160} },
+	CORA_WHARF     = { {DefId="hobo_sword",Count=4,Spread=220}, {DefId="hobo_mite",Count=3,Spread=200}, {DefId="hobo_cutter",Count=3,Spread=180}, {DefId="hobo_turnpike",Count=2,Spread=160} },
 	WHITE_HALL     = { {DefId="calliana_crue",Count=4,Spread=280}, {DefId="calliana_atroc",Count=3,Spread=260}, {DefId="hobo_blade",Count=3,Spread=240}, {DefId="passer",Count=2,Spread=200}, {DefId="calliana_princess",Count=1,Spread=150} },
 	FASCINATING_LAND={ {DefId="calliana_princess",Count=3,Spread=260}, {DefId="calliana_crue",Count=3,Spread=240}, {DefId="calliana_atroc",Count=3,Spread=220}, {DefId="calliana_archer",Count=2,Spread=200}, {DefId="assassin_builder_b",Count=1,Spread=140} },
 	JACKS_LAND     = { {DefId="passer",Count=4,Spread=260}, {DefId="hobo_robber",Count=3,Spread=240}, {DefId="calliana_crue",Count=2,Spread=200}, {DefId="calliana_atroc",Count=2,Spread=180} },
