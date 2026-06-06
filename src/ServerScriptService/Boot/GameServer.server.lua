@@ -194,6 +194,13 @@ Players.PlayerAdded:Connect(function(player)
 		humanoid.MaxHealth = maxHP
 		humanoid.Health    = maxHP
 
+		-- Tunggu map selesai di-generate sebelum teleport ke race spawn
+		-- (MapGenerator meletakkan _MapGenerated BoolValue saat selesai)
+		if not workspace:FindFirstChild("_MapGenerated") then
+			workspace:WaitForChild("_MapGenerated", 180)
+			task.wait(0.2) -- sedikit settle setelah terrain siap
+		end
+
 		-- RF Classic: respawn di HQ sesuai ras (spread acak agar tidak stack)
 		local race = currentData.Race or "Bellato"
 		local baseSpawn = MapDefinitions.RaceSpawn[race] or MapDefinitions.RaceSpawn["Bellato"]

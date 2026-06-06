@@ -26,6 +26,22 @@ end
 
 local Terrain = workspace.Terrain
 local Zones      = MapDefinitions.Zones
+
+-- ================================================================
+-- EMERGENCY SPAWN — sebelum helper functions, agar player tidak jatuh
+-- saat map sedang generate
+-- ================================================================
+Terrain:FillBlock(CFrame.new(0, -15, 0), Vector3.new(500, 30, 500), Enum.Material.Grass)
+do
+	local es = Instance.new("SpawnLocation")
+	es.Name = "EmergencySpawn"; es.Size = Vector3.new(8,1,8)
+	es.CFrame = CFrame.new(0, 2, 0); es.Neutral = true
+	es.Anchored = true
+	es.BrickColor = BrickColor.new("Medium stone grey")
+	es.Material = Enum.Material.SmoothPlastic
+	es.Parent = workspace
+end
+print("[MapGen] Emergency spawn ready")
 local GROUND_Y   = MapDefinitions.GROUND_Y
 local DEPTH      = MapDefinitions.TERRAIN_DEPTH   -- 30
 local MAP_HALF   = MapDefinitions.MAP_HALF         -- 7000
