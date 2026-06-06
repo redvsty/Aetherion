@@ -2947,22 +2947,33 @@ function AetherionGameplayUI.Create()
 	AetherionGameplayUI.Render()
 	setupRuntime()
 
-	-- Setiap kali character respawn: release TextBox focus (cegah hotkey terblokir)
-	-- dan refresh HUD segera agar data langsung benar.
+	-- Setiap kali character respawn: re-setup connections + refresh HUD.
+	-- setupRuntime() di sini WAJIB dipanggil lagi agar Heartbeat/InputBegan terhubung kembali
+	-- ke character baru (misalnya jika ada referensi ke humanoid lama).
 	player.CharacterAdded:Connect(function(character)
-		-- Roblox kadang biarkan TextBox terfokus setelah respawn → blokir semua hotkey
+		-- Tunggu server selesai restore HP/FP/SP
+		task.wait(0.5)
+
+		-- Re-setup semua connections: Heartbeat HUD refresh + InputBegan hotkeys
+		setupRuntime()
+
+		-- Pastikan tidak ada TextBox yang memblokir hotkeys
 		local focused = UserInputService:GetFocusedTextBox()
 		if focused then
 			focused:ReleaseFocus()
 		end
 
-		-- Tunggu server restore HP/FP/SP sebelum refresh HUD
-		task.wait(0.3)
 		refreshPlayerData()
 		buildHUD()
 	end)
 
 	setStatus("UI loaded. I = Inventory, P = Party, right-click upgrader = Upgrade")
+end
+
+-- Reconnect: panggil jika script loader di-restart (safety net)
+function AetherionGameplayUI.Reconnect()
+	if not guiRefs.ScreenGui then return end
+	setupRuntime()
 end
 
 return AetherionGameplayUI
