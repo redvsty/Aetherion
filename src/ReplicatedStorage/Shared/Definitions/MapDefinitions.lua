@@ -569,6 +569,62 @@ MapDefinitions.Zones = {
 		LevelRange = {45, 47},
 		Center = Vector3.new(-600, 400, -3800), Radius = 340,
 	},
+
+	-- ═══════════════════════════════════════════════════════
+	-- CAULDRON VOLCANIC AREA — L48-57 (boss Belphegor L60)
+	-- Posisi: utara jauh melewati Sette Desert (Z -6200 ke -7200)
+	-- Akses via portal dari Sette Highland / Windy Cave
+	-- ═══════════════════════════════════════════════════════
+
+	ABADON_PASSAGE = {
+		Id = "ABADON_PASSAGE", Name = "Abadon Passage",
+		Race = nil, SafeZone = false, PvP = true,
+		LevelRange = {48, 49},
+		Center = Vector3.new(0, 0, -6200), Radius = 380,
+		SpawnPos = Vector3.new(0, 5, -6200),
+	},
+	ABADON_CAVE_NW = {
+		Id = "ABADON_CAVE_NW", Name = "Abadon Cave",
+		Race = nil, SafeZone = false, PvP = true,
+		LevelRange = {48, 49},
+		Center = Vector3.new(-700, 0, -6500), Radius = 380,
+	},
+	GENIAL_SPRING = {
+		Id = "GENIAL_SPRING", Name = "Genial Spring",
+		Race = nil, SafeZone = false, PvP = true,
+		LevelRange = {49, 50},
+		Center = Vector3.new(200, 0, -6500), Radius = 380,
+	},
+	BELPHEGOR_CASTLE = {
+		Id = "BELPHEGOR_CASTLE", Name = "Belphegor Castle",
+		Race = nil, SafeZone = false, PvP = true,
+		LevelRange = {50, 52},
+		Center = Vector3.new(-400, 0, -6850), Radius = 400,
+	},
+	EVIL_HALL = {
+		Id = "EVIL_HALL", Name = "Evil Hall",
+		Race = nil, SafeZone = false, PvP = true,
+		LevelRange = {50, 51},
+		Center = Vector3.new(300, 0, -6800), Radius = 360,
+	},
+	BAFER_LAKE = {
+		Id = "BAFER_LAKE", Name = "Bafer Lake",
+		Race = nil, SafeZone = false, PvP = true,
+		LevelRange = {52, 53},
+		Center = Vector3.new(0, 0, -7100), Radius = 360,
+	},
+	HWATT_LAND = {
+		Id = "HWATT_LAND", Name = "Hwatt Land",
+		Race = nil, SafeZone = false, PvP = true,
+		LevelRange = {52, 54},
+		Center = Vector3.new(-600, 0, -7200), Radius = 340,
+	},
+	ABADON_CAVE_E = {
+		Id = "ABADON_CAVE_E", Name = "Abadon Cave",
+		Race = nil, SafeZone = false, PvP = true,
+		LevelRange = {52, 57},
+		Center = Vector3.new(800, 0, -6700), Radius = 420,
+	},
 }
 
 -- ============================================================
@@ -682,6 +738,16 @@ MapDefinitions.SpawnConfig = {
 	WHITE_HALL     = { {DefId="calliana_crue",Count=4,Spread=280}, {DefId="calliana_atroc",Count=3,Spread=260}, {DefId="hobo_blade",Count=3,Spread=240}, {DefId="passer",Count=2,Spread=200}, {DefId="calliana_princess",Count=1,Spread=150} },
 	FASCINATING_LAND={ {DefId="calliana_princess",Count=3,Spread=260}, {DefId="calliana_crue",Count=3,Spread=240}, {DefId="calliana_atroc",Count=3,Spread=220}, {DefId="calliana_archer",Count=2,Spread=200}, {DefId="assassin_builder_b",Count=1,Spread=140} },
 	JACKS_LAND     = { {DefId="passer",Count=4,Spread=260}, {DefId="hobo_robber",Count=3,Spread=240}, {DefId="calliana_crue",Count=2,Spread=200}, {DefId="calliana_atroc",Count=2,Spread=180} },
+
+	-- Cauldron Volcanic Area
+	ABADON_PASSAGE   = { {DefId="infernal_demolis",Count=4,Spread=280}, {DefId="infernal_lava",Count=3,Spread=260} },
+	ABADON_CAVE_NW   = { {DefId="infernal_demolis",Count=4,Spread=280}, {DefId="infernal_lava",Count=4,Spread=260} },
+	GENIAL_SPRING    = { {DefId="fever_lapis",Count=4,Spread=280}, {DefId="infernal_grumble",Count=4,Spread=260} },
+	BELPHEGOR_CASTLE = { {DefId="bolide",Count=4,Spread=300}, {DefId="ash",Count=4,Spread=280}, {DefId="burn_ash",Count=3,Spread=260}, {DefId="belphegor",Count=1,Spread=80} },
+	EVIL_HALL        = { {DefId="infernal_grumble",Count=4,Spread=280}, {DefId="bolide",Count=4,Spread=260}, {DefId="heavy_scud",Count=3,Spread=240}, {DefId="burn_ash",Count=3,Spread=220} },
+	BAFER_LAKE       = { {DefId="cur",Count=5,Spread=280}, {DefId="great_cur",Count=4,Spread=260} },
+	HWATT_LAND       = { {DefId="cur",Count=4,Spread=260}, {DefId="great_cur",Count=3,Spread=240}, {DefId="granite_block",Count=2,Spread=200} },
+	ABADON_CAVE_E    = { {DefId="cur",Count=4,Spread=320}, {DefId="great_cur",Count=4,Spread=280}, {DefId="granite_block",Count=3,Spread=260}, {DefId="hum_baba",Count=2,Spread=220}, {DefId="giant_baba",Count=2,Spread=200}, {DefId="infernal_draco",Count=1,Spread=160} },
 }
 
 -- Race spawn positions (dipakai GameServer)

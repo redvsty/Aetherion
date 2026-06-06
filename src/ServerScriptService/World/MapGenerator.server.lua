@@ -113,6 +113,32 @@ task.wait()
 fill(0, -5200, 3600, 2400, Enum.Material.Sand, GROUND_Y, DEPTH)
 task.wait()
 
+-- Cauldron Volcanic Area — batu gelap + material volcanic
+-- Zona Z -6000 sampai -7400, lebar 3000
+fill(0, -6700, 3000, 2800, Enum.Material.Rock, GROUND_Y, DEPTH)
+task.wait()
+-- Lava pools di Cauldron (neon orange strips — efek lava)
+for _, lv in ipairs({
+	{-500, -6600, 200, 400}, {300, -6900, 300, 200}, {-200, -7100, 400, 200},
+	{600, -6700, 200, 300}, {-600, -7000, 200, 200},
+}) do
+	Terrain:FillBlock(
+		CFrame.new(lv[1], GROUND_Y - 2, lv[2]),
+		Vector3.new(lv[3], 4, lv[4]),
+		Enum.Material.Neon
+	)
+end
+task.wait()
+-- Rocky hills di Cauldron
+for _, h in ipairs({
+	{-400, 0, -6300, 100}, {400, 0, -6300, 90},
+	{-750, 0, -6600, 110}, {750, 0, -6600, 110},
+	{0, 0, -7300, 120},
+}) do
+	ball(h[1], h[2], h[3], h[4], Enum.Material.Rock)
+end
+task.wait()
+
 -- Crag Mine — batu
 fill(0, -3500, 2000, 1800, Enum.Material.Rock, GROUND_Y, DEPTH)
 task.wait()
@@ -521,6 +547,85 @@ local function buildSetteRuins()
 	neonLight(m,Vector3.new(cx,cy+30,cz),Color3.fromRGB(120,80,40),80,1)
 end
 buildSetteRuins(); task.wait()
+
+-- ================================================================
+-- Roads Cauldron Volcanic — dari Sette Highland ke Abadon Passage
+-- ================================================================
+do
+	local VC = Zones
+	makeRoad(VC.SETTE_HIGHLAND.Center, VC.ABADON_PASSAGE.Center, 20)
+	task.wait()
+	makeRoad(VC.ABADON_PASSAGE.Center, VC.ABADON_CAVE_NW.Center, 16)
+	makeRoad(VC.ABADON_PASSAGE.Center, VC.GENIAL_SPRING.Center,  16)
+	task.wait()
+	makeRoad(VC.GENIAL_SPRING.Center,  VC.EVIL_HALL.Center,       16)
+	makeRoad(VC.ABADON_CAVE_NW.Center, VC.BELPHEGOR_CASTLE.Center,16)
+	task.wait()
+	makeRoad(VC.EVIL_HALL.Center,      VC.BELPHEGOR_CASTLE.Center,16)
+	makeRoad(VC.BELPHEGOR_CASTLE.Center,VC.BAFER_LAKE.Center,     16)
+	task.wait()
+	makeRoad(VC.BAFER_LAKE.Center,     VC.HWATT_LAND.Center,      14)
+	makeRoad(VC.ABADON_PASSAGE.Center, VC.ABADON_CAVE_E.Center,   16)
+	makeRoad(VC.ABADON_CAVE_E.Center,  VC.BAFER_LAKE.Center,      14)
+	task.wait()
+end
+
+-- ================================================================
+-- Struktur Belphegor Castle
+-- ================================================================
+local function buildBelphegorCastle()
+	local m = Instance.new("Model"); m.Name = "BelphegorCastle"; m.Parent = worldFolder
+	local cx, cy, cz = -400, GROUND_Y, -6850
+	local darkRed = "Maroon"
+	local darkGrey = "Dark stone grey"
+	local blood    = "Bright red"
+
+	-- Platform base
+	part(m,"Base",    Vector3.new(700,6,600),   CFrame.new(cx,cy+3,cz),      darkGrey,Enum.Material.SmoothPlastic)
+
+	-- Tembok kastil (gothic)
+	part(m,"WallN",   Vector3.new(700,36,16),   CFrame.new(cx,cy+20,cz-300), darkGrey,Enum.Material.SmoothPlastic)
+	part(m,"WallS",   Vector3.new(700,36,16),   CFrame.new(cx,cy+20,cz+300), darkGrey,Enum.Material.SmoothPlastic)
+	part(m,"WallE",   Vector3.new(16,36,600),   CFrame.new(cx+350,cy+20,cz), darkGrey,Enum.Material.SmoothPlastic)
+	part(m,"WallW",   Vector3.new(16,36,600),   CFrame.new(cx-350,cy+20,cz), darkGrey,Enum.Material.SmoothPlastic)
+
+	-- Menara sudut (ramping gothic)
+	for _, c in ipairs({ {-350,-300},{350,-300},{-350,300},{350,300} }) do
+		part(m,"Tower",   Vector3.new(36,70,36), CFrame.new(cx+c[1],cy+37,cz+c[2]), darkGrey,Enum.Material.SmoothPlastic)
+		part(m,"TowerTop",Vector3.new(24,40,24), CFrame.new(cx+c[1],cy+92,cz+c[2]), darkRed, Enum.Material.Neon)
+		neonLight(m, Vector3.new(cx+c[1],cy+115,cz+c[2]), Color3.fromRGB(180,0,0), 60, 1.5)
+	end
+
+	-- Gerbang utara (arah entry)
+	part(m,"GateL",   Vector3.new(14,44,16),    CFrame.new(cx-55,cy+24,cz-300), darkGrey,Enum.Material.SmoothPlastic)
+	part(m,"GateR",   Vector3.new(14,44,16),    CFrame.new(cx+55,cy+24,cz-300), darkGrey,Enum.Material.SmoothPlastic)
+	part(m,"GateArch",Vector3.new(110,12,16),   CFrame.new(cx,cy+46,cz-300),    darkRed, Enum.Material.Neon)
+
+	-- Gedung utama (keep)
+	part(m,"Keep",    Vector3.new(260,55,200),  CFrame.new(cx,cy+30,cz+50),    darkGrey,Enum.Material.SmoothPlastic)
+	part(m,"KeepTop", Vector3.new(220,22,160),  CFrame.new(cx,cy+68,cz+50),    darkRed, Enum.Material.Neon)
+
+	-- Belphegor throne (pusat kastil, glowing)
+	local throne = part(m,"Throne",Vector3.new(30,24,30),CFrame.new(cx,cy+18,cz+60),blood,Enum.Material.Neon)
+	neonLight(m, Vector3.new(cx,cy+50,cz+60), Color3.fromRGB(220,0,0), 200, 3)
+
+	-- Tulang-tulang / dekorasi gothic
+	for i=1,6 do
+		local ox = (i-3.5)*100
+		part(m,"Spike"..i, Vector3.new(8,30,8),
+			CFrame.new(cx+ox, cy+48, cz-300), darkGrey, Enum.Material.SmoothPlastic)
+	end
+
+	-- Lava moat
+	part(m,"MoatN",   Vector3.new(760,4,40),   CFrame.new(cx,cy+1,cz-322),    "Bright orange",Enum.Material.Neon)
+	part(m,"MoatS",   Vector3.new(760,4,40),   CFrame.new(cx,cy+1,cz+322),    "Bright orange",Enum.Material.Neon)
+	part(m,"MoatE",   Vector3.new(40,4,680),   CFrame.new(cx+372,cy+1,cz),    "Bright orange",Enum.Material.Neon)
+	part(m,"MoatW",   Vector3.new(40,4,680),   CFrame.new(cx-372,cy+1,cz),    "Bright orange",Enum.Material.Neon)
+	neonLight(m, Vector3.new(cx,cy+10,cz), Color3.fromRGB(255,80,0), 250, 2)
+
+	spawnLoc(raceSpawnFolder, "Cauldron_Spawn", Vector3.new(0,cy+4,-6200), "Dark red")
+end
+buildBelphegorCastle(); task.wait()
 
 -- ================================================================
 -- STEP 10: Monster Spawners
