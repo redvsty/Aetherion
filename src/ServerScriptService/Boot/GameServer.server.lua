@@ -172,15 +172,29 @@ Players.PlayerAdded:Connect(function(player)
 		end
 
 		local humanoid = character:WaitForChild("Humanoid")
-		humanoid.MaxHealth = currentData.Stats.MaxHP
+
+		-- Tunggu sebentar agar Roblox selesai initialize character sepenuhnya
+		-- sebelum kita override Health/MaxHealth (cegah race condition dengan engine)
+		task.wait(0.1)
+
+		-- Pastikan data stats valid (fallback ke nilai RF Classic default)
+		local stats = currentData.Stats or {}
+		local maxHP = stats.MaxHP or 150
+		local maxFP = stats.MaxFP or 100
+		local maxSP = stats.MaxSP or 200
 
 		-- RF Classic: respawn di HQ = HP, FP, SP penuh.
-		currentData.Stats.HP = currentData.Stats.MaxHP
-		currentData.Stats.FP = currentData.Stats.MaxFP
-		currentData.Stats.SP = currentData.Stats.MaxSP
-		humanoid.Health = currentData.Stats.MaxHP
+		stats.HP = maxHP
+		stats.FP = maxFP
+		stats.SP = maxSP
 
-		-- Apply run/walk speed sesuai stamina state
+		humanoid.MaxHealth = maxHP
+		humanoid.Health    = maxHP
+
+		-- Reset StaminaService internal state agar SP penuh dan WalkSpeed normal
+		StaminaService.InitPlayer(player, currentData)
+
+		-- Apply run/walk speed sesuai stamina state yang sudah di-reset
 		local staminaState = StaminaService.GetState(player)
 		if staminaState then
 			StaminaService.ApplySpeedToCharacter(player, staminaState)
