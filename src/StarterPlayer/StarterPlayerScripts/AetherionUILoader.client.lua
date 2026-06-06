@@ -1,3 +1,7 @@
+-- AetherionUILoader.client.lua
+-- Di StarterPlayerScripts (bukan StarterGui) agar script INI tidak di-kill saat respawn.
+-- StarterGui scripts di-restart tiap respawn → connections di-GC → hotkeys/HUD mati.
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -26,11 +30,6 @@ local function getGameplayUIModule()
 end
 
 local function loadUI()
-	if playerGui:FindFirstChild("AetherionGameplayUI") then
-		print("[Aetherion] Gameplay UI already exists")
-		return true
-	end
-
 	local uiModule, moduleErr = getGameplayUIModule()
 	if not uiModule then
 		warn("[Aetherion] Cannot load Gameplay UI:", moduleErr)
@@ -51,6 +50,15 @@ local function loadUI()
 		return false
 	end
 
+	-- Jika UI sudah ada (restart loader karena Roblox), cukup reconnect connections
+	if playerGui:FindFirstChild("AetherionGameplayUI") then
+		print("[Aetherion] Gameplay UI already exists — reconnecting")
+		if type(UI.Reconnect) == "function" then
+			pcall(UI.Reconnect)
+		end
+		return true
+	end
+
 	local createOk, createErr = pcall(function()
 		UI.Create()
 	end)
@@ -60,7 +68,7 @@ local function loadUI()
 		return false
 	end
 
-	-- Batch 2.5: Load SkillPanelUI setelah GameplayUI
+	-- Load SkillPanelUI setelah GameplayUI siap
 	task.spawn(function()
 		local client = ReplicatedStorage:WaitForChild("Shared", 10):WaitForChild("Client", 10)
 		local skillModule = client:WaitForChild("SkillPanelUI", 10)
@@ -89,7 +97,7 @@ local function loadUI()
 		print("[Aetherion] SkillPanelUI initialized — L=Melee/Range, F=Force")
 	end)
 
-	print("[Aetherion] Gameplay UI created from StarterGui loader")
+	print("[Aetherion] Gameplay UI created")
 	return true
 end
 
@@ -104,6 +112,7 @@ task.delay(1, function()
 	loadUI()
 end)
 
+-- Fallback: jika karena alasan tertentu ScreenGui belum ada saat respawn, buat ulang
 player.CharacterAdded:Connect(function()
 	task.wait(1)
 
