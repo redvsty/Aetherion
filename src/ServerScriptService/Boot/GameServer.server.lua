@@ -22,6 +22,9 @@ local GameConfig = require(game.ReplicatedStorage.Shared.GameConfig)
 -- Batch 4: Monster + PvE
 local MonsterService = require(script.Parent.Parent.Services.MonsterService)
 local LevelService   = require(script.Parent.Parent.Services.LevelService)
+-- Map
+local MapDefinitions = require(game.ReplicatedStorage.Shared.Definitions.MapDefinitions)
+local ZoneService    = require(script.Parent.Parent.Services.ZoneService)
 
 local EquipmentServiceRef = EquipmentService -- alias untuk dipakai di SkillService cast
 
@@ -190,6 +193,15 @@ Players.PlayerAdded:Connect(function(player)
 
 		humanoid.MaxHealth = maxHP
 		humanoid.Health    = maxHP
+
+		-- RF Classic: respawn di HQ sesuai ras (spread acak agar tidak stack)
+		local race = currentData.Race or "Bellato"
+		local baseSpawn = MapDefinitions.RaceSpawn[race] or MapDefinitions.RaceSpawn["Bellato"]
+		local hrp = character:FindFirstChild("HumanoidRootPart")
+		if hrp then
+			local spread = Vector3.new(math.random(-80, 80), 0, math.random(-80, 80))
+			hrp.CFrame = CFrame.new(baseSpawn + spread)
+		end
 
 		-- Reset SP di StaminaService state yang ada (JANGAN InitPlayer ulang —
 		-- InitPlayer reset LastPosition ke nil sehingga movement tracking rusak)

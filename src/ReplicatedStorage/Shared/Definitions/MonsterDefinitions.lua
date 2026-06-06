@@ -184,18 +184,76 @@ MonsterDefinitions["crawler"] = {
 MonsterDefinitions["high_elf_guard"] = {
 	Id          = "high_elf_guard",
 	Name        = "High Elf Guard",
-	Level       = 45,
-	MaxHP       = 1800,
-	Attack      = 145,
-	Defense     = 58,
+	Level       = 35,
+	MaxHP       = 1100,
+	Attack      = 105,
+	Defense     = 42,
 	MoveSpeed   = 10,
 	AggroRadius = 16,
 	AttackRange = 5,
 	AttackDelay = 3.0,
 	LeashRadius = 70,
-	ExpReward   = 900,
-	GoldMin = 60, GoldMax = 130,
+	ExpReward   = 520,
+	GoldMin = 45, GoldMax = 95,
+	RespawnTime = 65,
+	DropTable   = {},
+}
+
+-- ============================================================
+-- LEVEL 36-50 — Chip Mine area
+-- ============================================================
+
+MonsterDefinitions["dark_warbeast"] = {
+	Id          = "dark_warbeast",
+	Name        = "Dark Warbeast",
+	Level       = 38,
+	MaxHP       = 1600,
+	Attack      = 145,
+	Defense     = 60,
+	MoveSpeed   = 12,
+	AggroRadius = 18,
+	AttackRange = 5,
+	AttackDelay = 2.8,
+	LeashRadius = 70,
+	ExpReward   = 720,
+	GoldMin = 55, GoldMax = 110,
 	RespawnTime = 70,
+	DropTable   = {},
+}
+
+MonsterDefinitions["mine_guardian"] = {
+	Id          = "mine_guardian",
+	Name        = "Mine Guardian",
+	Level       = 45,
+	MaxHP       = 3200,
+	Attack      = 220,
+	Defense     = 95,
+	MoveSpeed   = 9,
+	AggroRadius = 20,
+	AttackRange = 6,
+	AttackDelay = 3.5,
+	LeashRadius = 75,
+	ExpReward   = 1400,
+	GoldMin = 90, GoldMax = 180,
+	RespawnTime = 90,
+	DropTable   = {},
+}
+
+MonsterDefinitions["force_titan"] = {
+	Id          = "force_titan",
+	Name        = "Force Titan",
+	Level       = 48,
+	MaxHP       = 6500,
+	Attack      = 360,
+	Defense     = 145,
+	MoveSpeed   = 8,
+	AggroRadius = 22,
+	AttackRange = 7,
+	AttackDelay = 4.0,
+	LeashRadius = 80,
+	ExpReward   = 3200,
+	GoldMin = 150, GoldMax = 300,
+	RespawnTime = 120,
 	DropTable   = {},
 }
 
