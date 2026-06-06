@@ -175,6 +175,28 @@ def("assassin_builder_a",   "Assassin Builder A",50,4200,568,235,10, 22, 6, 5.0,
 def("assassin_builder_b",   "Assassin Builder B",50,4500,609,252,10, 22, 6, 5.0, 95,9500, 220,440, 95, true)
 
 -- =====================================================================
+-- Cauldron Volcanic Area (L48-57, boss L60)
+-- Referensi: screenshot "Cauldron Volcanic Area" RF Classic
+-- =====================================================================
+--                          id                name                  lv   hp     atk  def  spd  ag  rng dly   lsh   exp    gMn  gMx  resp  agg
+def("infernal_demolis",  "Infernal Demolis",  48, 3800, 515, 213,  9, 20,  6, 5.0,  95, 6800, 190, 380,  95)
+def("infernal_lava",     "Infernal Lava",     49, 4000, 542, 224,  9, 20,  6, 5.0,  95, 7400, 200, 400,  95)
+def("fever_lapis",       "Fever Lapis",       49, 4050, 548, 227,  9, 19,  6, 5.0,  95, 7500, 202, 404,  95)
+def("infernal_grumble",  "Infernal Grumble",  50, 4200, 568, 235, 10, 20,  6, 5.2,  98, 8200, 210, 420,  98)
+def("bolide",            "Bolide",            50, 4250, 575, 238, 10, 20,  7, 5.2,  98, 8400, 212, 424,  98)
+def("heavy_scud",        "Heavy Scud",        51, 4450, 602, 249,  9, 20,  6, 5.2,  98, 9000, 220, 440,  98)
+def("burn_ash",          "Burn Ash",          51, 4460, 603, 250, 10, 20,  6, 5.2,  98, 9050, 220, 440,  98)
+def("ash",               "Ash",               51, 4440, 601, 249, 10, 19,  6, 5.2,  98, 8980, 219, 438,  98)
+def("cur",               "Cur",               52, 4700, 636, 263, 10, 20,  6, 5.5, 100, 9800, 232, 464, 100)
+def("great_cur",         "Great Cur",         53, 4950, 670, 277,  9, 20,  6, 5.5, 100,10600, 244, 488, 100)
+def("granite_block",     "Granite Block",     54, 5200, 704, 291,  8, 20,  7, 5.5, 100,11400, 256, 512, 100)
+def("hum_baba",          "Hum Baba",          55, 5500, 744, 308,  9, 20,  7, 5.8, 105,12400, 270, 540, 105)
+def("giant_baba",        "Giant Baba",        56, 5800, 785, 325,  8, 20,  7, 5.8, 105,13400, 285, 570, 105)
+def("infernal_draco",    "Infernal Draco",    57, 6200, 839, 347, 10, 21,  7, 6.0, 110,14600, 300, 600, 110)
+-- Boss
+def("belphegor",         "Belphegor",         60,30000,1200,500, 11, 28,  8, 6.0, 150,60000,1000,2000,180, true)
+
+-- =====================================================================
 -- Crag Mine — Lazhuwardian (L31-42)
 -- =====================================================================
 def("little_lazhuwardian",  "Little Lazhuwardian",31,1360,185, 76, 9, 18, 5, 3.8, 75,1220, 75,155, 68)
