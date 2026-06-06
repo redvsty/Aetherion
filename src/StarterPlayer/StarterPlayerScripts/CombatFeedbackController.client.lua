@@ -12,6 +12,10 @@
 local Players           = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService      = game:GetService("TweenService")
+local StarterGui        = game:GetService("StarterGui")
+
+-- Sembunyikan health bar bawaan Roblox — pakai HUD custom Aetherion saja
+StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, false)
 
 local LocalPlayer = Players.LocalPlayer
 local Camera      = workspace.CurrentCamera
