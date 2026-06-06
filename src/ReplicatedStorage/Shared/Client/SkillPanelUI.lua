@@ -196,6 +196,9 @@ local function buildHotbar(parent)
 		Position = UDim2.new(0.5, -math.floor(totalW / 2) - 8, 1, -150),
 		Color = TH.WindowDark,
 	})
+	-- Skill hotbar tersembunyi — belt hotbar (1-10) di AetherionGameplayUI sudah cukup.
+	-- Skill tetap bisa di-cast via belt hotbar atau Ctrl+1..8.
+	barFrame.Visible = false
 	addBorder(barFrame, TH.Border)
 	addCorner(barFrame, 6)
 

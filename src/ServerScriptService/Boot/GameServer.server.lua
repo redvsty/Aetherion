@@ -174,8 +174,10 @@ Players.PlayerAdded:Connect(function(player)
 		local humanoid = character:WaitForChild("Humanoid")
 		humanoid.MaxHealth = currentData.Stats.MaxHP
 
-		-- RF Classic: respawn = HP penuh. Stats.HP juga di-restore agar HUD sync.
+		-- RF Classic: respawn di HQ = HP, FP, SP penuh.
 		currentData.Stats.HP = currentData.Stats.MaxHP
+		currentData.Stats.FP = currentData.Stats.MaxFP
+		currentData.Stats.SP = currentData.Stats.MaxSP
 		humanoid.Health = currentData.Stats.MaxHP
 
 		-- Apply run/walk speed sesuai stamina state
