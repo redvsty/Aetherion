@@ -287,7 +287,31 @@ end
 
 SelectRaceAndClassRequest.OnServerInvoke = function(player, factionId, startingClassId)
 	local data = profiles[player]
-	return CharacterCreationService.SelectRaceAndClass(data, factionId, startingClassId)
+	local success, result = CharacterCreationService.SelectRaceAndClass(data, factionId, startingClassId)
+
+	if success then
+		-- Teleport karakter ke HQ ras yang baru dipilih
+		local FACTION_TO_RACE = { MECHA = "Bellato", CYBORG = "Accretia", MYSTIC = "Cora" }
+		local race = FACTION_TO_RACE[factionId] or "Bellato"
+		local baseSpawn = MapDefinitions.RaceSpawn[race] or MapDefinitions.RaceSpawn["Bellato"]
+
+		task.spawn(function()
+			if not workspace:FindFirstChild("_MapGenerated") then
+				workspace:WaitForChild("_MapGenerated", 180)
+				task.wait(0.3)
+			end
+			local character = player.Character
+			if character then
+				local hrp = character:FindFirstChild("HumanoidRootPart")
+				if hrp then
+					local spread = Vector3.new(math.random(-80, 80), 0, math.random(-80, 80))
+					hrp.CFrame = CFrame.new(baseSpawn + spread)
+				end
+			end
+		end)
+	end
+
+	return success, result
 end
 
 SelectLevel30ClassRequest.OnServerInvoke = function(player, classId)
