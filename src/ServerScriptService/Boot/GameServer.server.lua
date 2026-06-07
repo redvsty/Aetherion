@@ -290,25 +290,19 @@ SelectRaceAndClassRequest.OnServerInvoke = function(player, factionId, startingC
 	local success, result = CharacterCreationService.SelectRaceAndClass(data, factionId, startingClassId)
 
 	if success then
-		-- Teleport karakter ke HQ ras yang baru dipilih
+		-- Teleport langsung ke HQ ras yang dipilih (synchronous, sebelum return ke client)
 		local FACTION_TO_RACE = { MECHA = "Bellato", CYBORG = "Accretia", MYSTIC = "Cora" }
 		local race = FACTION_TO_RACE[factionId] or "Bellato"
 		local baseSpawn = MapDefinitions.RaceSpawn[race] or MapDefinitions.RaceSpawn["Bellato"]
-
-		task.spawn(function()
-			if not workspace:FindFirstChild("_MapGenerated") then
-				workspace:WaitForChild("_MapGenerated", 180)
-				task.wait(0.3)
+		local character = player.Character
+		if character then
+			local hrp = character:FindFirstChild("HumanoidRootPart")
+			if hrp then
+				local spread = Vector3.new(math.random(-80, 80), 0, math.random(-80, 80))
+				hrp.CFrame = CFrame.new(baseSpawn + spread)
+				print(string.format("[GameServer] %s teleported to %s HQ: %s", player.Name, race, tostring(baseSpawn + spread)))
 			end
-			local character = player.Character
-			if character then
-				local hrp = character:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					local spread = Vector3.new(math.random(-80, 80), 0, math.random(-80, 80))
-					hrp.CFrame = CFrame.new(baseSpawn + spread)
-				end
-			end
-		end)
+		end
 	end
 
 	return success, result
