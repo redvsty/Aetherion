@@ -392,170 +392,194 @@ local function buildAccretiaHQ()
 	local m = Instance.new("Model"); m.Name = "AccretiaHQ"; m.Parent = worldFolder
 	local cx, cy, cz = 5500, GROUND_Y, 500
 
-	-- RF Classic Accretia color palette: light beige/grey hull, red neon, dark metal accents
-	local hull  = "Light stone grey"   -- struktur utama (beige-grey seperti RF)
-	local panel = "Dark stone grey"    -- panel dan detail gelap
-	local red   = "Bright red"         -- semua neon merah
-	local dark  = "Really black"       -- shadow trim
-	local cyan  = "Cyan"               -- window biru-biru RF
+	-- Palette berdasarkan referensi RF Classic Accretia HQ:
+	-- Interior: dinding krem/beige tebal, panel oval, red neon, blue window bawah
+	-- Exterior: dark teal-green, hexagonal platform, tower mekanik dengan orb
+	local beige  = "Tan"              -- dinding interior (cream/beige RF Classic)
+	local dark   = "Dark stone grey"  -- panel gelap, detail
+	local black  = "Really black"     -- trim hitam
+	local red    = "Bright red"       -- semua neon merah
+	local cyan   = "Cyan"             -- blue window bawah
+	local teal   = "Dark teal"        -- exterior struktur
+	local grey   = "Medium stone grey"-- lantai
 
-	local N    = 20    -- jumlah segmen polygon (aproksimasi lingkaran)
-	local R    = 560   -- radius dome
-	local WALL_H = 130 -- tinggi dinding dome
-	local DISC_H = 95  -- ketinggian overhead disc dari lantai
-	local DISC_R = 390 -- radius disc overhead
+	local N      = 24    -- polygon 24 sisi (lingkaran halus)
+	local R      = 580   -- radius dome interior
+	local WALL_H = 140   -- tinggi dinding
+	local DISC_H = 100   -- tinggi disc dari lantai
+	local DISC_R = 420   -- radius disc overhead
+	local tw     = 36    -- ketebalan dinding
 
 	-- ── LANTAI ────────────────────────────────────────────────────
-	part(m,"Floor", Vector3.new(R*2+30, 5, R*2+30), CFrame.new(cx,cy+2,cz), "Smoky grey", Enum.Material.SmoothPlastic)
-	-- Garis melingkar (ring) di lantai — dua cincin
+	part(m,"Floor", Vector3.new(R*2+tw*2, 4, R*2+tw*2), CFrame.new(cx,cy+2,cz), grey, Enum.Material.SmoothPlastic)
+	-- Concentric rings di lantai (khas RF)
 	for i = 0, N-1 do
-		local am = ((i+0.5)/N) * math.pi * 2
-		local sl = 2*(R-25)*math.sin(math.pi/N) + 2
-		part(m,"FR1_"..i, Vector3.new(sl,2,10),
-			CFrame.new(cx+(R-25)*math.sin(am), cy+5, cz+(R-25)*math.cos(am)) * CFrame.Angles(0,-am,0),
-			red, Enum.Material.Neon)
-		local sl2 = 2*220*math.sin(math.pi/N) + 2
-		part(m,"FR2_"..i, Vector3.new(sl2,2,7),
-			CFrame.new(cx+220*math.sin(am), cy+5, cz+220*math.cos(am)) * CFrame.Angles(0,-am,0),
-			red, Enum.Material.Neon)
+		local am = ((i+0.5)/N)*math.pi*2
+		-- Ring luar
+		local r1 = R - 40
+		part(m,"FRO"..i, Vector3.new(2*r1*math.sin(math.pi/N)+1,2,12),
+			CFrame.new(cx+r1*math.sin(am),cy+4,cz+r1*math.cos(am))*CFrame.Angles(0,-am,0), red, Enum.Material.Neon)
+		-- Ring dalam
+		local r2 = 260
+		part(m,"FRI"..i, Vector3.new(2*r2*math.sin(math.pi/N)+1,2,7),
+			CFrame.new(cx+r2*math.sin(am),cy+4,cz+r2*math.cos(am))*CFrame.Angles(0,-am,0), red, Enum.Material.Neon)
 	end
-	-- Garis radial lantai
-	for i = 0, 7 do
-		local a = (i/8)*math.pi*2
-		part(m,"Spoke"..i, Vector3.new(4,2,R-50),
-			CFrame.new(cx+(R/2-25)*math.sin(a), cy+5, cz+(R/2-25)*math.cos(a)) * CFrame.Angles(0,-a,0),
-			panel, Enum.Material.Metal)
-	end
+	-- Center platform hexagonal (terinspirasi RF floor)
+	part(m,"FloorCenter", Vector3.new(180,5,180), CFrame.new(cx,cy+4,cz), dark, Enum.Material.Metal)
+	part(m,"FloorCenterRim", Vector3.new(200,2,200), CFrame.new(cx,cy+2,cz), black, Enum.Material.Metal)
 
-	-- ── DINDING DOME (polygon N-sisi, 2 lapis) ────────────────────
+	-- ── DINDING DOME (N=24 polygon, beige/cream seperti RF interior) ──
 	for i = 0, N-1 do
-		local am = ((i+0.5)/N) * math.pi * 2
+		local am = ((i+0.5)/N)*math.pi*2
 		local sl = 2*R*math.sin(math.pi/N) + 2
 
-		-- Dinding utama (luar + dalam sekaligus karena tebal)
-		local wCF = CFrame.new(cx+R*math.sin(am), cy+WALL_H/2, cz+R*math.cos(am)) * CFrame.Angles(0,-am,0)
-		part(m,"Wall"..i, Vector3.new(sl, WALL_H, 32), wCF, hull, Enum.Material.SmoothPlastic)
+		-- Dinding utama beige (sama persis RF Classic interior)
+		part(m,"Wall"..i, Vector3.new(sl, WALL_H, tw),
+			CFrame.new(cx+R*math.sin(am), cy+WALL_H/2, cz+R*math.cos(am))*CFrame.Angles(0,-am,0),
+			beige, Enum.Material.SmoothPlastic)
 
-		-- Panel vertikal divider (dalam, tiap segmen)
-		local inR = R - 17
-		local divCF = CFrame.new(cx+inR*math.sin(am), cy+WALL_H/2, cz+inR*math.cos(am)) * CFrame.Angles(0,-am,0)
-		part(m,"WDiv"..i, Vector3.new(8, WALL_H, 4), divCF, panel, Enum.Material.Metal)
+		-- Panel oval gelap di tiap segmen (ciri khas RF - panel oval dengan tanda merah)
+		local inR = R - tw/2 - 3
+		local pCF = CFrame.new(cx+inR*math.sin(am), cy+WALL_H/2+5, cz+inR*math.cos(am))*CFrame.Angles(0,-am,0)
+		part(m,"WPanel"..i, Vector3.new(sl*0.7, WALL_H*0.72, 4), pCF, dark, Enum.Material.SmoothPlastic)
 
-		-- Strip neon merah atas (dalam)
-		local topCF = CFrame.new(cx+inR*math.sin(am), cy+WALL_H-9, cz+inR*math.cos(am)) * CFrame.Angles(0,-am,0)
-		part(m,"WNeonTop"..i, Vector3.new(sl-8, 10, 4), topCF, red, Enum.Material.Neon)
+		-- Tanda silang merah di panel (khas Accretia HQ)
+		part(m,"WMarkH"..i, Vector3.new(sl*0.42, 6, 5),
+			CFrame.new(cx+inR*math.sin(am), cy+WALL_H*0.55, cz+inR*math.cos(am))*CFrame.Angles(0,-am,0),
+			red, Enum.Material.Neon)
+		part(m,"WMarkV"..i, Vector3.new(6, WALL_H*0.44, 5),
+			CFrame.new(cx+inR*math.sin(am), cy+WALL_H*0.55, cz+inR*math.cos(am))*CFrame.Angles(0,-am,0),
+			red, Enum.Material.Neon)
 
-		-- Strip neon merah bawah / mid (dalam)
-		local midCF = CFrame.new(cx+inR*math.sin(am), cy+50, cz+inR*math.cos(am)) * CFrame.Angles(0,-am,0)
-		part(m,"WNeonMid"..i, Vector3.new(sl-8, 6, 4), midCF, red, Enum.Material.Neon)
+		-- Blue window strip bawah (persis RF - cermin biru transparan di kaki dinding)
+		part(m,"WWin"..i, Vector3.new(sl-6, 28, 5),
+			CFrame.new(cx+inR*math.sin(am), cy+17, cz+inR*math.cos(am))*CFrame.Angles(0,-am,0),
+			cyan, Enum.Material.Neon)
 
-		-- Window biru (bawah, mirip RF blue windows)
-		local winCF = CFrame.new(cx+inR*math.sin(am), cy+22, cz+inR*math.cos(am)) * CFrame.Angles(0,-am,0)
-		part(m,"WWin"..i, Vector3.new(sl-14, 26, 4), winCF, cyan, Enum.Material.Neon)
+		-- Trim hitam vertikal antar panel
+		part(m,"WTrim"..i, Vector3.new(8, WALL_H, 5),
+			CFrame.new(cx+(inR+1)*math.sin(am), cy+WALL_H/2, cz+(inR+1)*math.cos(am))*CFrame.Angles(0,-am,0),
+			black, Enum.Material.SmoothPlastic)
 	end
 
-	-- ── LANGIT-LANGIT / ATAP ──────────────────────────────────────
-	part(m,"Ceiling", Vector3.new(R*2+30, 10, R*2+30), CFrame.new(cx, cy+WALL_H+5, cz), panel, Enum.Material.Metal)
+	-- ── LANGIT-LANGIT ─────────────────────────────────────────────
+	part(m,"Ceiling", Vector3.new(R*2+tw*2+10, 12, R*2+tw*2+10),
+		CFrame.new(cx, cy+WALL_H+6, cz), black, Enum.Material.Metal)
 
-	-- ── KOLOM PENYANGGA DALAM (8 kolom melingkar) ─────────────────
-	local COL_R = R - 90
+	-- ── KOLOM DALAM (8 pilar silindris) ───────────────────────────
+	local COL_R = R - 100
 	for i = 0, 7 do
 		local a = (i/8)*math.pi*2
 		local px, pz = cx+COL_R*math.sin(a), cz+COL_R*math.cos(a)
-		part(m,"Col"..i,     Vector3.new(26, DISC_H+16, 26), CFrame.new(px, cy+(DISC_H+16)/2, pz), panel, Enum.Material.Metal)
-		part(m,"ColRing"..i, Vector3.new(36, 8, 36),          CFrame.new(px, cy+DISC_H+20, pz),    red,   Enum.Material.Neon)
-		part(m,"ColBase"..i, Vector3.new(36, 5, 36),          CFrame.new(px, cy+3, pz),             panel, Enum.Material.Metal)
-		neonLight(m, Vector3.new(px, cy+DISC_H+28, pz), Color3.fromRGB(255,0,0), 45, 2)
+		-- Pilar utama (dark, industrial)
+		part(m,"Col"..i,     Vector3.new(28,DISC_H+14,28), CFrame.new(px,cy+(DISC_H+14)/2,pz), dark,  Enum.Material.Metal)
+		-- Ring merah di pilar (khas Accretia)
+		part(m,"ColR1_"..i,  Vector3.new(36,8,36),         CFrame.new(px,cy+30,pz),             red,   Enum.Material.Neon)
+		part(m,"ColR2_"..i,  Vector3.new(36,8,36),         CFrame.new(px,cy+DISC_H+16,pz),      red,   Enum.Material.Neon)
+		part(m,"ColBase"..i, Vector3.new(36,4,36),         CFrame.new(px,cy+3,pz),              dark,  Enum.Material.Metal)
+		neonLight(m, Vector3.new(px,cy+DISC_H+24,pz), Color3.fromRGB(220,0,0), 40, 2)
 	end
 
-	-- ── OVERHEAD DISC (struktur UFO melayang, ciri khas Accretia HQ) ──
-	-- Rim luar disc (toroidal approximation dengan N=20 segmen)
+	-- ── OVERHEAD DISC (struktur UFO bertingkat, ciri utama Accretia HQ) ──
+	-- Berdasarkan referensi: outer rim gelap, multiple inner red rings, center merah
+	-- Ring terluar (body gelap besar)
 	for i = 0, N-1 do
-		local am = ((i+0.5)/N) * math.pi * 2
+		local am = ((i+0.5)/N)*math.pi*2
+		-- Rim terluar — body tebal gelap
 		local sl = 2*DISC_R*math.sin(math.pi/N) + 2
-
-		-- Rim luar tebal
-		local dCF = CFrame.new(cx+DISC_R*math.sin(am), cy+DISC_H, cz+DISC_R*math.cos(am)) * CFrame.Angles(0,-am,0)
-		part(m,"DiscRim"..i, Vector3.new(sl, 28, 65), dCF, panel, Enum.Material.Metal)
-
-		-- Neon merah underside rim (sangat khas RF)
-		local dr2 = DISC_R - 36
-		local dnCF = CFrame.new(cx+dr2*math.sin(am), cy+DISC_H-10, cz+dr2*math.cos(am)) * CFrame.Angles(0,-am,0)
-		part(m,"DiscNeon"..i, Vector3.new(sl-4, 12, 10), dnCF, red, Enum.Material.Neon)
-
-		-- Inner machinery ring
-		local mr = DISC_R - 80
-		local mCF = CFrame.new(cx+mr*math.sin(am), cy+DISC_H-14, cz+mr*math.cos(am)) * CFrame.Angles(0,-am,0)
-		part(m,"DiscMach"..i, Vector3.new(2*mr*math.sin(math.pi/N), 14, 22), mCF, dark, Enum.Material.Metal)
-
-		-- Machine neon (tiap-2 segmen)
-		if i % 2 == 0 then
-			part(m,"MachNeon"..i, Vector3.new(8, 8, 8), CFrame.new(cx+mr*math.sin(am), cy+DISC_H-10, cz+mr*math.cos(am)), red, Enum.Material.Neon)
-		end
+		part(m,"DR1_"..i, Vector3.new(sl,35,70),
+			CFrame.new(cx+DISC_R*math.sin(am),cy+DISC_H,cz+DISC_R*math.cos(am))*CFrame.Angles(0,-am,0),
+			dark, Enum.Material.Metal)
+		-- Neon merah underside rim luar
+		local r2 = DISC_R - 40
+		part(m,"DN1_"..i, Vector3.new(2*r2*math.sin(math.pi/N)+1,14,14),
+			CFrame.new(cx+r2*math.sin(am),cy+DISC_H-14,cz+r2*math.cos(am))*CFrame.Angles(0,-am,0),
+			red, Enum.Material.Neon)
+		-- Ring merah ke-2 (lebih dalam)
+		local r3 = DISC_R - 95
+		part(m,"DN2_"..i, Vector3.new(2*r3*math.sin(math.pi/N)+1,12,18),
+			CFrame.new(cx+r3*math.sin(am),cy+DISC_H-20,cz+r3*math.cos(am))*CFrame.Angles(0,-am,0),
+			red, Enum.Material.Neon)
+		-- Ring merah ke-3 (paling dalam, glowing paling terang)
+		local r4 = DISC_R - 150
+		part(m,"DN3_"..i, Vector3.new(2*r4*math.sin(math.pi/N)+1,10,12),
+			CFrame.new(cx+r4*math.sin(am),cy+DISC_H-24,cz+r4*math.cos(am))*CFrame.Angles(0,-am,0),
+			red, Enum.Material.Neon)
 	end
-
-	-- Platform atas disc (datar)
-	part(m,"DiscPlatTop", Vector3.new(DISC_R*2-130, 12, DISC_R*2-130), CFrame.new(cx, cy+DISC_H+10, cz), hull, Enum.Material.SmoothPlastic)
-
-	-- Core tengah bawah disc (glowing merah, sangat khas RF)
-	part(m,"CoreOuter", Vector3.new(160, 38, 160), CFrame.new(cx, cy+DISC_H-4, cz),  panel, Enum.Material.Metal)
-	part(m,"CoreMid",   Vector3.new(110, 22, 110), CFrame.new(cx, cy+DISC_H-8, cz),  red,   Enum.Material.Neon)
-	part(m,"CoreGlow",  Vector3.new(60,  12, 60),  CFrame.new(cx, cy+DISC_H-13, cz), red,   Enum.Material.Neon)
-	neonLight(m, Vector3.new(cx, cy+DISC_H, cz), Color3.fromRGB(255,0,0), 280, 3.5)
-
-	-- Strut penghubung disc ke langit-langit (4 penopang)
+	-- Platform atas disc
+	part(m,"DiscTop", Vector3.new((DISC_R-20)*2, 14, (DISC_R-20)*2),
+		CFrame.new(cx,cy+DISC_H+8,cz), dark, Enum.Material.Metal)
+	-- Core bawah disc bertingkat (glowing panas merah)
+	part(m,"DCore1", Vector3.new(200,30,200), CFrame.new(cx,cy+DISC_H-5,cz),  dark, Enum.Material.Metal)
+	part(m,"DCore2", Vector3.new(140,20,140), CFrame.new(cx,cy+DISC_H-12,cz), red,  Enum.Material.Neon)
+	part(m,"DCore3", Vector3.new(80, 14,80),  CFrame.new(cx,cy+DISC_H-18,cz), red,  Enum.Material.Neon)
+	part(m,"DCore4", Vector3.new(30, 10,30),  CFrame.new(cx,cy+DISC_H-22,cz), red,  Enum.Material.Neon)
+	neonLight(m, Vector3.new(cx,cy+DISC_H,cz), Color3.fromRGB(255,0,0), 320, 4)
+	-- Strut ke langit-langit (4 penopang)
 	for i = 0, 3 do
-		local a = (i/4)*math.pi*2 + math.pi/4
-		local sr = DISC_R - 20
-		part(m,"Strut"..i, Vector3.new(12, WALL_H-DISC_H, 12),
-			CFrame.new(cx+sr*math.sin(a), cy+DISC_H+(WALL_H-DISC_H)/2+8, cz+sr*math.cos(a)), panel, Enum.Material.Metal)
+		local a  = (i/4)*math.pi*2 + math.pi/4
+		local sr = DISC_R - 18
+		part(m,"Strut"..i, Vector3.new(14,WALL_H-DISC_H,14),
+			CFrame.new(cx+sr*math.sin(a),cy+DISC_H+(WALL_H-DISC_H)/2+8,cz+sr*math.cos(a)), dark, Enum.Material.Metal)
 	end
 
-	-- ── GERBANG MASUK (selatan) ────────────────────────────────────
-	local gz = cz + R + 80
-	-- Tunnel masuk
-	part(m,"TunnelBody", Vector3.new(180,WALL_H,90),   CFrame.new(cx, cy+WALL_H/2, cz+R+45), hull,  Enum.Material.SmoothPlastic)
-	part(m,"TunnelOpen", Vector3.new(90, 100, 92),     CFrame.new(cx, cy+52,       cz+R+45), dark,  Enum.Material.SmoothPlastic)
-	part(m,"TunnelNeon", Vector3.new(94, 8,   4),      CFrame.new(cx, cy+104,      cz+R),    red,   Enum.Material.Neon)
-	-- Gate towers
-	part(m,"GT_L", Vector3.new(44,150,44), CFrame.new(cx-130, cy+75, gz), panel, Enum.Material.Metal)
-	part(m,"GT_R", Vector3.new(44,150,44), CFrame.new(cx+130, cy+75, gz), panel, Enum.Material.Metal)
-	part(m,"GT_LN",Vector3.new(54, 14,54), CFrame.new(cx-130, cy+155,gz), red,   Enum.Material.Neon)
-	part(m,"GT_RN",Vector3.new(54, 14,54), CFrame.new(cx+130, cy+155,gz), red,   Enum.Material.Neon)
-	neonLight(m, Vector3.new(cx-130, cy+165, gz), Color3.fromRGB(255,0,0), 70, 2)
-	neonLight(m, Vector3.new(cx+130, cy+165, gz), Color3.fromRGB(255,0,0), 70, 2)
+	-- ── EXTERIOR: HEXAGONAL TERMINAL PLATFORM (depan entrance) ────
+	-- Berdasarkan referensi: lantai hexagonal grey, struktur teal
+	local EX = cx; local EZ = cz + R + 120
+	part(m,"ExtPlatBase",  Vector3.new(500,4,300),  CFrame.new(EX,cy+2,EZ+50), grey,  Enum.Material.SmoothPlastic)
+	part(m,"ExtPlatTrim",  Vector3.new(510,2,310),  CFrame.new(EX,cy,EZ+50),   black, Enum.Material.Metal)
+	-- Hexagonal tiles (rotated squares approximation)
+	for ix = -1, 1 do for iz = -1, 1 do
+		part(m,"HexTile"..ix..iz, Vector3.new(80,1,80),
+			CFrame.new(EX+ix*120,cy+4,EZ+50+iz*90)*CFrame.Angles(0,math.pi/4,0), dark, Enum.Material.Metal)
+	end end
 
-	-- ── WARP DEVICE (center) ──────────────────────────────────────
-	part(m,"WarpPed",  Vector3.new(70,  8, 70),  CFrame.new(cx, cy+4,  cz), panel, Enum.Material.Metal)
-	part(m,"WarpRing", Vector3.new(85,  3, 85),  CFrame.new(cx, cy+8,  cz), red,   Enum.Material.Neon)
-	part(m,"WarpPillar",Vector3.new(16,28,16),   CFrame.new(cx, cy+18, cz), panel, Enum.Material.Metal)
-	part(m,"WarpCore", Vector3.new(26, 12, 26),  CFrame.new(cx, cy+30, cz), red,   Enum.Material.Neon)
-	neonLight(m, Vector3.new(cx, cy+40, cz), Color3.fromRGB(255,0,0), 100, 4)
+	-- ── EXTERIOR: MECHANICAL TOWERS (teal, khas Accretia) ─────────
+	-- Tower besar kiri dengan arm melengkung dan orb (persis referensi)
+	local function accTower(name, tx, tz, h)
+		part(m,name.."Base",  Vector3.new(40,h,40),    CFrame.new(tx,cy+h/2,tz),         teal,  Enum.Material.SmoothPlastic)
+		part(m,name.."Cap",   Vector3.new(50,12,50),   CFrame.new(tx,cy+h+6,tz),          black, Enum.Material.Metal)
+		part(m,name.."Orb",   Vector3.new(44,44,44),   CFrame.new(tx,cy+h+36,tz),         teal,  Enum.Material.SmoothPlastic)
+		part(m,name.."OrbNeon",Vector3.new(20,20,20),  CFrame.new(tx,cy+h+36,tz),         red,   Enum.Material.Neon)
+		-- Arm horizontal
+		part(m,name.."Arm",   Vector3.new(120,14,14),  CFrame.new(tx+70,cy+h-20,tz),      teal,  Enum.Material.SmoothPlastic)
+		part(m,name.."ArmTip",Vector3.new(22,50,22),   CFrame.new(tx+132,cy+h-8,tz),      teal,  Enum.Material.SmoothPlastic)
+		-- Blade fins (ciri khas struktur Accretia di referensi)
+		part(m,name.."Fin1",  Vector3.new(14,100,8),   CFrame.new(tx-22,cy+h-24,tz),      teal,  Enum.Material.SmoothPlastic)
+		part(m,name.."Fin2",  Vector3.new(14,80,8),    CFrame.new(tx+22,cy+h-18,tz),      teal,  Enum.Material.SmoothPlastic)
+		neonLight(m, Vector3.new(tx,cy+h+50,tz), Color3.fromRGB(0,200,255), 55, 1.5)
+	end
+	accTower("TowerL", cx-280, EZ+50, 130)
+	accTower("TowerR", cx+280, EZ+50, 110)
 
-	-- ── AREA NPC (sepanjang dinding dalam) ────────────────────────
-	-- Weapon shop (barat)
-	local wsCF = CFrame.new(cx-(R-110), cy+7, cz) * CFrame.Angles(0, math.pi/2, 0)
-	part(m,"WS_Counter",Vector3.new(140,14,44), wsCF, panel, Enum.Material.Metal)
-	part(m,"WS_Sign",   Vector3.new(90, 18, 4),
-		CFrame.new(cx-(R-110), cy+30, cz+70), red, Enum.Material.Neon)
+	-- ── ENTRANCE TUNNEL (dome → exterior) ─────────────────────────
+	part(m,"TunBody", Vector3.new(200,WALL_H,100),
+		CFrame.new(cx,cy+WALL_H/2,cz+R+50), beige, Enum.Material.SmoothPlastic)
+	part(m,"TunOpen", Vector3.new(100,110,102),
+		CFrame.new(cx,cy+57,cz+R+50),       black, Enum.Material.SmoothPlastic)
+	part(m,"TunNeon", Vector3.new(104,8,4),
+		CFrame.new(cx,cy+114,cz+R),         red,   Enum.Material.Neon)
 
-	-- Armor shop (timur)
-	local asCF = CFrame.new(cx+(R-110), cy+7, cz) * CFrame.Angles(0, math.pi/2, 0)
-	part(m,"AS_Counter",Vector3.new(140,14,44), asCF, panel, Enum.Material.Metal)
-	part(m,"AS_Sign",   Vector3.new(90, 18, 4),
-		CFrame.new(cx+(R-110), cy+30, cz-70), red, Enum.Material.Neon)
+	-- ── WARP TERMINAL (center dome, hexagonal platform) ───────────
+	part(m,"WarpPlat",  Vector3.new(90,6,90),  CFrame.new(cx,cy+5,cz)*CFrame.Angles(0,math.pi/4,0), dark, Enum.Material.Metal)
+	part(m,"WarpRim",   Vector3.new(100,3,100), CFrame.new(cx,cy+3,cz)*CFrame.Angles(0,math.pi/4,0), red,  Enum.Material.Neon)
+	part(m,"WarpPillar",Vector3.new(18,30,18),  CFrame.new(cx,cy+20,cz),                             dark, Enum.Material.Metal)
+	part(m,"WarpCore",  Vector3.new(28,14,28),  CFrame.new(cx,cy+32,cz),                             red,  Enum.Material.Neon)
+	neonLight(m, Vector3.new(cx,cy+40,cz), Color3.fromRGB(255,0,0), 110, 5)
 
-	-- Quest NPC area (utara)
-	part(m,"QA_Desk",Vector3.new(120,14,44), CFrame.new(cx, cy+7, cz-(R-110)), panel, Enum.Material.Metal)
-	part(m,"QA_Sign",Vector3.new(90, 18, 4), CFrame.new(cx+70, cy+30, cz-(R-110)), red, Enum.Material.Neon)
+	-- ── NPC COUNTERS (sepanjang dinding dalam, 3 sisi) ────────────
+	for i, npc in ipairs({
+		{cx-(R-120), cy+7, cz-60,  0          },  -- barat
+		{cx+(R-120), cy+7, cz+60,  0          },  -- timur
+		{cx-60,      cy+7, cz-(R-120), math.pi/2}, -- utara
+	}) do
+		local cf = CFrame.new(npc[1],npc[2],npc[3]) * CFrame.Angles(0,npc[4],0)
+		part(m,"NPC"..i.."Counter", Vector3.new(130,16,40), cf, dark,  Enum.Material.Metal)
+		part(m,"NPC"..i.."Sign",    Vector3.new(80,14,4),
+			CFrame.new(npc[1],npc[2]+22,npc[3]), red, Enum.Material.Neon)
+	end
 
-	-- ── BENDERA (di entrance tunnel) ─────────────────────────────
-	part(m,"Flag1Pole",Vector3.new(4,90,4),  CFrame.new(cx-200, cy+47, cz+R+20), hull, Enum.Material.Metal)
-	part(m,"Flag1",    Vector3.new(55,30,3), CFrame.new(cx-172, cy+88, cz+R+20), red,  Enum.Material.SmoothPlastic)
-	part(m,"Flag2Pole",Vector3.new(4,90,4),  CFrame.new(cx+200, cy+47, cz+R+20), hull, Enum.Material.Metal)
-	part(m,"Flag2",    Vector3.new(55,30,3), CFrame.new(cx+228, cy+88, cz+R+20), red,  Enum.Material.SmoothPlastic)
-
-	spawnLoc(raceSpawnFolder, "Accretia_Spawn", Vector3.new(cx, cy+8, cz+300), "Bright red")
+	spawnLoc(raceSpawnFolder, "Accretia_Spawn", Vector3.new(cx,cy+8,cz+200), "Bright red")
 end
 buildAccretiaHQ(); task.wait()
 
