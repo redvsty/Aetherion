@@ -351,35 +351,110 @@ print("[MapGen] 4/10 Bellato HQ...")
 local function buildBellatoHQ()
 	local m = Instance.new("Model"); m.Name = "BellatoHQ"; m.Parent = worldFolder
 	local cx, cy, cz = -5500, GROUND_Y, 500
+
+	-- RF Classic Bellato: benteng baja industrial, blue neon, fortress militaristic
+	local steel = "Dark stone grey"
 	local stone = "Medium stone grey"
-	local red   = "Bright red"
+	local floor = "Sand yellow"
+	local blue  = "Bright blue"
+	local dark  = "Really black"
+	local warm  = "Warm greige"
 
-	-- Tembok luar
-	part(m,"Plaza",   Vector3.new(700,4,700),   CFrame.new(cx,cy+2,cz),     "Warm greige", Enum.Material.SmoothPlastic)
-	part(m,"WallN",   Vector3.new(700,26,14),   CFrame.new(cx,cy+15,cz-350), stone, Enum.Material.SmoothPlastic)
-	part(m,"WallE",   Vector3.new(14,26,700),   CFrame.new(cx+350,cy+15,cz), stone, Enum.Material.SmoothPlastic)
-	part(m,"WallW",   Vector3.new(14,26,700),   CFrame.new(cx-350,cy+15,cz), stone, Enum.Material.SmoothPlastic)
-	part(m,"WallSL",  Vector3.new(280,26,14),   CFrame.new(cx-210,cy+15,cz+350), stone, Enum.Material.SmoothPlastic)
-	part(m,"WallSR",  Vector3.new(280,26,14),   CFrame.new(cx+210,cy+15,cz+350), stone, Enum.Material.SmoothPlastic)
-	-- Menara sudut
-	for _, c in ipairs({ {-350,-350},{350,-350},{-350,350},{350,350} }) do
-		part(m,"Tower",Vector3.new(34,52,34),CFrame.new(cx+c[1],cy+28,cz+c[2]),stone,Enum.Material.SmoothPlastic)
-		part(m,"TTop", Vector3.new(40,16,40),CFrame.new(cx+c[1],cy+60,cz+c[2]),red,  Enum.Material.SmoothPlastic)
+	-- ── PLAZA & GRID ──────────────────────────────────────────────
+	part(m,"Plaza",    Vector3.new(900,4,900),  CFrame.new(cx,cy+2,cz), floor, Enum.Material.SmoothPlastic)
+	part(m,"PlazaRim", Vector3.new(910,2,910),  CFrame.new(cx,cy,cz),   dark,  Enum.Material.Metal)
+	for i = -3, 3 do
+		part(m,"GX"..i, Vector3.new(900,1,5), CFrame.new(cx,cy+4,cz+i*110), dark, Enum.Material.Metal)
+		part(m,"GZ"..i, Vector3.new(5,1,900), CFrame.new(cx+i*110,cy+4,cz), dark, Enum.Material.Metal)
 	end
-	-- Gerbang
-	part(m,"GateL",   Vector3.new(13,34,13),  CFrame.new(cx-50,cy+19,cz+350), stone, Enum.Material.SmoothPlastic)
-	part(m,"GateR",   Vector3.new(13,34,13),  CFrame.new(cx+50,cy+19,cz+350), stone, Enum.Material.SmoothPlastic)
-	part(m,"GateArch",Vector3.new(100,9,14),  CFrame.new(cx,cy+36,cz+350),    stone, Enum.Material.SmoothPlastic)
-	-- Barracks
-	part(m,"Barracks",Vector3.new(200,42,150),CFrame.new(cx,cy+23,cz-100),    stone, Enum.Material.SmoothPlastic)
-	wedge(m,"RoofL",  Vector3.new(150,24,100),CFrame.new(cx-50,cy+56,cz-100)*CFrame.Angles(0,math.pi/2,0),red)
-	wedge(m,"RoofR",  Vector3.new(150,24,100),CFrame.new(cx+50,cy+56,cz-100)*CFrame.Angles(0,-math.pi/2,0),red)
-	-- Bendera
-	part(m,"FlagPole",Vector3.new(3,62,3),    CFrame.new(cx,cy+33,cz-230),    "Light grey", Enum.Material.Metal)
-	part(m,"Flag",    Vector3.new(30,20,2),   CFrame.new(cx+16,cy+63,cz-230), "Bright blue",Enum.Material.SmoothPlastic)
-	neonLight(m, Vector3.new(cx,cy+70,cz), Color3.fromRGB(100,149,255), 120, 1.2)
 
-	spawnLoc(raceSpawnFolder, "Bellato_Spawn", Vector3.new(cx,cy+2,cz+100), "Bright blue")
+	-- ── TEMBOK BENTENG ────────────────────────────────────────────
+	local WR = 440; local WH = 42
+	part(m,"WallN",  Vector3.new(900, WH, 22), CFrame.new(cx,cy+WH/2,cz-WR),   stone, Enum.Material.SmoothPlastic)
+	part(m,"WallE",  Vector3.new(22, WH, 900), CFrame.new(cx+WR,cy+WH/2,cz),   stone, Enum.Material.SmoothPlastic)
+	part(m,"WallW",  Vector3.new(22, WH, 900), CFrame.new(cx-WR,cy+WH/2,cz),   stone, Enum.Material.SmoothPlastic)
+	part(m,"WallSL", Vector3.new(330,WH,22),   CFrame.new(cx-285,cy+WH/2,cz+WR), stone, Enum.Material.SmoothPlastic)
+	part(m,"WallSR", Vector3.new(330,WH,22),   CFrame.new(cx+285,cy+WH/2,cz+WR), stone, Enum.Material.SmoothPlastic)
+	-- Parapet + blue neon strip atas tembok
+	part(m,"ParaN", Vector3.new(910,6,10), CFrame.new(cx,cy+WH+3,cz-WR),   stone, Enum.Material.SmoothPlastic)
+	part(m,"ParaE", Vector3.new(10,6,910), CFrame.new(cx+WR,cy+WH+3,cz),   stone, Enum.Material.SmoothPlastic)
+	part(m,"ParaW", Vector3.new(10,6,910), CFrame.new(cx-WR,cy+WH+3,cz),   stone, Enum.Material.SmoothPlastic)
+	part(m,"NeonN", Vector3.new(880,5,5),  CFrame.new(cx,cy+WH+8,cz-WR),   blue,  Enum.Material.Neon)
+	part(m,"NeonE", Vector3.new(5,5,880),  CFrame.new(cx+WR,cy+WH+8,cz),   blue,  Enum.Material.Neon)
+	part(m,"NeonW", Vector3.new(5,5,880),  CFrame.new(cx-WR,cy+WH+8,cz),   blue,  Enum.Material.Neon)
+
+	-- ── MENARA SUDUT (4 corner towers) ────────────────────────────
+	for _, c in ipairs({{-WR,-WR},{WR,-WR},{-WR,WR},{WR,WR}}) do
+		local tx, tz = cx+c[1], cz+c[2]
+		part(m,"CT_"..tx,   Vector3.new(50,WH+45,50), CFrame.new(tx,cy+(WH+45)/2,tz), stone, Enum.Material.SmoothPlastic)
+		part(m,"CTCap_"..tx,Vector3.new(60,14,60),    CFrame.new(tx,cy+WH+52,tz),     steel, Enum.Material.Metal)
+		part(m,"CTNeon_"..tx,Vector3.new(64,8,64),    CFrame.new(tx,cy+WH+62,tz),     blue,  Enum.Material.Neon)
+		neonLight(m, Vector3.new(tx,cy+WH+74,tz), Color3.fromRGB(100,160,255), 60, 2)
+	end
+
+	-- ── GERBANG SELATAN ────────────────────────────────────────────
+	local GZ = cz + WR
+	part(m,"GateL",    Vector3.new(18,68,18),  CFrame.new(cx-85,cy+35,GZ),  steel, Enum.Material.Metal)
+	part(m,"GateR",    Vector3.new(18,68,18),  CFrame.new(cx+85,cy+35,GZ),  steel, Enum.Material.Metal)
+	part(m,"GateArch", Vector3.new(170,14,22), CFrame.new(cx,cy+72,GZ),     steel, Enum.Material.Metal)
+	part(m,"GateNeon", Vector3.new(174,6,6),   CFrame.new(cx,cy+80,GZ),     blue,  Enum.Material.Neon)
+	part(m,"GTL",      Vector3.new(34,WH+50,34), CFrame.new(cx-116,cy+(WH+50)/2,GZ), stone, Enum.Material.SmoothPlastic)
+	part(m,"GTR",      Vector3.new(34,WH+50,34), CFrame.new(cx+116,cy+(WH+50)/2,GZ), stone, Enum.Material.SmoothPlastic)
+
+	-- ── MAU HANGAR (bangunan utama Bellato — docking robot MAU) ───
+	local HX, HZ = cx, cz - 160
+	part(m,"HanBase",    Vector3.new(320,4,240),   CFrame.new(HX,cy+3,HZ),       steel, Enum.Material.Metal)
+	part(m,"HanBody",    Vector3.new(300,100,220),  CFrame.new(HX,cy+52,HZ),      stone, Enum.Material.SmoothPlastic)
+	part(m,"HanDoor",    Vector3.new(180,80,8),     CFrame.new(HX,cy+42,HZ+114),  dark,  Enum.Material.Metal)
+	part(m,"HanDoorNeon",Vector3.new(184,6,8),      CFrame.new(HX,cy+86,HZ+114),  blue,  Enum.Material.Neon)
+	part(m,"HanRoof",    Vector3.new(300,10,220),   CFrame.new(HX,cy+107,HZ),     steel, Enum.Material.Metal)
+	for _, ox in ipairs({-130,0,130}) do
+		part(m,"HanPil"..ox, Vector3.new(20,100,20), CFrame.new(HX+ox,cy+52,HZ+114), steel, Enum.Material.Metal)
+	end
+	for _, ix in ipairs({-1,1}) do
+		part(m,"Vent"..ix,    Vector3.new(60,22,60), CFrame.new(HX+ix*90,cy+118,HZ), steel, Enum.Material.Metal)
+		part(m,"VentNeon"..ix,Vector3.new(70,6,70),  CFrame.new(HX+ix*90,cy+132,HZ), blue,  Enum.Material.Neon)
+	end
+	part(m,"HanNeonL",Vector3.new(6,90,6), CFrame.new(HX-150,cy+52,HZ), blue, Enum.Material.Neon)
+	part(m,"HanNeonR",Vector3.new(6,90,6), CFrame.new(HX+150,cy+52,HZ), blue, Enum.Material.Neon)
+	neonLight(m, Vector3.new(HX,cy+132,HZ), Color3.fromRGB(100,160,255), 180, 2)
+
+	-- ── COMMAND TOWER (pusat komando) ─────────────────────────────
+	local TX, TZ = cx, cz - 10
+	part(m,"CmdBase",     Vector3.new(80,6,80),    CFrame.new(TX,cy+4,TZ),   steel, Enum.Material.Metal)
+	part(m,"CmdBody",     Vector3.new(60,120,60),  CFrame.new(TX,cy+64,TZ),  stone, Enum.Material.SmoothPlastic)
+	part(m,"CmdBridge",   Vector3.new(100,20,100), CFrame.new(TX,cy+130,TZ), steel, Enum.Material.Metal)
+	part(m,"CmdTop",      Vector3.new(50,30,50),   CFrame.new(TX,cy+155,TZ), stone, Enum.Material.SmoothPlastic)
+	part(m,"CmdAntenna",  Vector3.new(8,50,8),     CFrame.new(TX,cy+185,TZ), steel, Enum.Material.Metal)
+	part(m,"CmdNeonRing", Vector3.new(110,8,110),  CFrame.new(TX,cy+128,TZ), blue,  Enum.Material.Neon)
+	neonLight(m, Vector3.new(TX,cy+212,TZ), Color3.fromRGB(100,160,255), 130, 3)
+
+	-- ── BARRACKS TIMUR & BARAT ─────────────────────────────────────
+	for _, sx in ipairs({-260, 260}) do
+		local bx = cx + sx
+		part(m,"Bar"..sx,   Vector3.new(130,44,180),   CFrame.new(bx,cy+24,cz+80),    warm,  Enum.Material.SmoothPlastic)
+		wedge(m,"BRoof"..sx,Vector3.new(180,22,65),    CFrame.new(bx,cy+56,cz+80)*CFrame.Angles(0,sx>0 and math.pi or 0,0), stone)
+		part(m,"BNeon"..sx, Vector3.new(6,6,170),      CFrame.new(bx+(sx>0 and 65 or -65),cy+8,cz+80), blue, Enum.Material.Neon)
+	end
+
+	-- ── NPC COUNTERS ──────────────────────────────────────────────
+	part(m,"NPCArmory",  Vector3.new(110,16,40), CFrame.new(cx-280,cy+9,cz+220),  steel, Enum.Material.Metal)
+	part(m,"NPCASign",   Vector3.new(70,14,5),   CFrame.new(cx-280,cy+26,cz+202), blue,  Enum.Material.Neon)
+	part(m,"NPCSmith",   Vector3.new(110,16,40), CFrame.new(cx+280,cy+9,cz+220),  steel, Enum.Material.Metal)
+	part(m,"NPCSSign",   Vector3.new(70,14,5),   CFrame.new(cx+280,cy+26,cz+202), blue,  Enum.Material.Neon)
+
+	-- ── WARP DEVICE ───────────────────────────────────────────────
+	part(m,"WarpPlat",   Vector3.new(80,6,80),  CFrame.new(cx,cy+4,cz+220)*CFrame.Angles(0,math.pi/4,0), steel, Enum.Material.Metal)
+	part(m,"WarpRim",    Vector3.new(90,3,90),  CFrame.new(cx,cy+2,cz+220)*CFrame.Angles(0,math.pi/4,0), blue,  Enum.Material.Neon)
+	part(m,"WarpPillar", Vector3.new(16,28,16), CFrame.new(cx,cy+17,cz+220),                              steel, Enum.Material.Metal)
+	part(m,"WarpCore",   Vector3.new(24,12,24), CFrame.new(cx,cy+30,cz+220),                              blue,  Enum.Material.Neon)
+	neonLight(m, Vector3.new(cx,cy+38,cz+220), Color3.fromRGB(100,160,255), 90, 4)
+
+	-- ── BENDERA ────────────────────────────────────────────────────
+	part(m,"FlagPole", Vector3.new(3,50,3),  CFrame.new(TX,cy+190,TZ),    "Light grey", Enum.Material.Metal)
+	part(m,"Flag",     Vector3.new(40,26,3), CFrame.new(TX+22,cy+215,TZ), "Bright blue", Enum.Material.SmoothPlastic)
+
+	spawnLoc(raceSpawnFolder, "Bellato_Spawn", Vector3.new(cx,cy+2,cz+250), "Bright blue")
 end
 buildBellatoHQ(); task.wait()
 
@@ -591,40 +666,100 @@ print("[MapGen] 6/10 Cora HQ...")
 local function buildCoraHQ()
 	local m = Instance.new("Model"); m.Name = "CoraHQ"; m.Parent = worldFolder
 	local cx, cy, cz = 0, GROUND_Y, 5800
-	local white = "White"
-	local cyan  = "Cyan"
 
-	part(m,"Plaza",Vector3.new(700,4,700), CFrame.new(cx,cy+2,cz), "White", Enum.Material.SmoothPlastic)
-	-- Tembok melingkar 8 segmen
-	local wr = 340; local seg = 8
-	for i=1,seg do
-		local a = (i/seg)*math.pi*2
-		local nx,nz = cx+math.cos(a)*wr, cz+math.sin(a)*wr
-		if i~=7 then -- gap di selatan (arah Novus)
-			part(m,"Wall"..i,Vector3.new(14,24,(2*math.pi*wr/seg)+2),
-				CFrame.new(nx,cy+14,nz)*CFrame.Angles(0,a+math.pi/2,0),
-				white,Enum.Material.SmoothPlastic)
-		end
-	end
-	-- Menara kristal
-	for i=1,4 do
-		local a = ((i-1)/4)*math.pi*2+math.pi/4
-		local tx,tz = cx+math.cos(a)*355,cz+math.sin(a)*355
-		part(m,"Tower"..i,Vector3.new(24,58,24),CFrame.new(tx,cy+31,tz),white,Enum.Material.SmoothPlastic)
-		part(m,"Crystal"..i,Vector3.new(16,32,16),CFrame.new(tx,cy+76,tz),cyan,Enum.Material.Neon)
-		neonLight(m,Vector3.new(tx,cy+90,tz),Color3.fromRGB(0,255,220),60,1.5)
-	end
-	-- Kuil
-	part(m,"Temple",Vector3.new(170,52,170),CFrame.new(cx,cy+28,cz-70),white,Enum.Material.SmoothPlastic)
-	part(m,"Dome",  Vector3.new(150,64,150),CFrame.new(cx,cy+84,cz-70),cyan, Enum.Material.Neon)
-	for _,dx in ipairs({-65,-22,22,65}) do
-		part(m,"Col"..dx,Vector3.new(11,56,11),CFrame.new(cx+dx,cy+30,cz+16),white,Enum.Material.SmoothPlastic)
-	end
-	part(m,"FlagPole",Vector3.new(3,62,3),CFrame.new(cx,cy+33,cz-205),"Light grey",Enum.Material.Metal)
-	part(m,"Flag",Vector3.new(30,20,2),CFrame.new(cx+16,cy+63,cz-205),"Bright green",Enum.Material.SmoothPlastic)
-	neonLight(m,Vector3.new(cx,cy+80,cz),Color3.fromRGB(0,255,180),130,1.2)
+	-- RF Classic Cora: sacred/mystical, white marble, crystal spires, Animus altar
+	local white  = "White"
+	local stone  = "Light stone grey"
+	local cyan   = "Cyan"
+	local dark   = "Dark stone grey"
 
-	spawnLoc(raceSpawnFolder,"Cora_Spawn",Vector3.new(cx,cy+2,cz-100),"Bright green")
+	-- ── PLAZA SACRED (circular ground) ────────────────────────────
+	part(m,"Plaza",    Vector3.new(900,4,900),  CFrame.new(cx,cy+2,cz), stone, Enum.Material.SmoothPlastic)
+	part(m,"PlazaRim", Vector3.new(910,2,910),  CFrame.new(cx,cy,cz),   dark,  Enum.Material.Metal)
+	-- Sacred circles di lantai
+	local NF = 16
+	for i = 0, NF-1 do
+		local a = (i/NF)*math.pi*2
+		local r1 = 380
+		part(m,"RO"..i, Vector3.new(2*r1*math.sin(math.pi/NF)+1,2,10),
+			CFrame.new(cx+r1*math.sin(a),cy+4,cz+r1*math.cos(a))*CFrame.Angles(0,-a,0), cyan, Enum.Material.Neon)
+		local r2 = 200
+		part(m,"RI"..i, Vector3.new(2*r2*math.sin(math.pi/NF)+1,2,6),
+			CFrame.new(cx+r2*math.sin(a),cy+4,cz+r2*math.cos(a))*CFrame.Angles(0,-a,0), cyan, Enum.Material.Neon)
+	end
+
+	-- ── TEMBOK LUAR (N=12 polygon, gap di selatan) ────────────────
+	local WR = 440
+	for i = 0, 10 do   -- 11 dari 12 segmen (1 gap = entrance selatan)
+		local a = ((i+0.5)/12)*math.pi*2
+		local sl = 2*WR*math.sin(math.pi/12)+2
+		part(m,"Wall"..i, Vector3.new(sl,30,18),
+			CFrame.new(cx+WR*math.sin(a),cy+17,cz+WR*math.cos(a))*CFrame.Angles(0,-a,0), white, Enum.Material.SmoothPlastic)
+		part(m,"WallN"..i,Vector3.new(sl-4,6,8),
+			CFrame.new(cx+WR*math.sin(a),cy+34,cz+WR*math.cos(a))*CFrame.Angles(0,-a,0), cyan, Enum.Material.Neon)
+	end
+
+	-- ── CRYSTAL SPIRES (8 menara melingkar, alternating height) ───
+	for i = 0, 7 do
+		local a  = (i/8)*math.pi*2
+		local tx = cx + math.cos(a)*WR
+		local tz = cz + math.sin(a)*WR
+		local h  = (i%2==0) and 110 or 78
+		part(m,"SpireBase"..i,  Vector3.new(28,h,28),      CFrame.new(tx,cy+h/2,tz),        white, Enum.Material.SmoothPlastic)
+		part(m,"SpireMid"..i,   Vector3.new(18,h*0.7,18),  CFrame.new(tx,cy+h+h*0.35,tz),   cyan,  Enum.Material.Neon)
+		part(m,"SpireTip"..i,   Vector3.new(10,h*0.45,10), CFrame.new(tx,cy+h+h*0.88,tz),   cyan,  Enum.Material.Neon)
+		neonLight(m, Vector3.new(tx,cy+h*2+5,tz), Color3.fromRGB(0,255,200), 50, 1.5)
+	end
+
+	-- ── MAIN TEMPLE (kuil utama bertingkat) ───────────────────────
+	local TX, TZ = cx, cz - 80
+	part(m,"TPlat1", Vector3.new(280,10,280), CFrame.new(TX,cy+6,TZ),  white, Enum.Material.SmoothPlastic)
+	part(m,"TPlat2", Vector3.new(220,10,220), CFrame.new(TX,cy+16,TZ), stone, Enum.Material.SmoothPlastic)
+	part(m,"TPlat3", Vector3.new(160,10,160), CFrame.new(TX,cy+26,TZ), white, Enum.Material.SmoothPlastic)
+	-- Kolom marble 4 di depan
+	for _, ox in ipairs({-65,-22,22,65}) do
+		part(m,"TCol"..ox,    Vector3.new(14,70,14), CFrame.new(TX+ox,cy+61,TZ+82),  white, Enum.Material.SmoothPlastic)
+		part(m,"TColCap"..ox, Vector3.new(18,8,18),  CFrame.new(TX+ox,cy+98,TZ+82),  cyan,  Enum.Material.Neon)
+	end
+	-- Body temple
+	part(m,"TBody",    Vector3.new(170,60,160), CFrame.new(TX,cy+57,TZ),   white, Enum.Material.SmoothPlastic)
+	-- Dome glowing cyan
+	part(m,"TDomeRim", Vector3.new(170,10,170), CFrame.new(TX,cy+88,TZ),   white, Enum.Material.SmoothPlastic)
+	part(m,"TDome",    Vector3.new(148,72,148), CFrame.new(TX,cy+113,TZ),  cyan,  Enum.Material.Neon)
+	-- Menara mini di 4 sudut temple
+	for _, c in ipairs({{-80,-80},{80,-80},{-80,80},{80,80}}) do
+		part(m,"MT"..c[1], Vector3.new(20,60,20), CFrame.new(TX+c[1],cy+39,TZ+c[2]),  white, Enum.Material.SmoothPlastic)
+		part(m,"MC"..c[1], Vector3.new(14,40,14), CFrame.new(TX+c[1],cy+89,TZ+c[2]), cyan,  Enum.Material.Neon)
+	end
+	neonLight(m, Vector3.new(TX,cy+162,TZ), Color3.fromRGB(0,255,200), 200, 2)
+
+	-- ── ANIMUS ALTAR (floating crystal ring — ciri khas Cora RF) ──
+	local AX, AZ = cx, cz + 120
+	part(m,"AltarBase", Vector3.new(100,6,100),  CFrame.new(AX,cy+4,AZ),  white, Enum.Material.SmoothPlastic)
+	part(m,"AltarRim",  Vector3.new(110,3,110),  CFrame.new(AX,cy+2,AZ),  cyan,  Enum.Material.Neon)
+	part(m,"AltarPed",  Vector3.new(28,24,28),   CFrame.new(AX,cy+16,AZ), white, Enum.Material.SmoothPlastic)
+	-- Ring melayang (12 segmen)
+	local AN = 12; local AR = 55
+	for i = 0, AN-1 do
+		local a = (i/AN)*math.pi*2
+		part(m,"Ani"..i, Vector3.new(2*AR*math.sin(math.pi/AN)+1,8,12),
+			CFrame.new(AX+AR*math.sin(a),cy+56,AZ+AR*math.cos(a))*CFrame.Angles(0,-a,0), cyan, Enum.Material.Neon)
+	end
+	part(m,"AniCore",Vector3.new(28,48,28), CFrame.new(AX,cy+50,AZ),  cyan,  Enum.Material.Neon)
+	part(m,"AniGlow",Vector3.new(14,18,14), CFrame.new(AX,cy+67,AZ),  white, Enum.Material.Neon)
+	neonLight(m, Vector3.new(AX,cy+82,AZ), Color3.fromRGB(0,255,200), 150, 5)
+
+	-- ── NPC COUNTERS ──────────────────────────────────────────────
+	part(m,"Shop1",     Vector3.new(110,16,40), CFrame.new(cx-220,cy+9,cz+260),  white, Enum.Material.SmoothPlastic)
+	part(m,"Shop1Sign", Vector3.new(70,14,5),   CFrame.new(cx-220,cy+26,cz+242), cyan,  Enum.Material.Neon)
+	part(m,"Shop2",     Vector3.new(110,16,40), CFrame.new(cx+220,cy+9,cz+260),  white, Enum.Material.SmoothPlastic)
+	part(m,"Shop2Sign", Vector3.new(70,14,5),   CFrame.new(cx+220,cy+26,cz+242), cyan,  Enum.Material.Neon)
+
+	-- ── BENDERA ────────────────────────────────────────────────────
+	part(m,"FlagPole", Vector3.new(3,70,3),  CFrame.new(TX,cy+37,TZ-145),    "Light grey",  Enum.Material.Metal)
+	part(m,"Flag",     Vector3.new(40,26,3), CFrame.new(TX+22,cy+73,TZ-145), "Bright green",Enum.Material.SmoothPlastic)
+
+	spawnLoc(raceSpawnFolder,"Cora_Spawn",Vector3.new(cx,cy+2,cz+300),"Bright green")
 end
 buildCoraHQ(); task.wait()
 
