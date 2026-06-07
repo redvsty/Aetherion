@@ -391,41 +391,118 @@ print("[MapGen] 5/10 Accretia HQ...")
 local function buildAccretiaHQ()
 	local m = Instance.new("Model"); m.Name = "AccretiaHQ"; m.Parent = worldFolder
 	local cx, cy, cz = 5500, GROUND_Y, 500
-	local metal = "Dark stone grey"
-	local orange= "Bright orange"
+	local metal   = "Dark stone grey"
+	local panel   = "Medium stone grey"
+	local orange  = "Bright orange"
+	local red     = "Bright red"
+	local dark    = "Black"
 
-	part(m,"Plaza",  Vector3.new(700,4,700),  CFrame.new(cx,cy+2,cz),     "Sand green", Enum.Material.Metal)
-	-- Grid lines
-	for i=-2,2 do
-		part(m,"GX"..i,Vector3.new(700,1,5),CFrame.new(cx,cy+5,cz+i*120),metal,Enum.Material.Metal)
-		part(m,"GZ"..i,Vector3.new(5,1,700),CFrame.new(cx+i*120,cy+5,cz),metal,Enum.Material.Metal)
+	-- ── Ground plaza (1200×1200 dengan subdivisi panel) ──────────
+	part(m,"PlazaBase", Vector3.new(1200,6,1200), CFrame.new(cx,cy+3,cz), "Smoky grey", Enum.Material.Metal)
+	-- Panel grid (setiap 200 stud)
+	for i = -2, 2 do
+		part(m,"GridX"..i, Vector3.new(1200,1,4), CFrame.new(cx,cy+7,cz+i*200), dark, Enum.Material.Metal)
+		part(m,"GridZ"..i, Vector3.new(4,1,1200), CFrame.new(cx+i*200,cy+7,cz), dark, Enum.Material.Metal)
 	end
-	-- Tembok
-	part(m,"WallN",  Vector3.new(700,32,18), CFrame.new(cx,cy+18,cz-350),  metal, Enum.Material.Metal)
-	part(m,"WallE",  Vector3.new(18,32,700), CFrame.new(cx+350,cy+18,cz),  metal, Enum.Material.Metal)
-	part(m,"WallW",  Vector3.new(18,32,700), CFrame.new(cx-350,cy+18,cz),  metal, Enum.Material.Metal)
-	part(m,"WallSL", Vector3.new(280,32,18), CFrame.new(cx-210,cy+18,cz+350),metal,Enum.Material.Metal)
-	part(m,"WallSR", Vector3.new(280,32,18), CFrame.new(cx+210,cy+18,cz+350),metal,Enum.Material.Metal)
-	-- Menara
-	for _, c in ipairs({ {-350,-350},{350,-350},{-350,350},{350,350} }) do
-		part(m,"TBase",Vector3.new(44,44,44),CFrame.new(cx+c[1],cy+24,cz+c[2]),metal, Enum.Material.Metal)
-		part(m,"TTop", Vector3.new(32,26,32),CFrame.new(cx+c[1],cy+57,cz+c[2]),orange,Enum.Material.Neon)
-	end
-	-- Gerbang
-	part(m,"GateL",  Vector3.new(16,42,16), CFrame.new(cx-65,cy+23,cz+350), metal, Enum.Material.Metal)
-	part(m,"GateR",  Vector3.new(16,42,16), CFrame.new(cx+65,cy+23,cz+350), metal, Enum.Material.Metal)
-	part(m,"GateTop",Vector3.new(130,10,18),CFrame.new(cx,cy+44,cz+350),    metal, Enum.Material.Metal)
-	-- Command center
-	part(m,"CmdBase",Vector3.new(240,52,170),CFrame.new(cx,cy+28,cz-100),   metal, Enum.Material.Metal)
-	part(m,"CmdTop", Vector3.new(200,22,130),CFrame.new(cx,cy+63,cz-100),   orange,Enum.Material.Neon)
-	part(m,"Antenna",Vector3.new(4,55,4),   CFrame.new(cx,cy+85,cz-100),    "Sand green",Enum.Material.Metal)
-	part(m,"AntTop", Vector3.new(22,4,22),  CFrame.new(cx,cy+113,cz-100),   orange,Enum.Material.Neon)
-	-- Bendera
-	part(m,"FlagPole",Vector3.new(3,62,3),  CFrame.new(cx,cy+33,cz-270),    "Light grey",Enum.Material.Metal)
-	part(m,"Flag",   Vector3.new(30,20,2),  CFrame.new(cx+16,cy+63,cz-270), "Bright red",Enum.Material.SmoothPlastic)
-	neonLight(m, Vector3.new(cx,cy+80,cz), Color3.fromRGB(255,100,50), 120, 1.2)
+	-- Raised center platform
+	part(m,"Center",    Vector3.new(160,8,160),   CFrame.new(cx,cy+7,cz),      panel, Enum.Material.Metal)
+	part(m,"CenterRim", Vector3.new(180,3,180),   CFrame.new(cx,cy+5,cz),      dark,  Enum.Material.Metal)
 
-	spawnLoc(raceSpawnFolder, "Accretia_Spawn", Vector3.new(cx,cy+2,cz+100), "Bright red")
+	-- ── Perimeter wall (1200×1200, H=48) ─────────────────────────
+	local wt, wh = 20, 48
+	part(m,"WallN", Vector3.new(1200,wh,wt), CFrame.new(cx,cy+wh/2,cz-600),   metal, Enum.Material.Metal)
+	part(m,"WallS_L",Vector3.new(480,wh,wt), CFrame.new(cx-360,cy+wh/2,cz+600),metal,Enum.Material.Metal)
+	part(m,"WallS_R",Vector3.new(480,wh,wt), CFrame.new(cx+360,cy+wh/2,cz+600),metal,Enum.Material.Metal)
+	part(m,"WallE", Vector3.new(wt,wh,1200), CFrame.new(cx+600,cy+wh/2,cz),   metal, Enum.Material.Metal)
+	part(m,"WallW", Vector3.new(wt,wh,1200), CFrame.new(cx-600,cy+wh/2,cz),   metal, Enum.Material.Metal)
+	-- Wall accent strips (orange neon band)
+	part(m,"BandN", Vector3.new(1200,4,wt+1), CFrame.new(cx,cy+wh-6,cz-600),  orange,Enum.Material.Neon)
+	part(m,"BandE", Vector3.new(wt+1,4,1200), CFrame.new(cx+600,cy+wh-6,cz),  orange,Enum.Material.Neon)
+	part(m,"BandW", Vector3.new(wt+1,4,1200), CFrame.new(cx-600,cy+wh-6,cz),  orange,Enum.Material.Neon)
+	part(m,"BandSL",Vector3.new(480,4,wt+1),  CFrame.new(cx-360,cy+wh-6,cz+600),orange,Enum.Material.Neon)
+	part(m,"BandSR",Vector3.new(480,4,wt+1),  CFrame.new(cx+360,cy+wh-6,cz+600),orange,Enum.Material.Neon)
+
+	-- ── Corner towers (4 sudut, 3 tingkat) ────────────────────────
+	for i, c in ipairs({ {-600,-600},{600,-600},{-600,600},{600,600} }) do
+		local tx, tz = cx+c[1], cz+c[2]
+		part(m,"T"..i.."Base",  Vector3.new(70,60,70),  CFrame.new(tx,cy+30,tz),  metal,  Enum.Material.Metal)
+		part(m,"T"..i.."Mid",   Vector3.new(54,30,54),  CFrame.new(tx,cy+75,tz),  panel,  Enum.Material.Metal)
+		part(m,"T"..i.."Top",   Vector3.new(40,20,40),  CFrame.new(tx,cy+100,tz), orange, Enum.Material.Neon)
+		part(m,"T"..i.."Cap",   Vector3.new(30,6,30),   CFrame.new(tx,cy+113,tz), dark,   Enum.Material.Metal)
+		neonLight(m, Vector3.new(tx,cy+115,tz), Color3.fromRGB(255,100,30), 60, 2)
+	end
+
+	-- ── Main gate (selatan, tengah) ────────────────────────────────
+	part(m,"GateL",    Vector3.new(22,70,22),  CFrame.new(cx-120,cy+35,cz+600),  metal,  Enum.Material.Metal)
+	part(m,"GateR",    Vector3.new(22,70,22),  CFrame.new(cx+120,cy+35,cz+600),  metal,  Enum.Material.Metal)
+	part(m,"GateArch", Vector3.new(240,18,24), CFrame.new(cx,cy+69,cz+600),      metal,  Enum.Material.Metal)
+	part(m,"GateEnergy",Vector3.new(200,50,4), CFrame.new(cx,cy+43,cz+600),      orange, Enum.Material.Neon)
+	part(m,"GateTop",  Vector3.new(260,8,26),  CFrame.new(cx,cy+79,cz+600),      orange, Enum.Material.Neon)
+	-- Gate towers flanking
+	part(m,"GateTL",   Vector3.new(30,90,30),  CFrame.new(cx-155,cy+45,cz+600),  metal,  Enum.Material.Metal)
+	part(m,"GateTR",   Vector3.new(30,90,30),  CFrame.new(cx+155,cy+45,cz+600),  metal,  Enum.Material.Metal)
+
+	-- ── Command Tower (utara, center) ─────────────────────────────
+	local kx, kz = cx, cz - 350
+	part(m,"CmdFoundation", Vector3.new(300,10,220),  CFrame.new(kx,cy+5,kz),        panel,  Enum.Material.Metal)
+	part(m,"CmdBase1",      Vector3.new(260,70,180),  CFrame.new(kx,cy+40,kz),       metal,  Enum.Material.Metal)
+	part(m,"CmdBase2",      Vector3.new(200,50,140),  CFrame.new(kx,cy+95,kz),       panel,  Enum.Material.Metal)
+	part(m,"CmdSpire",      Vector3.new(100,80,100),  CFrame.new(kx,cy+160,kz),      metal,  Enum.Material.Metal)
+	part(m,"CmdSpireTop",   Vector3.new(60,40,60),    CFrame.new(kx,cy+220,kz),      orange, Enum.Material.Neon)
+	part(m,"CmdAntenna",    Vector3.new(6,70,6),      CFrame.new(kx,cy+260,kz),      panel,  Enum.Material.Metal)
+	part(m,"CmdAntTop",     Vector3.new(28,6,28),     CFrame.new(kx,cy+296,kz),      orange, Enum.Material.Neon)
+	-- Command windows (orange neon bands)
+	part(m,"CmdWinN",  Vector3.new(240,10,4),  CFrame.new(kx,cy+60,kz-92),  orange, Enum.Material.Neon)
+	part(m,"CmdWinS",  Vector3.new(240,10,4),  CFrame.new(kx,cy+60,kz+92),  orange, Enum.Material.Neon)
+	part(m,"CmdWinE",  Vector3.new(4,10,160),  CFrame.new(kx+132,cy+60,kz), orange, Enum.Material.Neon)
+	part(m,"CmdWinW",  Vector3.new(4,10,160),  CFrame.new(kx-132,cy+60,kz), orange, Enum.Material.Neon)
+	neonLight(m, Vector3.new(kx,cy+300,kz), Color3.fromRGB(255,80,0), 200, 2.5)
+
+	-- ── Barak barat (perumahan tentara) ───────────────────────────
+	local bx = cx - 380
+	part(m,"BarrackBase", Vector3.new(180,8,260),   CFrame.new(bx,cy+4,cz+80),  panel,  Enum.Material.Metal)
+	part(m,"BarrackBody", Vector3.new(160,55,240),  CFrame.new(bx,cy+34,cz+80), metal,  Enum.Material.Metal)
+	part(m,"BarrackRoof", Vector3.new(170,10,250),  CFrame.new(bx,cy+64,cz+80), dark,   Enum.Material.Metal)
+	part(m,"BarrackWin",  Vector3.new(130,8,4),     CFrame.new(bx,cy+30,cz-40), orange, Enum.Material.Neon)
+	part(m,"BarrackWin2", Vector3.new(130,8,4),     CFrame.new(bx,cy+30,cz+200),orange, Enum.Material.Neon)
+
+	-- ── Weapon shop timur ─────────────────────────────────────────
+	local sx = cx + 380
+	part(m,"ShopBase",  Vector3.new(160,8,200),   CFrame.new(sx,cy+4,cz+80),    panel,  Enum.Material.Metal)
+	part(m,"ShopBody",  Vector3.new(140,48,180),  CFrame.new(sx,cy+28,cz+80),   metal,  Enum.Material.Metal)
+	part(m,"ShopRoof",  Vector3.new(150,8,190),   CFrame.new(sx,cy+56,cz+80),   dark,   Enum.Material.Metal)
+	part(m,"ShopSign",  Vector3.new(100,14,4),    CFrame.new(sx,cy+42,cz-10),   orange, Enum.Material.Neon)
+	-- Front awning
+	part(m,"ShopAwning",Vector3.new(140,5,40),    CFrame.new(sx,cy+52,cz-110),  dark,   Enum.Material.Metal)
+
+	-- ── Landing pad (sudut timur laut) ────────────────────────────
+	local lx, lz = cx+400, cz-300
+	part(m,"PadBase",   Vector3.new(220,6,220),   CFrame.new(lx,cy+3,lz),        dark,   Enum.Material.Metal)
+	part(m,"PadRim",    Vector3.new(240,4,240),   CFrame.new(lx,cy+1,lz),        orange, Enum.Material.Neon)
+	-- Stripes
+	for i = -1, 1 do
+		part(m,"PadS"..i,Vector3.new(160,1,16),  CFrame.new(lx,cy+7,lz+i*60),   orange, Enum.Material.Neon)
+	end
+
+	-- ── Warp device (center plaza) ────────────────────────────────
+	part(m,"WarpBase",  Vector3.new(40,6,40),    CFrame.new(cx,cy+10,cz),       dark,   Enum.Material.Metal)
+	part(m,"WarpRing",  Vector3.new(50,2,50),    CFrame.new(cx,cy+13,cz),       orange, Enum.Material.Neon)
+	part(m,"WarpCore",  Vector3.new(10,20,10),   CFrame.new(cx,cy+20,cz),       orange, Enum.Material.Neon)
+	neonLight(m, Vector3.new(cx,cy+35,cz), Color3.fromRGB(255,120,0), 80, 3)
+
+	-- ── Lampu jalan di plaza ──────────────────────────────────────
+	for _, p in ipairs({ {-250,200},{250,200},{-250,-200},{250,-200},{0,350},{0,-350} }) do
+		local lp = part(m,"Lamp", Vector3.new(4,36,4), CFrame.new(cx+p[1],cy+18,cz+p[2]), panel, Enum.Material.Metal)
+		neonLight(m, Vector3.new(cx+p[1],cy+38,cz+p[2]), Color3.fromRGB(255,140,60), 50, 1.5)
+	end
+
+	-- ── Bendera Accretia (depan command tower) ────────────────────
+	part(m,"FlagPole", Vector3.new(4,80,4),    CFrame.new(cx-80,cy+42,kz+120), panel, Enum.Material.Metal)
+	part(m,"Flag",     Vector3.new(50,28,3),   CFrame.new(cx-56,cy+78,kz+120),  red,  Enum.Material.SmoothPlastic)
+	part(m,"FlagPole2",Vector3.new(4,80,4),    CFrame.new(cx+80,cy+42,kz+120), panel, Enum.Material.Metal)
+	part(m,"Flag2",    Vector3.new(50,28,3),   CFrame.new(cx+104,cy+78,kz+120), red,  Enum.Material.SmoothPlastic)
+
+	spawnLoc(raceSpawnFolder, "Accretia_Spawn", Vector3.new(cx,cy+8,cz+200), "Bright red")
 end
 buildAccretiaHQ(); task.wait()
 
