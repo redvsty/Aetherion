@@ -244,7 +244,7 @@ local hills = {
 	{-2000, 0, -2400, 110}, {2000, 0, -2600, 110},
 }
 for _, h in ipairs(hills) do
-	ball(h[1], 0, h[2], h[3] or 120, Enum.Material.Rock)
+	ball(h[1], h[2], h[3], h[4] or 120, Enum.Material.Rock)
 	task.wait()
 end
 
