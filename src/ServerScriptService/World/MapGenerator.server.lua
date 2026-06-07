@@ -352,109 +352,163 @@ local function buildBellatoHQ()
 	local m = Instance.new("Model"); m.Name = "BellatoHQ"; m.Parent = worldFolder
 	local cx, cy, cz = -5500, GROUND_Y, 500
 
-	-- RF Classic Bellato: benteng baja industrial, blue neon, fortress militaristic
-	local steel = "Dark stone grey"
-	local stone = "Medium stone grey"
+	-- RF Classic Bellato: MERAH TUA industrial fortress, neon biru (faction color)
+	local red   = "Bright red"        -- bangunan utama (sesuai screenshot RF)
+	local dkred = "Dark red"          -- aksen gelap
+	local steel = "Dark stone grey"   -- metal detail
 	local floor = "Sand yellow"
-	local blue  = "Bright blue"
+	local blue  = "Bright blue"       -- neon faction Bellato
 	local dark  = "Really black"
-	local warm  = "Warm greige"
 
 	-- ── PLAZA & GRID ──────────────────────────────────────────────
-	part(m,"Plaza",    Vector3.new(900,4,900),  CFrame.new(cx,cy+2,cz), floor, Enum.Material.SmoothPlastic)
-	part(m,"PlazaRim", Vector3.new(910,2,910),  CFrame.new(cx,cy,cz),   dark,  Enum.Material.Metal)
+	part(m,"Plaza",    Vector3.new(900,4,900), CFrame.new(cx,cy+2,cz), floor, Enum.Material.SmoothPlastic)
+	part(m,"PlazaRim", Vector3.new(910,2,910), CFrame.new(cx,cy,cz),   dark,  Enum.Material.Metal)
 	for i = -3, 3 do
 		part(m,"GX"..i, Vector3.new(900,1,5), CFrame.new(cx,cy+4,cz+i*110), dark, Enum.Material.Metal)
 		part(m,"GZ"..i, Vector3.new(5,1,900), CFrame.new(cx+i*110,cy+4,cz), dark, Enum.Material.Metal)
 	end
 
-	-- ── TEMBOK BENTENG ────────────────────────────────────────────
+	-- ── TEMBOK BENTENG (MERAH) ─────────────────────────────────────
 	local WR = 440; local WH = 42
-	part(m,"WallN",  Vector3.new(900, WH, 22), CFrame.new(cx,cy+WH/2,cz-WR),   stone, Enum.Material.SmoothPlastic)
-	part(m,"WallE",  Vector3.new(22, WH, 900), CFrame.new(cx+WR,cy+WH/2,cz),   stone, Enum.Material.SmoothPlastic)
-	part(m,"WallW",  Vector3.new(22, WH, 900), CFrame.new(cx-WR,cy+WH/2,cz),   stone, Enum.Material.SmoothPlastic)
-	part(m,"WallSL", Vector3.new(330,WH,22),   CFrame.new(cx-285,cy+WH/2,cz+WR), stone, Enum.Material.SmoothPlastic)
-	part(m,"WallSR", Vector3.new(330,WH,22),   CFrame.new(cx+285,cy+WH/2,cz+WR), stone, Enum.Material.SmoothPlastic)
-	-- Parapet + blue neon strip atas tembok
-	part(m,"ParaN", Vector3.new(910,6,10), CFrame.new(cx,cy+WH+3,cz-WR),   stone, Enum.Material.SmoothPlastic)
-	part(m,"ParaE", Vector3.new(10,6,910), CFrame.new(cx+WR,cy+WH+3,cz),   stone, Enum.Material.SmoothPlastic)
-	part(m,"ParaW", Vector3.new(10,6,910), CFrame.new(cx-WR,cy+WH+3,cz),   stone, Enum.Material.SmoothPlastic)
-	part(m,"NeonN", Vector3.new(880,5,5),  CFrame.new(cx,cy+WH+8,cz-WR),   blue,  Enum.Material.Neon)
-	part(m,"NeonE", Vector3.new(5,5,880),  CFrame.new(cx+WR,cy+WH+8,cz),   blue,  Enum.Material.Neon)
-	part(m,"NeonW", Vector3.new(5,5,880),  CFrame.new(cx-WR,cy+WH+8,cz),   blue,  Enum.Material.Neon)
+	part(m,"WallN",  Vector3.new(900, WH, 22), CFrame.new(cx,cy+WH/2,cz-WR),     red, Enum.Material.SmoothPlastic)
+	part(m,"WallE",  Vector3.new(22, WH, 900), CFrame.new(cx+WR,cy+WH/2,cz),     red, Enum.Material.SmoothPlastic)
+	part(m,"WallW",  Vector3.new(22, WH, 900), CFrame.new(cx-WR,cy+WH/2,cz),     red, Enum.Material.SmoothPlastic)
+	part(m,"WallSL", Vector3.new(330,WH,22),   CFrame.new(cx-285,cy+WH/2,cz+WR), red, Enum.Material.SmoothPlastic)
+	part(m,"WallSR", Vector3.new(330,WH,22),   CFrame.new(cx+285,cy+WH/2,cz+WR), red, Enum.Material.SmoothPlastic)
+	part(m,"ParaN",  Vector3.new(910,6,10),  CFrame.new(cx,cy+WH+3,cz-WR),   dkred, Enum.Material.SmoothPlastic)
+	part(m,"ParaE",  Vector3.new(10,6,910),  CFrame.new(cx+WR,cy+WH+3,cz),   dkred, Enum.Material.SmoothPlastic)
+	part(m,"ParaW",  Vector3.new(10,6,910),  CFrame.new(cx-WR,cy+WH+3,cz),   dkred, Enum.Material.SmoothPlastic)
+	part(m,"NeonN",  Vector3.new(880,5,5),   CFrame.new(cx,cy+WH+8,cz-WR),   blue,  Enum.Material.Neon)
+	part(m,"NeonE",  Vector3.new(5,5,880),   CFrame.new(cx+WR,cy+WH+8,cz),   blue,  Enum.Material.Neon)
+	part(m,"NeonW",  Vector3.new(5,5,880),   CFrame.new(cx-WR,cy+WH+8,cz),   blue,  Enum.Material.Neon)
 
-	-- ── MENARA SUDUT (4 corner towers) ────────────────────────────
+	-- ── MENARA SUDUT ──────────────────────────────────────────────
 	for _, c in ipairs({{-WR,-WR},{WR,-WR},{-WR,WR},{WR,WR}}) do
 		local tx, tz = cx+c[1], cz+c[2]
-		part(m,"CT_"..tx,   Vector3.new(50,WH+45,50), CFrame.new(tx,cy+(WH+45)/2,tz), stone, Enum.Material.SmoothPlastic)
-		part(m,"CTCap_"..tx,Vector3.new(60,14,60),    CFrame.new(tx,cy+WH+52,tz),     steel, Enum.Material.Metal)
-		part(m,"CTNeon_"..tx,Vector3.new(64,8,64),    CFrame.new(tx,cy+WH+62,tz),     blue,  Enum.Material.Neon)
-		neonLight(m, Vector3.new(tx,cy+WH+74,tz), Color3.fromRGB(100,160,255), 60, 2)
+		part(m,"CT"..tx,   Vector3.new(50,WH+48,50), CFrame.new(tx,cy+(WH+48)/2,tz), red,   Enum.Material.SmoothPlastic)
+		part(m,"CTCap"..tx,Vector3.new(62,14,62),    CFrame.new(tx,cy+WH+55,tz),     dkred, Enum.Material.Metal)
+		part(m,"CTNeon"..tx,Vector3.new(66,8,66),    CFrame.new(tx,cy+WH+65,tz),     blue,  Enum.Material.Neon)
+		neonLight(m, Vector3.new(tx,cy+WH+76,tz), Color3.fromRGB(100,160,255), 60, 2)
 	end
 
 	-- ── GERBANG SELATAN ────────────────────────────────────────────
 	local GZ = cz + WR
-	part(m,"GateL",    Vector3.new(18,68,18),  CFrame.new(cx-85,cy+35,GZ),  steel, Enum.Material.Metal)
-	part(m,"GateR",    Vector3.new(18,68,18),  CFrame.new(cx+85,cy+35,GZ),  steel, Enum.Material.Metal)
-	part(m,"GateArch", Vector3.new(170,14,22), CFrame.new(cx,cy+72,GZ),     steel, Enum.Material.Metal)
-	part(m,"GateNeon", Vector3.new(174,6,6),   CFrame.new(cx,cy+80,GZ),     blue,  Enum.Material.Neon)
-	part(m,"GTL",      Vector3.new(34,WH+50,34), CFrame.new(cx-116,cy+(WH+50)/2,GZ), stone, Enum.Material.SmoothPlastic)
-	part(m,"GTR",      Vector3.new(34,WH+50,34), CFrame.new(cx+116,cy+(WH+50)/2,GZ), stone, Enum.Material.SmoothPlastic)
+	part(m,"GateL",   Vector3.new(18,70,18),  CFrame.new(cx-85,cy+36,GZ),  dkred, Enum.Material.Metal)
+	part(m,"GateR",   Vector3.new(18,70,18),  CFrame.new(cx+85,cy+36,GZ),  dkred, Enum.Material.Metal)
+	part(m,"GateArch",Vector3.new(170,14,22), CFrame.new(cx,cy+74,GZ),     steel, Enum.Material.Metal)
+	part(m,"GateNeon",Vector3.new(174,6,6),   CFrame.new(cx,cy+82,GZ),     blue,  Enum.Material.Neon)
+	part(m,"GTL",     Vector3.new(36,WH+52,36), CFrame.new(cx-116,cy+(WH+52)/2,GZ), red, Enum.Material.SmoothPlastic)
+	part(m,"GTR",     Vector3.new(36,WH+52,36), CFrame.new(cx+116,cy+(WH+52)/2,GZ), red, Enum.Material.SmoothPlastic)
 
-	-- ── MAU HANGAR (bangunan utama Bellato — docking robot MAU) ───
+	-- ── MAU HANGAR (merah + pintu biru) ──────────────────────────
 	local HX, HZ = cx, cz - 160
-	part(m,"HanBase",    Vector3.new(320,4,240),   CFrame.new(HX,cy+3,HZ),       steel, Enum.Material.Metal)
-	part(m,"HanBody",    Vector3.new(300,100,220),  CFrame.new(HX,cy+52,HZ),      stone, Enum.Material.SmoothPlastic)
-	part(m,"HanDoor",    Vector3.new(180,80,8),     CFrame.new(HX,cy+42,HZ+114),  dark,  Enum.Material.Metal)
-	part(m,"HanDoorNeon",Vector3.new(184,6,8),      CFrame.new(HX,cy+86,HZ+114),  blue,  Enum.Material.Neon)
-	part(m,"HanRoof",    Vector3.new(300,10,220),   CFrame.new(HX,cy+107,HZ),     steel, Enum.Material.Metal)
+	part(m,"HanBase",    Vector3.new(320,4,240),  CFrame.new(HX,cy+3,HZ),       steel, Enum.Material.Metal)
+	part(m,"HanBody",    Vector3.new(300,100,220), CFrame.new(HX,cy+52,HZ),      red,   Enum.Material.SmoothPlastic)
+	part(m,"HanDoor",    Vector3.new(180,80,8),    CFrame.new(HX,cy+42,HZ+114),  dark,  Enum.Material.Metal)
+	part(m,"HanDoorNeon",Vector3.new(184,6,8),     CFrame.new(HX,cy+86,HZ+114),  blue,  Enum.Material.Neon)
+	part(m,"HanRoof",    Vector3.new(300,10,220),  CFrame.new(HX,cy+107,HZ),     dkred, Enum.Material.Metal)
 	for _, ox in ipairs({-130,0,130}) do
-		part(m,"HanPil"..ox, Vector3.new(20,100,20), CFrame.new(HX+ox,cy+52,HZ+114), steel, Enum.Material.Metal)
+		part(m,"HanPil"..ox,  Vector3.new(20,100,20), CFrame.new(HX+ox,cy+52,HZ+114), steel, Enum.Material.Metal)
 	end
 	for _, ix in ipairs({-1,1}) do
-		part(m,"Vent"..ix,    Vector3.new(60,22,60), CFrame.new(HX+ix*90,cy+118,HZ), steel, Enum.Material.Metal)
-		part(m,"VentNeon"..ix,Vector3.new(70,6,70),  CFrame.new(HX+ix*90,cy+132,HZ), blue,  Enum.Material.Neon)
+		part(m,"Vent"..ix,    Vector3.new(60,22,60), CFrame.new(HX+ix*90,cy+118,HZ), dkred, Enum.Material.Metal)
+		part(m,"VentN"..ix,   Vector3.new(70,6,70),  CFrame.new(HX+ix*90,cy+132,HZ), blue,  Enum.Material.Neon)
 	end
-	part(m,"HanNeonL",Vector3.new(6,90,6), CFrame.new(HX-150,cy+52,HZ), blue, Enum.Material.Neon)
-	part(m,"HanNeonR",Vector3.new(6,90,6), CFrame.new(HX+150,cy+52,HZ), blue, Enum.Material.Neon)
+	-- Pipa industrial spanning (khas Bellato HQ dari screenshot)
+	part(m,"Pipe1", Vector3.new(6,6,500),  CFrame.new(HX-120,cy+115,HZ+60)*CFrame.Angles(0,0,0), steel, Enum.Material.Metal)
+	part(m,"Pipe2", Vector3.new(6,6,500),  CFrame.new(HX+120,cy+115,HZ+60)*CFrame.Angles(0,0,0), steel, Enum.Material.Metal)
 	neonLight(m, Vector3.new(HX,cy+132,HZ), Color3.fromRGB(100,160,255), 180, 2)
 
-	-- ── COMMAND TOWER (pusat komando) ─────────────────────────────
+	-- ── COMMAND TOWER ─────────────────────────────────────────────
 	local TX, TZ = cx, cz - 10
-	part(m,"CmdBase",     Vector3.new(80,6,80),    CFrame.new(TX,cy+4,TZ),   steel, Enum.Material.Metal)
-	part(m,"CmdBody",     Vector3.new(60,120,60),  CFrame.new(TX,cy+64,TZ),  stone, Enum.Material.SmoothPlastic)
-	part(m,"CmdBridge",   Vector3.new(100,20,100), CFrame.new(TX,cy+130,TZ), steel, Enum.Material.Metal)
-	part(m,"CmdTop",      Vector3.new(50,30,50),   CFrame.new(TX,cy+155,TZ), stone, Enum.Material.SmoothPlastic)
-	part(m,"CmdAntenna",  Vector3.new(8,50,8),     CFrame.new(TX,cy+185,TZ), steel, Enum.Material.Metal)
-	part(m,"CmdNeonRing", Vector3.new(110,8,110),  CFrame.new(TX,cy+128,TZ), blue,  Enum.Material.Neon)
+	part(m,"CmdBase",    Vector3.new(80,6,80),    CFrame.new(TX,cy+4,TZ),   steel, Enum.Material.Metal)
+	part(m,"CmdBody",    Vector3.new(60,120,60),  CFrame.new(TX,cy+64,TZ),  red,   Enum.Material.SmoothPlastic)
+	part(m,"CmdBridge",  Vector3.new(100,20,100), CFrame.new(TX,cy+130,TZ), dkred, Enum.Material.Metal)
+	part(m,"CmdTop",     Vector3.new(50,30,50),   CFrame.new(TX,cy+155,TZ), red,   Enum.Material.SmoothPlastic)
+	part(m,"CmdAntenna", Vector3.new(8,50,8),     CFrame.new(TX,cy+185,TZ), steel, Enum.Material.Metal)
+	part(m,"CmdNeon",    Vector3.new(110,8,110),  CFrame.new(TX,cy+128,TZ), blue,  Enum.Material.Neon)
 	neonLight(m, Vector3.new(TX,cy+212,TZ), Color3.fromRGB(100,160,255), 130, 3)
 
-	-- ── BARRACKS TIMUR & BARAT ─────────────────────────────────────
-	for _, sx in ipairs({-260, 260}) do
-		local bx = cx + sx
-		part(m,"Bar"..sx,   Vector3.new(130,44,180),   CFrame.new(bx,cy+24,cz+80),    warm,  Enum.Material.SmoothPlastic)
-		wedge(m,"BRoof"..sx,Vector3.new(180,22,65),    CFrame.new(bx,cy+56,cz+80)*CFrame.Angles(0,sx>0 and math.pi or 0,0), stone)
-		part(m,"BNeon"..sx, Vector3.new(6,6,170),      CFrame.new(bx+(sx>0 and 65 or -65),cy+8,cz+80), blue, Enum.Material.Neon)
+	-- ── BARRACKS TIMUR & BARAT ────────────────────────────────────
+	for _, sx in ipairs({-260,260}) do
+		local bx = cx+sx
+		part(m,"Bar"..sx,  Vector3.new(130,44,180), CFrame.new(bx,cy+24,cz+80),  red,   Enum.Material.SmoothPlastic)
+		wedge(m,"BRoof"..sx,Vector3.new(180,22,65), CFrame.new(bx,cy+56,cz+80)*CFrame.Angles(0,sx>0 and math.pi or 0,0), dkred)
+		part(m,"BNeon"..sx,Vector3.new(6,6,170),    CFrame.new(bx+(sx>0 and 65 or -65),cy+8,cz+80), blue, Enum.Material.Neon)
 	end
 
-	-- ── NPC COUNTERS ──────────────────────────────────────────────
-	part(m,"NPCArmory",  Vector3.new(110,16,40), CFrame.new(cx-280,cy+9,cz+220),  steel, Enum.Material.Metal)
-	part(m,"NPCASign",   Vector3.new(70,14,5),   CFrame.new(cx-280,cy+26,cz+202), blue,  Enum.Material.Neon)
-	part(m,"NPCSmith",   Vector3.new(110,16,40), CFrame.new(cx+280,cy+9,cz+220),  steel, Enum.Material.Metal)
-	part(m,"NPCSSign",   Vector3.new(70,14,5),   CFrame.new(cx+280,cy+26,cz+202), blue,  Enum.Material.Neon)
+	-- ── NPC MARKET (RF Classic: deretan stall di tengah plaza) ───
+	-- Stall Bellato: red body + blue sign
+	local function bStall(name, px, pz, rotY, signCol)
+		local bCF = CFrame.new(px, cy, pz) * CFrame.Angles(0, rotY, 0)
+		part(m, name.."Base", Vector3.new(62,4,50),  bCF*CFrame.new(0,3,0),   dkred, Enum.Material.Metal)
+		part(m, name.."Desk", Vector3.new(62,16,34), bCF*CFrame.new(0,12,0),  red,   Enum.Material.SmoothPlastic)
+		part(m, name.."Top",  Vector3.new(62,3,34),  bCF*CFrame.new(0,21,0),  dkred, Enum.Material.Metal)
+		part(m, name.."Back", Vector3.new(62,34,5),  bCF*CFrame.new(0,30,-22), dark,  Enum.Material.SmoothPlastic)
+		part(m, name.."Sign", Vector3.new(48,22,4),  bCF*CFrame.new(0,30,-22), signCol, Enum.Material.Neon)
+	end
+	-- Terminal penting (Race Manager, Guild Manager, Hero, Committee)
+	local function bTerminal(name, px, pz, rotY)
+		local bCF = CFrame.new(px, cy, pz) * CFrame.Angles(0, rotY, 0)
+		part(m, name.."Plat", Vector3.new(85,6,85),  bCF*CFrame.new(0,3,0),   steel, Enum.Material.Metal)
+		part(m, name.."Desk", Vector3.new(78,22,40), bCF*CFrame.new(0,14,0),  red,   Enum.Material.SmoothPlastic)
+		part(m, name.."DTop", Vector3.new(78,4,40),  bCF*CFrame.new(0,26,0),  blue,  Enum.Material.Neon)
+		part(m, name.."Back", Vector3.new(85,68,8),  bCF*CFrame.new(0,44,-30), dkred, Enum.Material.SmoothPlastic)
+		part(m, name.."Scr",  Vector3.new(68,48,5),  bCF*CFrame.new(0,50,-30), blue,  Enum.Material.Neon)
+		part(m, name.."PilL", Vector3.new(8,76,8),   bCF*CFrame.new(-44,40,-30), steel, Enum.Material.Metal)
+		part(m, name.."PilR", Vector3.new(8,76,8),   bCF*CFrame.new( 44,40,-30), steel, Enum.Material.Metal)
+		part(m, name.."Hdr",  Vector3.new(105,8,10), bCF*CFrame.new(0,82,-30), blue,  Enum.Material.Neon)
+		neonLight(m, (bCF*CFrame.new(0,86,-20)).Position, Color3.fromRGB(100,160,255), 40, 1.5)
+	end
 
-	-- ── WARP DEVICE ───────────────────────────────────────────────
-	part(m,"WarpPlat",   Vector3.new(80,6,80),  CFrame.new(cx,cy+4,cz+220)*CFrame.Angles(0,math.pi/4,0), steel, Enum.Material.Metal)
-	part(m,"WarpRim",    Vector3.new(90,3,90),  CFrame.new(cx,cy+2,cz+220)*CFrame.Angles(0,math.pi/4,0), blue,  Enum.Material.Neon)
-	part(m,"WarpPillar", Vector3.new(16,28,16), CFrame.new(cx,cy+17,cz+220),                              steel, Enum.Material.Metal)
-	part(m,"WarpCore",   Vector3.new(24,12,24), CFrame.new(cx,cy+30,cz+220),                              blue,  Enum.Material.Neon)
-	neonLight(m, Vector3.new(cx,cy+38,cz+220), Color3.fromRGB(100,160,255), 90, 4)
+	-- Row Resmi (utara market, menghadap selatan = rotY π):
+	-- Eldon Carter (Race Mgr), Jhan Chrisdoff (Committee), Sly (Aide), Bo Hammer (Hero)
+	bTerminal("BT_RaceM",  cx-150, cz+85,  math.pi)
+	bTerminal("BT_Comm",   cx-50,  cz+85,  math.pi)
+	bTerminal("BT_Aide",   cx+50,  cz+85,  math.pi)
+	bTerminal("BT_Hero",   cx+150, cz+85,  math.pi)
+
+	-- Row 1 vendor (cz+180, menghadap utara = rotY 0):
+	-- Madison (Wpn), Green Eye (Wpn), Monk (Wpn), Mahr Van (Wpn), Honakan (Force)
+	local row1 = {cx-280, cx-160, cx-40, cx+80, cx+200}
+	for i, px in ipairs(row1) do bStall("BR1_"..i, px, cz+180, 0, blue) end
+
+	-- Row 2 vendor (cz+270, menghadap utara = rotY 0):
+	-- Armor vendors (3), Charlie (Potion), El Luna (Potion)
+	local row2 = {cx-260, cx-120, cx+20, cx+150, cx+280}
+	for i, px in ipairs(row2) do
+		local sc = (i <= 3) and dkred or blue
+		bStall("BR2_"..i, px, cz+270, 0, sc)
+	end
+
+	-- Row 3 vendor (cz+360, menghadap utara = rotY 0):
+	-- Jun (Tool), Rockwell (Projectile), Asehan (Kartella), Durba (Ore), T-310 (Talic)
+	local row3 = {cx-280, cx-150, cx-20, cx+110, cx+240}
+	for i, px in ipairs(row3) do bStall("BR3_"..i, px, cz+360, 0, blue) end
+
+	-- Stall admin di sisi (Tatar CoinExchange, Isaac Mineral, Readies Messenger, Captured Keeper, Paybox Miti)
+	bStall("BAdmin1", cx-360, cz+180, math.pi/2, blue)   -- facing east
+	bStall("BAdmin2", cx-360, cz+270, math.pi/2, dkred)
+	bStall("BAdmin3", cx+360, cz+180, -math.pi/2, blue)  -- facing west
+	bStall("BAdmin4", cx+360, cz+270, -math.pi/2, dkred)
+
+	-- Guild Manager (Rezzo Gihon) — di sisi timur, full terminal
+	bTerminal("BT_Guild", cx+360, cz+360, -math.pi/2)
+	-- Gatekeeper (Gapaeng Schirak) — di dekat pintu masuk
+	bStall("BGate", cx, cz+390, math.pi, blue)
+
+	-- ── WARP DEVICE (dekat gate, bukan di tengah market) ─────────
+	part(m,"WarpPlat",  Vector3.new(80,6,80),  CFrame.new(cx,cy+4,cz+395)*CFrame.Angles(0,math.pi/4,0), steel, Enum.Material.Metal)
+	part(m,"WarpRim",   Vector3.new(90,3,90),  CFrame.new(cx,cy+2,cz+395)*CFrame.Angles(0,math.pi/4,0), blue,  Enum.Material.Neon)
+	part(m,"WarpPil",   Vector3.new(16,28,16), CFrame.new(cx,cy+17,cz+395),                              steel, Enum.Material.Metal)
+	part(m,"WarpCore",  Vector3.new(24,12,24), CFrame.new(cx,cy+30,cz+395),                              blue,  Enum.Material.Neon)
+	neonLight(m, Vector3.new(cx,cy+38,cz+395), Color3.fromRGB(100,160,255), 90, 4)
 
 	-- ── BENDERA ────────────────────────────────────────────────────
-	part(m,"FlagPole", Vector3.new(3,50,3),  CFrame.new(TX,cy+190,TZ),    "Light grey", Enum.Material.Metal)
+	part(m,"FlagPole", Vector3.new(3,50,3),  CFrame.new(TX,cy+190,TZ),    "Light grey",  Enum.Material.Metal)
 	part(m,"Flag",     Vector3.new(40,26,3), CFrame.new(TX+22,cy+215,TZ), "Bright blue", Enum.Material.SmoothPlastic)
 
-	spawnLoc(raceSpawnFolder, "Bellato_Spawn", Vector3.new(cx,cy+2,cz+250), "Bright blue")
+	spawnLoc(raceSpawnFolder, "Bellato_Spawn", Vector3.new(cx,cy+2,cz+300), "Bright blue")
 end
 buildBellatoHQ(); task.wait()
 
@@ -642,47 +696,71 @@ local function buildAccretiaHQ()
 	part(m,"WarpCore",  Vector3.new(28,14,28),  CFrame.new(cx,cy+32,cz),                             red,  Enum.Material.Neon)
 	neonLight(m, Vector3.new(cx,cy+40,cz), Color3.fromRGB(255,0,0), 110, 5)
 
-	-- ── NPC TERMINALS (Accretia industrial style — 6 stasiun) ──────
-	-- Setiap terminal: platform hexagonal + desk teal + backdrop + screen + pilar neon
-	local NPC_R = R - 110  -- jarak dari center ke terminal (dalam dome)
+	-- ── NPC LAYOUT (RF Classic Accretia HQ — 26 NPCs) ────────────
+	local NPC_R  = R - 110   -- ring luar (dekat dinding) = 470
+	local NPC_R2 = 300        -- ring dalam
 
+	-- Terminal penting: platform hex + desk + backdrop + screen + pilar
 	local function npcTerminal(name, px, pz, rotY, screenCol)
-		local baseCF = CFrame.new(px, cy, pz) * CFrame.Angles(0, rotY, 0)
-		-- Platform hexagonal (rotated 45°)
-		part(m, name.."Plat",    Vector3.new(90,6,90),
-			baseCF*CFrame.Angles(0,math.pi/4,0)*CFrame.new(0,3,0),   dark, Enum.Material.Metal)
-		part(m, name.."PlatRim", Vector3.new(98,2,98),
-			baseCF*CFrame.Angles(0,math.pi/4,0)*CFrame.new(0,1,0),   teal, Enum.Material.Neon)
-		-- Terminal desk
-		part(m, name.."Desk",    Vector3.new(82,22,42), baseCF*CFrame.new(0,14,0),  dark, Enum.Material.Metal)
-		part(m, name.."DeskTop", Vector3.new(82,4,42),  baseCF*CFrame.new(0,26,0),  teal, Enum.Material.SmoothPlastic)
-		-- Backdrop panel (menempel ke dinding, di belakang desk)
-		part(m, name.."Back",    Vector3.new(90,72,8),  baseCF*CFrame.new(0,46,-30), dark, Enum.Material.SmoothPlastic)
-		-- Screen di backdrop (warna beda per NPC type)
-		part(m, name.."Screen",  Vector3.new(72,52,5),  baseCF*CFrame.new(0,52,-30), screenCol, Enum.Material.Neon)
-		-- Pilar kiri & kanan
-		part(m, name.."PilL",    Vector3.new(8,80,8),   baseCF*CFrame.new(-48,42,-30), dark, Enum.Material.Metal)
-		part(m, name.."PilR",    Vector3.new(8,80,8),   baseCF*CFrame.new( 48,42,-30), dark, Enum.Material.Metal)
-		part(m, name.."CapL",    Vector3.new(12,12,12), baseCF*CFrame.new(-48,86,-30), red,  Enum.Material.Neon)
-		part(m, name.."CapR",    Vector3.new(12,12,12), baseCF*CFrame.new( 48,86,-30), red,  Enum.Material.Neon)
-		-- Header bar atas backdrop
-		part(m, name.."Header",  Vector3.new(110,8,10), baseCF*CFrame.new(0,86,-30),  red,  Enum.Material.Neon)
-		-- NPC light
-		local lp = (baseCF*CFrame.new(0,90,-20)).Position
-		neonLight(m, lp, Color3.fromRGB(255,50,0), 40, 1.5)
+		local bCF = CFrame.new(px, cy, pz) * CFrame.Angles(0, rotY, 0)
+		part(m, name.."Plat",   Vector3.new(90,6,90),  bCF*CFrame.Angles(0,math.pi/4,0)*CFrame.new(0,3,0), dark, Enum.Material.Metal)
+		part(m, name.."PRim",   Vector3.new(98,2,98),  bCF*CFrame.Angles(0,math.pi/4,0)*CFrame.new(0,1,0), teal, Enum.Material.Neon)
+		part(m, name.."Desk",   Vector3.new(82,22,42), bCF*CFrame.new(0,14,0),  dark, Enum.Material.Metal)
+		part(m, name.."DTop",   Vector3.new(82,4,42),  bCF*CFrame.new(0,26,0),  teal, Enum.Material.SmoothPlastic)
+		part(m, name.."Back",   Vector3.new(90,72,8),  bCF*CFrame.new(0,46,-30), dark, Enum.Material.SmoothPlastic)
+		part(m, name.."Scr",    Vector3.new(72,52,5),  bCF*CFrame.new(0,52,-30), screenCol, Enum.Material.Neon)
+		part(m, name.."PilL",   Vector3.new(8,80,8),   bCF*CFrame.new(-48,42,-30), dark, Enum.Material.Metal)
+		part(m, name.."PilR",   Vector3.new(8,80,8),   bCF*CFrame.new( 48,42,-30), dark, Enum.Material.Metal)
+		part(m, name.."CapL",   Vector3.new(12,12,12), bCF*CFrame.new(-48,86,-30), red, Enum.Material.Neon)
+		part(m, name.."CapR",   Vector3.new(12,12,12), bCF*CFrame.new( 48,86,-30), red, Enum.Material.Neon)
+		part(m, name.."Hdr",    Vector3.new(110,8,10), bCF*CFrame.new(0,86,-30),  red, Enum.Material.Neon)
+		neonLight(m, (bCF*CFrame.new(0,90,-20)).Position, Color3.fromRGB(255,50,0), 40, 1.5)
 	end
 
-	-- UTARA: Quest NPC (kiri) + Faction Officer (kanan) → menghadap selatan (rotY=0)
-	npcTerminal("NPC_Quest",   cx-120, cz-NPC_R,  0,            "Bright red")
-	npcTerminal("NPC_Officer", cx+120, cz-NPC_R,  0,            teal)
+	-- Stall vendor sederhana: counter + sign
+	local function npcStall(name, px, pz, rotY, signCol)
+		local bCF = CFrame.new(px, cy, pz) * CFrame.Angles(0, rotY, 0)
+		part(m, name.."Base", Vector3.new(65,4,52),  bCF*CFrame.new(0,3,0),   dark, Enum.Material.Metal)
+		part(m, name.."Desk", Vector3.new(65,16,36), bCF*CFrame.new(0,12,0),  dark, Enum.Material.Metal)
+		part(m, name.."Top",  Vector3.new(65,3,36),  bCF*CFrame.new(0,21,0),  teal, Enum.Material.SmoothPlastic)
+		part(m, name.."Back", Vector3.new(65,36,5),  bCF*CFrame.new(0,30,-22), dark, Enum.Material.SmoothPlastic)
+		part(m, name.."Sign", Vector3.new(50,24,4),  bCF*CFrame.new(0,30,-22), signCol, Enum.Material.Neon)
+	end
 
-	-- TIMUR: Weapon Dealer + Armor Dealer → menghadap barat (rotY=-π/2)
-	npcTerminal("NPC_Weapon",  cx+NPC_R, cz-100, -math.pi/2,   "Bright red")
-	npcTerminal("NPC_Armor",   cx+NPC_R, cz+100, -math.pi/2,   teal)
+	-- ── UTARA: NPC Resmi (4 terminal, menghadap selatan = rotY 0) ──
+	-- Adjutant 001B (Race Manager), Tribune Rep, Aide, HERO Lothan
+	npcTerminal("RaceM",   cx-150, cz-NPC_R,  0, red)
+	npcTerminal("Tribune", cx-50,  cz-NPC_R,  0, teal)
+	npcTerminal("Aide",    cx+50,  cz-NPC_R,  0, teal)
+	npcTerminal("Hero",    cx+150, cz-NPC_R,  0, red)
 
-	-- BARAT: Item Shop + Upgrade Tech → menghadap timur (rotY=π/2)
-	npcTerminal("NPC_Items",   cx-NPC_R, cz-100,  math.pi/2,   "Bright red")
-	npcTerminal("NPC_Upgrade", cx-NPC_R, cz+100,  math.pi/2,   teal)
+	-- ── TIMUR: Weapon & Shield vendors (7 stall, menghadap barat) ──
+	-- AR12-32-2003, AR33-32-1173, AR24-33-2581, AR14-31-0496, AR11-18-6345, AR23-14-5513, AR31-11-9983
+	local EX = cx + NPC_R
+	for i, zo in ipairs({-300,-200,-100,0,100,200,300}) do
+		npcStall("WepE"..i, EX, cz+zo, -math.pi/2, red)
+	end
+
+	-- ── BARAT: Armor & Tool vendors (6 stall, menghadap timur) ─────
+	-- NC-5874, AR24-33-2601, NC-110110B, NC-854125, NC-69800, Gem Collector
+	local WX = cx - NPC_R
+	for i, zo in ipairs({-250,-150,-50,50,150,250}) do
+		npcStall("ArmW"..i, WX, cz+zo, math.pi/2, teal)
+	end
+
+	-- ── RING DALAM TIMUR: Admin (4 stall, menghadap barat) ─────────
+	-- NC-255 Guild Manager, NC-5985 Charger, NC-66333 Charger, AR22-54-5078 Rare Tools
+	for i, zo in ipairs({-80, 30, 140, 250}) do
+		local sc = (i==1) and teal or red
+		npcStall("AdmE"..i, cx+NPC_R2, cz+zo, -math.pi/2, sc)
+	end
+
+	-- ── RING DALAM BARAT: Misc vendors (5 stall, menghadap timur) ──
+	-- Talic Collector, Golden Pigs, Foreign Vendor (Crea Windom), Paybox (Miti), Captured Keeper
+	for i, zo in ipairs({-200,-100,0,100,200}) do
+		local sc = (i==3 or i==4) and teal or red
+		npcStall("MscW"..i, cx-NPC_R2, cz+zo, math.pi/2, sc)
+	end
 
 	spawnLoc(raceSpawnFolder, "Accretia_Spawn", Vector3.new(cx,cy+8,cz+200), "Bright red")
 end
@@ -779,17 +857,73 @@ local function buildCoraHQ()
 	part(m,"AniGlow",Vector3.new(14,18,14), CFrame.new(AX,cy+67,AZ),  white, Enum.Material.Neon)
 	neonLight(m, Vector3.new(AX,cy+82,AZ), Color3.fromRGB(0,255,200), 150, 5)
 
-	-- ── NPC COUNTERS ──────────────────────────────────────────────
-	part(m,"Shop1",     Vector3.new(110,16,40), CFrame.new(cx-220,cy+9,cz+260),  white, Enum.Material.SmoothPlastic)
-	part(m,"Shop1Sign", Vector3.new(70,14,5),   CFrame.new(cx-220,cy+26,cz+242), cyan,  Enum.Material.Neon)
-	part(m,"Shop2",     Vector3.new(110,16,40), CFrame.new(cx+220,cy+9,cz+260),  white, Enum.Material.SmoothPlastic)
-	part(m,"Shop2Sign", Vector3.new(70,14,5),   CFrame.new(cx+220,cy+26,cz+242), cyan,  Enum.Material.Neon)
+	-- ── NPC LAYOUT (RF Classic Cora HQ) ──────────────────────────
+	-- Stall Cora: white body + cyan sign (sacred/mystical style)
+	local function cStall(name, px, pz, rotY, signCol)
+		local bCF = CFrame.new(px, cy, pz) * CFrame.Angles(0, rotY, 0)
+		part(m, name.."Plat", Vector3.new(68,4,56),  bCF*CFrame.new(0,3,0),   stone, Enum.Material.SmoothPlastic)
+		part(m, name.."Desk", Vector3.new(68,16,38), bCF*CFrame.new(0,12,0),  white, Enum.Material.SmoothPlastic)
+		part(m, name.."Top",  Vector3.new(68,3,38),  bCF*CFrame.new(0,21,0),  stone, Enum.Material.SmoothPlastic)
+		part(m, name.."Back", Vector3.new(68,38,6),  bCF*CFrame.new(0,31,-24), stone, Enum.Material.SmoothPlastic)
+		part(m, name.."Sign", Vector3.new(52,26,4),  bCF*CFrame.new(0,31,-24), signCol, Enum.Material.Neon)
+	end
+	-- Terminal penting Cora (Race Manager, Guild Manager, Archbishop Rep, Hero)
+	local function cTerminal(name, px, pz, rotY)
+		local bCF = CFrame.new(px, cy, pz) * CFrame.Angles(0, rotY, 0)
+		part(m, name.."Plat", Vector3.new(88,6,88),  bCF*CFrame.new(0,3,0),   white, Enum.Material.SmoothPlastic)
+		part(m, name.."PRim", Vector3.new(96,2,96),  bCF*CFrame.new(0,1,0),   cyan,  Enum.Material.Neon)
+		part(m, name.."Desk", Vector3.new(80,22,40), bCF*CFrame.new(0,14,0),  white, Enum.Material.SmoothPlastic)
+		part(m, name.."DTop", Vector3.new(80,4,40),  bCF*CFrame.new(0,26,0),  cyan,  Enum.Material.Neon)
+		part(m, name.."Back", Vector3.new(88,70,8),  bCF*CFrame.new(0,45,-30), stone, Enum.Material.SmoothPlastic)
+		part(m, name.."Scr",  Vector3.new(70,50,5),  bCF*CFrame.new(0,51,-30), cyan,  Enum.Material.Neon)
+		part(m, name.."PilL", Vector3.new(8,78,8),   bCF*CFrame.new(-46,41,-30), stone, Enum.Material.SmoothPlastic)
+		part(m, name.."PilR", Vector3.new(8,78,8),   bCF*CFrame.new( 46,41,-30), stone, Enum.Material.SmoothPlastic)
+		part(m, name.."Hdr",  Vector3.new(108,6,10), bCF*CFrame.new(0,84,-30), cyan,  Enum.Material.Neon)
+		neonLight(m, (bCF*CFrame.new(0,88,-20)).Position, Color3.fromRGB(0,255,200), 40, 1.5)
+	end
+
+	-- Timur temple (menghadap barat = rotY -π/2):
+	-- Quiane Kahn (Race Manager), Stupor (Archbishop Rep), Aias (Guild Manager), Giz Kadasha (Hero)
+	cTerminal("CT_Race",  cx+240, cz-80, -math.pi/2)
+	cTerminal("CT_Arch",  cx+240, cz+20, -math.pi/2)
+	cTerminal("CT_Guild", cx+240, cz+120, -math.pi/2)
+	cTerminal("CT_Hero",  cx+240, cz+220, -math.pi/2)
+
+	-- Barat temple (menghadap timur = rotY π/2):
+	-- Weapon vendors (2 tier), Armor vendors (2 tier)
+	cStall("CW1", cx-240, cz-100, math.pi/2, cyan)
+	cStall("CW2", cx-240, cz,     math.pi/2, cyan)
+	cStall("CW3", cx-240, cz+100, math.pi/2, white)
+	cStall("CW4", cx-240, cz+200, math.pi/2, white)
+
+	-- Selatan (sepanjang z ≈ cz+280, menghadap utara = rotY π):
+	-- Potion vendor, Gem Collector, Ore vendor, Tool vendor, Talic Collector
+	for i, px in ipairs({cx-300, cx-180, cx-60, cx+60, cx+180, cx+300}) do
+		local sc = (i % 2 == 0) and cyan or white
+		cStall("CS"..i, px, cz+290, math.pi, sc)
+	end
+
+	-- Baris kedua selatan (cz+370):
+	-- Item vendors (Trust / Client quest + misc)
+	for i, px in ipairs({cx-240, cx-100, cx+40, cx+200}) do
+		cStall("CS2_"..i, px, cz+370, math.pi, (i<=2) and cyan or white)
+	end
+
+	-- Maku Luketa (Gatekeeper) — dekat entrance
+	cStall("CGate", cx, cz+410, math.pi, cyan)
+
+	-- ── WARP DEVICE ────────────────────────────────────────────────
+	part(m,"WarpPlat",  Vector3.new(80,6,80),  CFrame.new(cx,cy+4,cz+380)*CFrame.Angles(0,math.pi/4,0), white, Enum.Material.SmoothPlastic)
+	part(m,"WarpRim",   Vector3.new(90,3,90),  CFrame.new(cx,cy+2,cz+380)*CFrame.Angles(0,math.pi/4,0), cyan,  Enum.Material.Neon)
+	part(m,"WarpPil",   Vector3.new(14,26,14), CFrame.new(cx,cy+16,cz+380),                              stone, Enum.Material.SmoothPlastic)
+	part(m,"WarpCore",  Vector3.new(22,12,22), CFrame.new(cx,cy+28,cz+380),                              cyan,  Enum.Material.Neon)
+	neonLight(m, Vector3.new(cx,cy+36,cz+380), Color3.fromRGB(0,255,200), 90, 4)
 
 	-- ── BENDERA ────────────────────────────────────────────────────
 	part(m,"FlagPole", Vector3.new(3,70,3),  CFrame.new(TX,cy+37,TZ-145),    "Light grey",  Enum.Material.Metal)
 	part(m,"Flag",     Vector3.new(40,26,3), CFrame.new(TX+22,cy+73,TZ-145), "Bright green",Enum.Material.SmoothPlastic)
 
-	spawnLoc(raceSpawnFolder,"Cora_Spawn",Vector3.new(cx,cy+2,cz+300),"Bright green")
+	spawnLoc(raceSpawnFolder,"Cora_Spawn",Vector3.new(cx,cy+2,cz+330),"Bright green")
 end
 buildCoraHQ(); task.wait()
 
