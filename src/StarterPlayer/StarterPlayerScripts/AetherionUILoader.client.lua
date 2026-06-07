@@ -1,175 +1,113 @@
 -- AetherionUILoader.client.lua
--- Di StarterPlayerScripts (bukan StarterGui) agar script INI tidak di-kill saat respawn.
--- StarterGui scripts di-restart tiap respawn → connections di-GC → hotkeys/HUD mati.
+-- Di StarterPlayerScripts agar tidak di-kill saat respawn.
 
-local Players = game:GetService("Players")
+local Players       = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 print("[Aetherion] AetherionUILoader started")
 
-local player = Players.LocalPlayer
+local player    = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
-local function getGameplayUIModule()
-	local shared = ReplicatedStorage:WaitForChild("Shared", 30)
-	if not shared then
-		return nil, "ReplicatedStorage.Shared not found"
-	end
+-- Flag: true saat character creation sedang ditampilkan.
+-- Blokir CharacterAdded handler agar tidak load gameplay HUD di saat creation.
+local creationActive = false
 
-	local client = shared:WaitForChild("Client", 30)
-	if not client then
-		return nil, "ReplicatedStorage.Shared.Client not found"
-	end
-
-	local uiModule = client:WaitForChild("AetherionGameplayUI", 30)
-	if not uiModule then
-		return nil, "AetherionGameplayUI module not found"
-	end
-
-	return uiModule, nil
-end
-
+-- ── Gameplay UI ────────────────────────────────────────────
 local function loadGameplayUI()
-	local uiModule, moduleErr = getGameplayUIModule()
-	if not uiModule then
-		warn("[Aetherion] Cannot load Gameplay UI:", moduleErr)
-		return false
-	end
+	local shared = ReplicatedStorage:WaitForChild("Shared", 30)
+	if not shared then warn("[Aetherion] Shared not found") return false end
+	local client = shared:WaitForChild("Client", 30)
+	if not client then warn("[Aetherion] Client not found") return false end
+	local uiModule = client:WaitForChild("AetherionGameplayUI", 30)
+	if not uiModule then warn("[Aetherion] AetherionGameplayUI not found") return false end
 
-	local ok, UI = pcall(function()
-		return require(uiModule)
-	end)
-
-	if not ok then
-		warn("[Aetherion] Failed to require AetherionGameplayUI:", UI)
-		return false
-	end
-
+	local ok, UI = pcall(require, uiModule)
+	if not ok then warn("[Aetherion] Failed to require AetherionGameplayUI:", UI) return false end
 	if type(UI) ~= "table" or type(UI.Create) ~= "function" then
-		warn("[Aetherion] AetherionGameplayUI must return a table with Create()")
+		warn("[Aetherion] AetherionGameplayUI must return table with Create()")
 		return false
 	end
 
-	-- Jika UI sudah ada (restart loader karena Roblox), cukup reconnect connections
 	if playerGui:FindFirstChild("AetherionGameplayUI") then
-		print("[Aetherion] Gameplay UI already exists — reconnecting")
-		if type(UI.Reconnect) == "function" then
-			pcall(UI.Reconnect)
-		end
+		if type(UI.Reconnect) == "function" then pcall(UI.Reconnect) end
 		return true
 	end
 
-	local createOk, createErr = pcall(function()
-		UI.Create()
-	end)
+	local createOk, createErr = pcall(UI.Create)
+	if not createOk then warn("[Aetherion] Failed to create Gameplay UI:", createErr) return false end
 
-	if not createOk then
-		warn("[Aetherion] Failed to create Gameplay UI:", createErr)
-		return false
-	end
-
-	-- Load SkillPanelUI setelah GameplayUI siap
+	-- SkillPanelUI
 	task.spawn(function()
-		local client = ReplicatedStorage:WaitForChild("Shared", 10):WaitForChild("Client", 10)
 		local skillModule = client:WaitForChild("SkillPanelUI", 10)
-
-		if not skillModule then
-			warn("[Aetherion] SkillPanelUI module not found, skill UI will not load")
-			return
-		end
-
-		local okSkill, SkillUI = pcall(require, skillModule)
-
-		if not okSkill then
-			warn("[Aetherion] Failed to require SkillPanelUI:", SkillUI)
-			return
-		end
-
-		local initOk, initErr = pcall(function()
-			SkillUI.Init()
-		end)
-
-		if not initOk then
-			warn("[Aetherion] Failed to init SkillPanelUI:", initErr)
-			return
-		end
-
-		print("[Aetherion] SkillPanelUI initialized — L=Melee/Range, F=Force")
+		if not skillModule then warn("[Aetherion] SkillPanelUI not found") return end
+		local okS, SkillUI = pcall(require, skillModule)
+		if not okS then warn("[Aetherion] Failed to require SkillPanelUI:", SkillUI) return end
+		local okI, err = pcall(SkillUI.Init)
+		if not okI then warn("[Aetherion] Failed to init SkillPanelUI:", err) return end
+		print("[Aetherion] SkillPanelUI initialized")
 	end)
 
 	print("[Aetherion] Gameplay UI created")
 	return true
 end
 
--- Cek apakah player adalah player baru (belum pilih race)
+-- ── New player check ───────────────────────────────────────
 local function isNewPlayer()
 	local remotes = ReplicatedStorage:WaitForChild("Remotes", 15)
 	if not remotes then return false end
-
-	local getDataRemote = remotes:FindFirstChild("GetPlayerDataRequest")
-	if not getDataRemote then return false end
-
-	local ok, data = pcall(function()
-		return getDataRemote:InvokeServer()
-	end)
-
+	local remote = remotes:FindFirstChild("GetPlayerDataRequest")
+	if not remote then return false end
+	local ok, data = pcall(function() return remote:InvokeServer() end)
 	if not ok or not data then return false end
-
 	return data.FactionId == nil or data.NeedsRaceSelection == true
 end
 
--- Flow utama: cek apakah perlu character creation, atau langsung load HUD
+-- ── Main loader ────────────────────────────────────────────
 local function loadUI()
-	-- Jika sudah punya gameplay UI, skip
+	-- Sudah punya gameplay UI (returning player / respawn)
 	if playerGui:FindFirstChild("AetherionGameplayUI") then
+		if creationActive then return true end  -- jangan reconnect saat creation berlangsung
 		local shared = ReplicatedStorage:WaitForChild("Shared", 10)
 		if shared then
-			local client = shared:WaitForChild("Client", 10)
-			if client then
-				local uiModule = client:FindFirstChild("AetherionGameplayUI")
-				if uiModule then
-					local ok, UI = pcall(require, uiModule)
-					if ok and type(UI) == "table" and type(UI.Reconnect) == "function" then
-						pcall(UI.Reconnect)
-					end
+			local client = shared:FindFirstChild("Client")
+			local mod    = client and client:FindFirstChild("AetherionGameplayUI")
+			if mod then
+				local ok, UI = pcall(require, mod)
+				if ok and type(UI) == "table" and type(UI.Reconnect) == "function" then
+					pcall(UI.Reconnect)
 				end
 			end
 		end
 		return true
 	end
 
-	-- Cek apakah player baru
 	local needsCreation = isNewPlayer()
 
 	if needsCreation then
-		print("[Aetherion] New player detected — showing Character Creation screen")
+		print("[Aetherion] Player baru — tampilkan Character Creation")
+		creationActive = true
 
-		-- Load CharacterCreationUI module
 		local shared = ReplicatedStorage:WaitForChild("Shared", 30)
-		if not shared then
-			warn("[Aetherion] Shared not found")
-			return false
-		end
-		local client = shared:WaitForChild("Client", 30)
-		if not client then
-			warn("[Aetherion] Client not found")
-			return false
-		end
-		local ccModule = client:WaitForChild("CharacterCreationUI", 15)
-		if not ccModule then
-			warn("[Aetherion] CharacterCreationUI module not found — falling back to gameplay UI")
+		local client = shared and shared:WaitForChild("Client", 30)
+		local ccMod  = client and client:WaitForChild("CharacterCreationUI", 15)
+
+		if not ccMod then
+			warn("[Aetherion] CharacterCreationUI tidak ditemukan — fallback ke gameplay UI")
+			creationActive = false
 			return loadGameplayUI()
 		end
 
-		local ok, CharCreationUI = pcall(require, ccModule)
+		local ok, CC = pcall(require, ccMod)
 		if not ok then
-			warn("[Aetherion] Failed to require CharacterCreationUI:", CharCreationUI)
+			warn("[Aetherion] Gagal require CharacterCreationUI:", CC)
+			creationActive = false
 			return loadGameplayUI()
 		end
 
-		-- Show creation screen; after confirmed, load gameplay UI
-		CharCreationUI.Show(function(factionId, classId)
-			print("[Aetherion] Character created —", factionId, classId, "— loading gameplay UI")
+		CC.Show(function(factionId, classId)
+			print("[Aetherion] Character dibuat:", factionId, classId)
+			creationActive = false
 			task.wait(0.5)
 			loadGameplayUI()
 		end)
@@ -177,27 +115,23 @@ local function loadUI()
 		return true
 	end
 
-	-- Returning/existing player — load HUD directly
 	return loadGameplayUI()
 end
 
-task.delay(1, function()
-	local loaded = loadUI()
-
-	if loaded then
-		return
+-- Delay kecil agar remotes dan data sudah siap
+task.delay(0.5, function()
+	local ok = loadUI()
+	if not ok then
+		task.wait(2)
+		loadUI()
 	end
-
-	task.wait(2)
-	loadUI()
 end)
 
--- Fallback: jika karena alasan tertentu ScreenGui belum ada saat respawn, buat ulang
+-- Fallback respawn: hanya load HUD jika BUKAN saat character creation
 player.CharacterAdded:Connect(function()
 	task.wait(1)
-
+	if creationActive then return end  -- jangan load HUD saat creation berlangsung
 	if not playerGui:FindFirstChild("AetherionGameplayUI") then
-		-- Hanya load gameplay UI saat respawn (race sudah dipilih di sesi ini)
 		loadGameplayUI()
 	end
 end)

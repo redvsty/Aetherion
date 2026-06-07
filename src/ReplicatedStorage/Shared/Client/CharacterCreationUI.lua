@@ -27,79 +27,87 @@ local GOLD    = Color3.fromRGB(255, 210, 60)
 local SEL_GL  = Color3.fromRGB(0, 220, 235)
 
 -- ============================================================
--- Race data
+-- Race data  (no stat bars — stats shown per class)
 -- ============================================================
 local RACES = {
 	{
-		Id          = "MECHA",
-		Name        = "BELLATO FEDERATION",
-		Tag         = "MECHA  ·  HUMAN",
-		Desc        = "Masters of MAU battle mechs. Balanced warriors with access to powerful battle suits. Strong in both melee and ranged combat.",
-		Color       = Color3.fromRGB(50, 110, 220),   -- blue
-		ColorDim    = Color3.fromRGB(20, 45, 100),
-		TagColor    = Color3.fromRGB(100, 160, 255),
-		-- Stat tendencies (0-5)
-		Stats       = { HP=3, FP=2, SP=3 },
-		Traits      = { "Can pilot MAU battle suits", "Holy force element", "Balanced stat growth" },
+		Id       = "MECHA",
+		Name     = "BELLATO FEDERATION",
+		Tag      = "MECHA  ·  HUMAN",
+		Desc     = "Masters of MAU battle mechs. Balanced warriors with access to powerful battle suits. Strong in both melee and ranged combat.",
+		Color    = Color3.fromRGB(50, 110, 220),
+		ColorDim = Color3.fromRGB(20, 45, 100),
+		TagColor = Color3.fromRGB(100, 160, 255),
+		Traits   = { "Can pilot MAU battle suits", "Holy force element", "All 4 classes available" },
 	},
 	{
-		Id          = "CYBORG",
-		Name        = "ACCRETIA EMPIRE",
-		Tag         = "CYBORG  ·  ROBOT",
-		Desc        = "Pure war machines engineered for maximum destruction. No magic capability, compensated by superior armor and the exclusive Launcher class.",
-		Color       = Color3.fromRGB(200, 60, 50),    -- red
-		ColorDim    = Color3.fromRGB(90, 22, 18),
-		TagColor    = Color3.fromRGB(255, 110, 100),
-		Stats       = { HP=5, FP=1, SP=4 },
-		Traits      = { "No magic (no Spiritualist)", "Exclusive Launcher weapon", "Highest base armor" },
+		Id       = "CYBORG",
+		Name     = "ACCRETIA EMPIRE",
+		Tag      = "CYBORG  ·  ROBOT",
+		Desc     = "Pure war machines engineered for maximum destruction. No magic capability, compensated by superior armor and the exclusive Launcher class.",
+		Color    = Color3.fromRGB(200, 60, 50),
+		ColorDim = Color3.fromRGB(90, 22, 18),
+		TagColor = Color3.fromRGB(255, 110, 100),
+		Traits   = { "No Spiritualist (no magic)", "Exclusive Launcher weapon", "Highest base armor" },
 	},
 	{
-		Id          = "MYSTIC",
-		Name        = "CORA ALLIANCE",
-		Tag         = "MYSTIC  ·  ELF",
-		Desc        = "Ancient elven summoners bonded with Animus spirits. Fragile in direct combat but unmatched in Force power and spirit manipulation.",
-		Color       = Color3.fromRGB(110, 55, 190),   -- purple
-		ColorDim    = Color3.fromRGB(45, 20, 85),
-		TagColor    = Color3.fromRGB(200, 150, 255),
-		Stats       = { HP=2, FP=5, SP=3 },
-		Traits      = { "Animus spirit summoning", "Highest Force power", "Exclusive Cora magic" },
+		Id       = "MYSTIC",
+		Name     = "CORA ALLIANCE",
+		Tag      = "MYSTIC  ·  ELF",
+		Desc     = "Ancient elven summoners bonded with Animus spirits. Fragile in direct combat but unmatched in Force power and spirit manipulation.",
+		Color    = Color3.fromRGB(110, 55, 190),
+		ColorDim = Color3.fromRGB(45, 20, 85),
+		TagColor = Color3.fromRGB(200, 150, 255),
+		Traits   = { "Animus spirit summoning", "Exclusive Cora magic school", "All 4 classes available" },
 	},
 }
 
 -- ============================================================
--- Class data
+-- Class data  — stats dari ClassDefinitions RF Classic
+-- Warrior     : BaseHP=200 HPLv=25 | BaseFP=80  FPLv=4  | BaseSP=200 SPLv=8
+-- Ranger      : BaseHP=160 HPLv=18 | BaseFP=80  FPLv=4  | BaseSP=220 SPLv=10
+-- Spiritualist: BaseHP=130 HPLv=12 | BaseFP=160 FPLv=20 | BaseSP=180 SPLv=5
+-- Specialist  : BaseHP=150 HPLv=15 | BaseFP=100 FPLv=8  | BaseSP=220 SPLv=10
+-- Pip scale 1-5 dihitung relatif terhadap range antar class:
+--   HP: max=200 min=130 → Warrior=5,Ranger=3,Spiritualist=1,Specialist=2
+--   FP: max=160 min=80  → Warrior=1,Ranger=1,Spiritualist=5,Specialist=2
+--   SP: max=220 min=180 → Warrior=3,Ranger=5,Spiritualist=1,Specialist=5
 -- ============================================================
 local CLASSES = {
 	{
 		Id        = "Warrior",
 		Name      = "WARRIOR",
 		Role      = "MELEE",
-		Desc      = "Front-line fighter.\nHighest HP pool.\nSwords & blades.",
+		Desc      = "Front-line fighter with highest HP. Masters swords and blades. Advances to Guardian or Templar at Lv30.",
 		RoleColor = Color3.fromRGB(220, 70, 50),
+		Stats     = { HP=5, FP=1, SP=3 },
 		Locked    = {},
 	},
 	{
 		Id        = "Ranger",
 		Name      = "RANGER",
 		Role      = "RANGED",
-		Desc      = "Ranged attacker.\nHigh mobility.\nRifles & bows.",
+		Desc      = "Agile ranged attacker with the highest stamina. Uses rifles, launchers, and bows. Advances to Scout at Lv30.",
 		RoleColor = Color3.fromRGB(50, 150, 220),
+		Stats     = { HP=3, FP=1, SP=5 },
 		Locked    = {},
 	},
 	{
 		Id        = "Spiritualist",
 		Name      = "SPIRITUALIST",
 		Role      = "MAGIC",
-		Desc      = "Force caster.\nHighest FP pool.\nNot for Accretia.",
+		Desc      = "Force caster with the highest FP. Fragile but powerful healer and nuker. Not available to Accretia.",
 		RoleColor = Color3.fromRGB(170, 80, 230),
+		Stats     = { HP=1, FP=5, SP=2 },
 		Locked    = { CYBORG = true },
 	},
 	{
 		Id        = "Specialist",
 		Name      = "SPECIALIST",
 		Role      = "SUPPORT",
-		Desc      = "Engineer support.\nCrafting & traps.\nBlood Ammo heal.",
+		Desc      = "Engineer and support with high stamina. Crafting, traps, and Blood Ammo healing (Accretia only).",
 		RoleColor = Color3.fromRGB(50, 190, 120),
+		Stats     = { HP=2, FP=2, SP=5 },
 		Locked    = {},
 	},
 }
@@ -193,6 +201,7 @@ function CharacterCreationUI.Show(onComplete)
 	sg.ResetOnSpawn = false
 	sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	sg.IgnoreGuiInset = true
+	sg.DisplayOrder = 200  -- tampil di atas semua HUD/belt/hotbar
 	sg.Parent = playerGui
 
 	-- Root background
@@ -286,12 +295,12 @@ function CharacterCreationUI.Show(onComplete)
 
 		-- Race name
 		L(inner, race.Name, 17, TEXT, true,
-			nil, UDim2.new(0,0,0,0), UDim2.new(.75,0,0,22),
+			nil, UDim2.new(0,0,0,0), UDim2.new(.73,0,0,22),
 			Enum.TextXAlignment.Left, 14)
 
 		-- Race tag badge
 		local tagBg = F(inner, race.ColorDim, 0, nil,
-			UDim2.new(.76,0,0,2), UDim2.new(.24,-4,0,18), 13)
+			UDim2.new(.74,0,0,2), UDim2.new(.26,-4,0,18), 13)
 		corner(tagBg, 4)
 		L(tagBg, race.Tag, 10, race.TagColor, true,
 			Vector2.new(.5,.5), UDim2.new(.5,0,.5,0), UDim2.new(1,-4,1,0),
@@ -302,23 +311,18 @@ function CharacterCreationUI.Show(onComplete)
 			UDim2.new(0,0,0,26), UDim2.new(1,0,0,1), 14)
 		grad(sep, race.Color, Color3.fromRGB(0,0,0), 0)
 
-		-- Stat bars
-		statBar(inner, "HP", race.Stats.HP, race.Color, 32)
-		statBar(inner, "FP", race.Stats.FP, race.Color, 52)
-		statBar(inner, "SP", race.Stats.SP, race.Color, 72)
+		-- Traits list (no stat bars — stats are per class)
+		for i, trait in ipairs(race.Traits) do
+			L(inner, "· " .. trait, 11, TEXT_DIM, false,
+				nil, UDim2.new(0,0,0,32+(i-1)*20), UDim2.new(.72,0,0,18),
+				Enum.TextXAlignment.Left, 14)
+		end
 
 		-- SELECT button
 		local selBtn = B(inner, "SELECT", 11, race.TagColor, PANEL2, 0,
-			Vector2.new(1,1), UDim2.new(1,-84,1,0), UDim2.new(0,80,0,24), 14)
+			Vector2.new(1,1), UDim2.new(1,-84,1,0), UDim2.new(0,80,0,26), 14)
 		corner(selBtn, 4)
 		stroke(selBtn, race.Color, 1)
-
-		-- Traits list (small, right side)
-		for i, trait in ipairs(race.Traits) do
-			L(inner, "· " .. trait, 10, TEXT_DIM, false,
-				nil, UDim2.new(.42,0,0,28+(i-1)*15), UDim2.new(.58,0,0,14),
-				Enum.TextXAlignment.Left, 14)
-		end
 
 		-- Click overlay (whole card)
 		local ov = B(card,"",12,TEXT,Color3.new(0,0,0),1,nil,nil,UDim2.new(1,0,1,0),15,"Overlay")
@@ -430,14 +434,21 @@ function CharacterCreationUI.Show(onComplete)
 			Vector2.new(.5,.5), UDim2.new(.5,0,.5,0), UDim2.new(1,-4,1,0),
 			Enum.TextXAlignment.Center, 15)
 
-		-- Description
-		L(cInner, cls.Desc, 11, TEXT_DIM, false,
-			nil, UDim2.new(0,0,0,24), UDim2.new(.7,0,1,0),
+		-- Description (kiri, lebih sempit karena ada stat bars kanan)
+		L(cInner, cls.Desc, 10, TEXT_DIM, false,
+			nil, UDim2.new(0,0,0,24), UDim2.new(.52,0,1,-4),
 			Enum.TextXAlignment.Left, 14)
+
+		-- Stat bars kanan (HP/FP/SP dari ClassDefinitions RF Classic)
+		local statFrame = F(cInner, Color3.new(0,0,0), 1, nil,
+			UDim2.new(0.54,0,0,22), UDim2.new(0.46,0,1,-4), 14)
+		statBar(statFrame, "HP", cls.Stats.HP, cls.RoleColor, 0)
+		statBar(statFrame, "FP", cls.Stats.FP, cls.RoleColor, 18)
+		statBar(statFrame, "SP", cls.Stats.SP, cls.RoleColor, 36)
 
 		-- Select button
 		local cSelBtn = B(cInner, "SELECT", 11, TEXT_DIM, PANEL2, 0,
-			Vector2.new(1,.5), UDim2.new(1,-70,.5,0), UDim2.new(0,66,0,26), 14)
+			Vector2.new(1,1), UDim2.new(1,-72,1,0), UDim2.new(0,68,0,24), 14)
 		corner(cSelBtn, 4)
 		stroke(cSelBtn, TEAL_DIM, 1)
 
