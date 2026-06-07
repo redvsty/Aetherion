@@ -50,14 +50,38 @@ local MAP_HALF   = MapDefinitions.MAP_HALF         -- 7000
 -- Helpers
 -- ================================================================
 
+local MAX_FILL = 4096  -- Roblox terrain FillBlock max per axis
 local function fill(cx, cz, w, d, mat, yBase, height)
 	yBase  = yBase  or GROUND_Y
 	height = height or DEPTH
-	Terrain:FillBlock(
-		CFrame.new(cx, yBase - height / 2, cz),
-		Vector3.new(w, height, d),
-		mat
-	)
+	if w <= MAX_FILL and d <= MAX_FILL then
+		Terrain:FillBlock(
+			CFrame.new(cx, yBase - height / 2, cz),
+			Vector3.new(w, height, d),
+			mat
+		)
+		return
+	end
+	-- Pecah jadi tiles agar tidak melebihi batas Roblox
+	local tileW = math.min(w, MAX_FILL)
+	local tileD = math.min(d, MAX_FILL)
+	local x0 = cx - w / 2
+	local z0 = cz - d / 2
+	local x = x0
+	while x < cx + w / 2 do
+		local tw = math.min(tileW, (cx + w / 2) - x)
+		local z = z0
+		while z < cz + d / 2 do
+			local td = math.min(tileD, (cz + d / 2) - z)
+			Terrain:FillBlock(
+				CFrame.new(x + tw / 2, yBase - height / 2, z + td / 2),
+				Vector3.new(tw, height, td),
+				mat
+			)
+			z = z + tileD
+		end
+		x = x + tileW
+	end
 end
 
 local function ball(x, y, z, radius, mat)
