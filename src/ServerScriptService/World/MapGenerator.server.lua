@@ -78,6 +78,7 @@ local function fill(cx, cz, w, d, mat, yBase, height)
 				Vector3.new(tw, height, td),
 				mat
 			)
+			task.wait()  -- yield tiap tile agar tidak timeout
 			z = z + tileD
 		end
 		x = x + tileW
