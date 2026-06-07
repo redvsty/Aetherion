@@ -642,17 +642,47 @@ local function buildAccretiaHQ()
 	part(m,"WarpCore",  Vector3.new(28,14,28),  CFrame.new(cx,cy+32,cz),                             red,  Enum.Material.Neon)
 	neonLight(m, Vector3.new(cx,cy+40,cz), Color3.fromRGB(255,0,0), 110, 5)
 
-	-- ── NPC COUNTERS (sepanjang dinding dalam, 3 sisi) ────────────
-	for i, npc in ipairs({
-		{cx-(R-120), cy+7, cz-60,  0          },  -- barat
-		{cx+(R-120), cy+7, cz+60,  0          },  -- timur
-		{cx-60,      cy+7, cz-(R-120), math.pi/2}, -- utara
-	}) do
-		local cf = CFrame.new(npc[1],npc[2],npc[3]) * CFrame.Angles(0,npc[4],0)
-		part(m,"NPC"..i.."Counter", Vector3.new(130,16,40), cf, dark,  Enum.Material.Metal)
-		part(m,"NPC"..i.."Sign",    Vector3.new(80,14,4),
-			CFrame.new(npc[1],npc[2]+22,npc[3]), red, Enum.Material.Neon)
+	-- ── NPC TERMINALS (Accretia industrial style — 6 stasiun) ──────
+	-- Setiap terminal: platform hexagonal + desk teal + backdrop + screen + pilar neon
+	local NPC_R = R - 110  -- jarak dari center ke terminal (dalam dome)
+
+	local function npcTerminal(name, px, pz, rotY, screenCol)
+		local baseCF = CFrame.new(px, cy, pz) * CFrame.Angles(0, rotY, 0)
+		-- Platform hexagonal (rotated 45°)
+		part(m, name.."Plat",    Vector3.new(90,6,90),
+			baseCF*CFrame.Angles(0,math.pi/4,0)*CFrame.new(0,3,0),   dark, Enum.Material.Metal)
+		part(m, name.."PlatRim", Vector3.new(98,2,98),
+			baseCF*CFrame.Angles(0,math.pi/4,0)*CFrame.new(0,1,0),   teal, Enum.Material.Neon)
+		-- Terminal desk
+		part(m, name.."Desk",    Vector3.new(82,22,42), baseCF*CFrame.new(0,14,0),  dark, Enum.Material.Metal)
+		part(m, name.."DeskTop", Vector3.new(82,4,42),  baseCF*CFrame.new(0,26,0),  teal, Enum.Material.SmoothPlastic)
+		-- Backdrop panel (menempel ke dinding, di belakang desk)
+		part(m, name.."Back",    Vector3.new(90,72,8),  baseCF*CFrame.new(0,46,-30), dark, Enum.Material.SmoothPlastic)
+		-- Screen di backdrop (warna beda per NPC type)
+		part(m, name.."Screen",  Vector3.new(72,52,5),  baseCF*CFrame.new(0,52,-30), screenCol, Enum.Material.Neon)
+		-- Pilar kiri & kanan
+		part(m, name.."PilL",    Vector3.new(8,80,8),   baseCF*CFrame.new(-48,42,-30), dark, Enum.Material.Metal)
+		part(m, name.."PilR",    Vector3.new(8,80,8),   baseCF*CFrame.new( 48,42,-30), dark, Enum.Material.Metal)
+		part(m, name.."CapL",    Vector3.new(12,12,12), baseCF*CFrame.new(-48,86,-30), red,  Enum.Material.Neon)
+		part(m, name.."CapR",    Vector3.new(12,12,12), baseCF*CFrame.new( 48,86,-30), red,  Enum.Material.Neon)
+		-- Header bar atas backdrop
+		part(m, name.."Header",  Vector3.new(110,8,10), baseCF*CFrame.new(0,86,-30),  red,  Enum.Material.Neon)
+		-- NPC light
+		local lp = (baseCF*CFrame.new(0,90,-20)).Position
+		neonLight(m, lp, Color3.fromRGB(255,50,0), 40, 1.5)
 	end
+
+	-- UTARA: Quest NPC (kiri) + Faction Officer (kanan) → menghadap selatan (rotY=0)
+	npcTerminal("NPC_Quest",   cx-120, cz-NPC_R,  0,            "Bright red")
+	npcTerminal("NPC_Officer", cx+120, cz-NPC_R,  0,            teal)
+
+	-- TIMUR: Weapon Dealer + Armor Dealer → menghadap barat (rotY=-π/2)
+	npcTerminal("NPC_Weapon",  cx+NPC_R, cz-100, -math.pi/2,   "Bright red")
+	npcTerminal("NPC_Armor",   cx+NPC_R, cz+100, -math.pi/2,   teal)
+
+	-- BARAT: Item Shop + Upgrade Tech → menghadap timur (rotY=π/2)
+	npcTerminal("NPC_Items",   cx-NPC_R, cz-100,  math.pi/2,   "Bright red")
+	npcTerminal("NPC_Upgrade", cx-NPC_R, cz+100,  math.pi/2,   teal)
 
 	spawnLoc(raceSpawnFolder, "Accretia_Spawn", Vector3.new(cx,cy+8,cz+200), "Bright red")
 end
