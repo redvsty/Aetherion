@@ -810,10 +810,13 @@ AttackRequest.OnServerInvoke = function(player, targetModel)
 	return ok, result
 end
 
--- Init monster spawners (cari Part di workspace dengan attribute MonsterDefId)
+-- Init monsters setelah terrain selesai di-generate
 task.spawn(function()
-	task.wait(2) -- tunggu workspace fully loaded
-	MonsterService.InitSpawners()
+	if not workspace:FindFirstChild("_MapGenerated") then
+		workspace:WaitForChild("_MapGenerated", 300)
+	end
+	task.wait(1)  -- settle setelah terrain
+	MonsterService.InitFromMapConfig(MapDefinitions.SpawnConfig, MapDefinitions.Zones)
 end)
 
 -- ============================================================

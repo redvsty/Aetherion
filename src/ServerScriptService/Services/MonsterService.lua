@@ -163,7 +163,7 @@ local function buildMonsterModel(def, position)
 	nameLabel.BackgroundTransparency = 1
 	nameLabel.TextColor3 = Color3.new(1, 1, 1)
 	nameLabel.TextScaled = true
-	nameLabel.Font = Enum.Font.GothamBold
+	nameLabel.Font = Enum.Font.BuilderSansBold
 	nameLabel.Text = def.Name .. " (Lv." .. def.Level .. ")"
 	nameLabel.Parent = bg
 
@@ -742,6 +742,47 @@ function MonsterService.InitSpawners()
 		print("  MonsterCount (number) = 3")
 	end
 
+	startAILoop()
+end
+
+-- Init monster langsung dari MapDefinitions.SpawnConfig + Zones.
+-- Tidak perlu Parts di workspace. Dipanggil setelah _MapGenerated.
+function MonsterService.InitFromMapConfig(spawnConfig, zonesConfig)
+	local totalSpawned = 0
+
+	for zoneId, spawnEntries in pairs(spawnConfig) do
+		local zone = zonesConfig[zoneId]
+		if not zone then
+			warn("[MonsterService] Zone tidak ditemukan di MapDefinitions:", zoneId)
+			continue
+		end
+
+		local center = zone.Center
+		local zoneRadius = zone.Radius or 400
+
+		for _, entry in ipairs(spawnEntries) do
+			local defId   = entry.DefId
+			local count   = entry.Count or 1
+			local spread  = math.min(entry.Spread or zoneRadius * 0.6, zoneRadius * 0.85)
+
+			for _ = 1, count do
+				local angle = math.random() * math.pi * 2
+				local dist  = math.random() * spread
+				local pos   = Vector3.new(
+					center.X + math.cos(angle) * dist,
+					center.Y + 3,
+					center.Z + math.sin(angle) * dist
+				)
+				spawnMonster(defId, pos)
+				totalSpawned += 1
+			end
+		end
+
+		task.wait()  -- yield antar zone agar tidak timeout
+	end
+
+	print(string.format("[MonsterService] %d monster di-spawn dari MapConfig (%d zone).",
+		totalSpawned, #spawnConfig))
 	startAILoop()
 end
 
