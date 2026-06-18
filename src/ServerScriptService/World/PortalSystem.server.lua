@@ -96,28 +96,6 @@ local portalDefs = {
 		up    = false,
 	},
 
-	-- ── CAULDRON PORTAL (akses ke zona boss L48+) ────────────────
-	-- Dari Sette Highland → Abadon Passage (Cauldron entrance)
-	{
-		id    = "portal_sette_to_cauldron",
-		label = "Abadon Passage ↓",
-		desc  = "Cauldron Volcanic Area",
-		color = Color3.fromRGB(255, 80, 0),       -- oranye lava
-		ring  = Color3.fromRGB(255, 180, 80),
-		from  = Vector3.new(0, GROUND_Y, -5600),   -- tengah Sette Desert utara
-		to    = Vector3.new(0, GROUND_Y + 3, -6200), -- Abadon Passage entrance
-		up    = true,
-	},
-	{
-		id    = "portal_cauldron_return",
-		label = "Kembali ↑",
-		desc  = "Sette Desert",
-		color = Color3.fromRGB(255, 80, 0),
-		ring  = Color3.fromRGB(255, 180, 80),
-		from  = Vector3.new(0, GROUND_Y, -6150),   -- Abadon Passage, dekat entrance
-		to    = Vector3.new(0, GROUND_Y + 3, -5600),
-		up    = false,
-	},
 }
 
 -- ================================================================
@@ -287,4 +265,4 @@ marker.Parent = workspace
 
 print(string.format("[PortalSystem] %d portals berhasil dibangun.", #portalDefs))
 print("  Ether portal: Bellato (Armory 117), Accretia (Armory 213), Cora (Sette Desert)")
-print("  Cauldron portal: dari Sette Desert utara → Abadon Passage")
+print("  Cauldron: akses jalan kaki dari Sette Desert (terrain nyambung)")
